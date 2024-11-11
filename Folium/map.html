@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_d1f56b9b910af518510ea96a0fac11bf {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_d1f56b9b910af518510ea96a0fac11bf" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_d1f56b9b910af518510ea96a0fac11bf = L.map(
+                "map_d1f56b9b910af518510ea96a0fac11bf",
+                {
+                    center: [41.5550248, -8.432193000000002],
+                    crs: L.CRS.EPSG3857,
+                    zoom: 13,
+                    zoomControl: true,
+                    preferCanvas: false,
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_663a8b313e72b72b3ca1600743c725c0 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            );
+        
+    
+            tile_layer_663a8b313e72b72b3ca1600743c725c0.addTo(map_d1f56b9b910af518510ea96a0fac11bf);
+        
+    
+            var marker_9f01f2f3c2c74805a7fc52f83adbee1c = L.marker(
+                [41.55793, -8.416057],
+                {}
+            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
+        
+    
+            var icon_925bdb12cbe93ee3279550679b4f0563 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "red", "prefix": "fa"}
+            );
+            marker_9f01f2f3c2c74805a7fc52f83adbee1c.setIcon(icon_925bdb12cbe93ee3279550679b4f0563);
+        
+    
+        var popup_8565a3abb422d3a33aeed0eb10ec386c = L.popup({"maxWidth": 700});
+
+        
+            
+                var html_87bd78f958514c8d2162bc12037901a3 = $(`<div id="html_87bd78f958514c8d2162bc12037901a3" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Residência.</strong></p>             <p><strong>Cliente:</strong> Luís Carvalho</p>             <p><strong>Instalação Ar Condicionado</strong> executada a <strong>09/10/2023</strong></p>             <p><strong>Próxima Manutenção prevista para Outubro 2024</strong></p>         </div>     </div>`)[0];
+                popup_8565a3abb422d3a33aeed0eb10ec386c.setContent(html_87bd78f958514c8d2162bc12037901a3);
+            
+        
+
+        marker_9f01f2f3c2c74805a7fc52f83adbee1c.bindPopup(popup_8565a3abb422d3a33aeed0eb10ec386c)
+        ;
+
+        
+    
+    
+            var marker_43fcbef6f2f1cb3b3a3dbbf429063258 = L.marker(
+                [41.531206, -8.433738],
+                {}
+            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
+        
+    
+            var icon_0ac2fba9c94ed788f105440bfed27f8b = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "gray", "prefix": "fa"}
+            );
+            marker_43fcbef6f2f1cb3b3a3dbbf429063258.setIcon(icon_0ac2fba9c94ed788f105440bfed27f8b);
+        
+    
+        var popup_6bc06822e88443b734bd6e9987da1270 = L.popup({"maxWidth": 700});
+
+        
+            
+                var html_c8f5600b98c6f01a8cfccee0e660158c = $(`<div id="html_c8f5600b98c6f01a8cfccee0e660158c" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Empresa.</strong></p>             <p><strong>Cliente:</strong> Pom Pom</p>             <p><strong>Instalação Ar Condicionado</strong> executada a <strong>30/10/2024</strong></p>             <p><strong>Próxima Manutenção prevista para Outubro 2025</strong></p>         </div>     </div>`)[0];
+                popup_6bc06822e88443b734bd6e9987da1270.setContent(html_c8f5600b98c6f01a8cfccee0e660158c);
+            
+        
+
+        marker_43fcbef6f2f1cb3b3a3dbbf429063258.bindPopup(popup_6bc06822e88443b734bd6e9987da1270)
+        ;
+
+        
+    
+    
+            var marker_ea1ff7f12aca6a0cb4374fa077ab7378 = L.marker(
+                [41.546754, -8.410735],
+                {}
+            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
+        
+    
+            var icon_b941953faee926a94dc95e9daa60bfe9 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "gray", "prefix": "fa"}
+            );
+            marker_ea1ff7f12aca6a0cb4374fa077ab7378.setIcon(icon_b941953faee926a94dc95e9daa60bfe9);
+        
+    
+        var popup_030a8fe15688e04b786d320ee0655edc = L.popup({"maxWidth": 700});
+
+        
+            
+                var html_c6f3ebfb2bcf2f6607ea34d458e5634e = $(`<div id="html_c6f3ebfb2bcf2f6607ea34d458e5634e" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Empresa.</strong></p>             <p><strong>Cliente:</strong> Worten</p>             <p><strong>Instalação Ar Condicionado</strong> executada a <strong>01/10/2024</strong></p>             <p><strong>Próxima Manutenção prevista para Outubro 2025</strong></p>         </div>     </div>`)[0];
+                popup_030a8fe15688e04b786d320ee0655edc.setContent(html_c6f3ebfb2bcf2f6607ea34d458e5634e);
+            
+        
+
+        marker_ea1ff7f12aca6a0cb4374fa077ab7378.bindPopup(popup_030a8fe15688e04b786d320ee0655edc)
+        ;
+
+        
+    
+    
+            var marker_a20ad1d33198aa4a3606eb083ea89369 = L.marker(
+                [41.559214, -8.461032],
+                {}
+            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
+        
+    
+            var icon_6551313c098005a997800911d589dcf9 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "red", "prefix": "fa"}
+            );
+            marker_a20ad1d33198aa4a3606eb083ea89369.setIcon(icon_6551313c098005a997800911d589dcf9);
+        
+    
+        var popup_e6b899af907079757642f2b4dbfa001a = L.popup({"maxWidth": 700});
+
+        
+            
+                var html_9dc195cd54def8652320ad42449e8ffc = $(`<div id="html_9dc195cd54def8652320ad42449e8ffc" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Residência.</strong></p>             <p><strong>Cliente:</strong> Elisabete Macedo</p>             <p><strong>Manutenção Ar Condicionado</strong> executada a <strong>01/08/2023</strong></p>             <p><strong>Próxima Manutenção prevista para Agosto 2024</strong></p>         </div>     </div>`)[0];
+                popup_e6b899af907079757642f2b4dbfa001a.setContent(html_9dc195cd54def8652320ad42449e8ffc);
+            
+        
+
+        marker_a20ad1d33198aa4a3606eb083ea89369.bindPopup(popup_e6b899af907079757642f2b4dbfa001a)
+        ;
+
+        
+    
+    
+            var marker_fac0b445dfde45b83eea1f4a5c7a546c = L.marker(
+                [41.58002, -8.439403],
+                {}
+            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
+        
+    
+            var icon_1d4de52d4d6ca84002401b03bc8f9152 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "orange", "prefix": "fa"}
+            );
+            marker_fac0b445dfde45b83eea1f4a5c7a546c.setIcon(icon_1d4de52d4d6ca84002401b03bc8f9152);
+        
+    
+        var popup_7baeb98a647f6c23f9601e7211315f8c = L.popup({"maxWidth": 700});
+
+        
+            
+                var html_c39b4f124b644be548bf7fd087c9fa98 = $(`<div id="html_c39b4f124b644be548bf7fd087c9fa98" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Empresa.</strong></p>             <p><strong>Cliente:</strong> Fnac</p>             <p><strong>Manutenção Ar Condicionado</strong> executada a <strong>16/01/2024</strong></p>             <p><strong>Próxima Manutenção prevista para Janeiro 2025</strong></p>         </div>     </div>`)[0];
+                popup_7baeb98a647f6c23f9601e7211315f8c.setContent(html_c39b4f124b644be548bf7fd087c9fa98);
+            
+        
+
+        marker_fac0b445dfde45b83eea1f4a5c7a546c.bindPopup(popup_7baeb98a647f6c23f9601e7211315f8c)
+        ;
+
+        
+    
+    
+
+            var geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa = {"collapsed": false, "defaultMarkGeocode": true, "position": "topright", "provider": "nominatim", "providerOptions": {}, "zoom": 11};
+
+            // note: geocoder name should start with lowercase
+            var geocoderName_geocoder_12a1889748b90f4f0404e36ec9e82cfa = geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa["provider"];
+
+            var customGeocoder_geocoder_12a1889748b90f4f0404e36ec9e82cfa = L.Control.Geocoder[ geocoderName_geocoder_12a1889748b90f4f0404e36ec9e82cfa ](
+                geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa['providerOptions']
+            );
+            geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa["geocoder"] = customGeocoder_geocoder_12a1889748b90f4f0404e36ec9e82cfa;
+
+            L.Control.geocoder(
+                geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa
+            ).on('markgeocode', function(e) {
+                var zoom = geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa['zoom'] || map_d1f56b9b910af518510ea96a0fac11bf.getZoom();
+                map_d1f56b9b910af518510ea96a0fac11bf.setView(e.geocode.center, zoom);
+            }).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
+
+        
+</script>
+</html>
