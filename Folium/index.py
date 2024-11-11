@@ -109,7 +109,7 @@ def home():
                     .map-container {
                         margin: 20px auto;
                         width: 95%;  /* Make the map wider */
-                        height: 700px;  /* Increased height */
+                        height: 600px;  /* Increased height */
                         border-radius: 10px;
                         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
                     }
