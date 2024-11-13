@@ -1,7 +1,7 @@
 from flask import Flask, render_template_string
 import folium
 import pandas as pd
-from folium.plugins import Geocoder
+from folium.plugins import Geocoder, TagFilterButton
 from datetime import datetime
 import locale
 from dateutil.relativedelta import relativedelta
@@ -67,6 +67,7 @@ def home():
         ).add_to(m)
 
     Geocoder().add_to(m)
+    #TagFilterButton(color).add_to(m)
 
     # Render the map
     m.get_root().render()
@@ -105,25 +106,47 @@ def home():
                         border-radius: 8px;
                     }
 
-                    /* Map Styling */
-                    .map-container {
-                        margin: 20px auto;
-                        width: 95%;  /* Make the map wider */
-                        height: 600px;  /* Increased height */
-                        border-radius: 10px;
-                        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-                    }
+                    .content-wrapper {
+    padding-bottom: 50px; /* Matches the footer height to prevent overlap */
+    min-height: 100vh; /* Ensures content wrapper covers full screen */
+    box-sizing: border-box;
+}
+
+.footer-spacer {
+    height: 35px; /* Same height as footer */
+}
+@media only screen and (max-width: 767px) {
+    .footer-spacer {
+        height: 20px;
+    }
+}
+/* General Map Container Styling */
+.map-container {
+    width: 97%;
+    height: calc(100% - 180px);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media only screen and (max-width: 767px) {
+    .map-container {
+        height: calc(100% - 210px);
+    }
+}
 
                     /* Footer Styling */
                     footer {
-                        text-align: center;
-                        padding: 10px;
-                        background-color: #333;
-                        color: white;
-                        position: fixed;
-                        width: 100%;
-                        bottom: 0;
-                    }
+    height: 50px; /* Fixed height */
+    text-align: center;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+    width: 100%;
+    position: absolute; /* Sticky keeps it at the bottom when scrolling */
+    bottom: 0;
+}
                 </style>
                 {{ header|safe }}
             </head>
@@ -132,6 +155,7 @@ def home():
                 <div class="map-container">
                     {{ body_html|safe }}
                 </div>
+                <div class="footer-spacer"></div>
                 <footer>
                     <p>&copy; MGP Air Switch</p>
                 </footer>
