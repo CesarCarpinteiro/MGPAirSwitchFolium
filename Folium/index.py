@@ -63,12 +63,17 @@ def home():
         folium.Marker( 
             location=[row['Latitude'], row['Longitude']],
             popup = folium.Popup(text, max_width = 700),
-            icon=folium.Icon(color=color, icon='fan', prefix='fa')
+            icon=folium.Icon(color=color, icon='fan', prefix='fa'), tags=[color]
         ).add_to(m)
 
     Geocoder().add_to(m)
-    #TagFilterButton(color).add_to(m)
 
+    # Inject JavaScript to modify the Geocoder placeholder text
+    
+#TagFilterButton(['gray', 'orange', 'red'], name='Filter by Color').add_to(m)
+
+    #m.get_root().html.add_child(folium.Element(custom_js))
+    
     # Render the map
     m.get_root().render()
     header = m.get_root().header.render()
@@ -107,46 +112,46 @@ def home():
                     }
 
                     .content-wrapper {
-    padding-bottom: 50px; /* Matches the footer height to prevent overlap */
-    min-height: 100vh; /* Ensures content wrapper covers full screen */
-    box-sizing: border-box;
-}
+                        padding-bottom: 50px; /* Matches the footer height to prevent overlap */
+                        min-height: 100vh; /* Ensures content wrapper covers full screen */
+                        box-sizing: border-box;
+                    }
 
-.footer-spacer {
-    height: 35px; /* Same height as footer */
-}
-@media only screen and (max-width: 767px) {
-    .footer-spacer {
-        height: 20px;
-    }
-}
-/* General Map Container Styling */
-.map-container {
-    width: 97%;
-    height: calc(100% - 180px);
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    margin: 0 auto;
-}
+                    .footer-spacer {
+                        height: 35px; /* Same height as footer */
+                    }
+                    @media only screen and (max-width: 767px) {
+                    .footer-spacer {
+                        height: 20px;
+                    }
+                    }
+                    /* General Map Container Styling */
+                    .map-container {
+                        width: 97%;
+                        height: calc(100% - 180px);
+                        border-radius: 10px;
+                        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                        margin: 0 auto;
+                    }
 
-/* Responsive adjustments */
-@media only screen and (max-width: 767px) {
-    .map-container {
-        height: calc(100% - 210px);
-    }
-}
+                    /* Responsive adjustments */
+                    @media only screen and (max-width: 767px) {
+                    .map-container {
+                        height: calc(100% - 210px);
+                    }
+                    }
 
                     /* Footer Styling */
                     footer {
-    height: 50px; /* Fixed height */
-    text-align: center;
-    padding: 10px;
-    background-color: #333;
-    color: white;
-    width: 100%;
-    position: absolute; /* Sticky keeps it at the bottom when scrolling */
-    bottom: 0;
-}
+                        height: 50px; /* Fixed height */
+                        text-align: center;
+                        padding: 10px;
+                        background-color: #333;
+                        color: white;
+                        width: 100%;
+                        position: absolute; /* Sticky keeps it at the bottom when scrolling */
+                        bottom: 0;
+                    }
                 </style>
                 {{ header|safe }}
             </head>
