@@ -1,3 +1,6 @@
 FLASK>=2.1.0
 folium
 pandas
+markupsafe
+jinja2<3.1.0
+flask-login
