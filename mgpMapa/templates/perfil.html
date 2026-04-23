@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+        .page-header a {
+            padding: 9px 20px;
+            background: white;
+            color: #2e7d32;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            transition: background 0.2s;
+        }
+
+        .page-header a:hover { background: #f0f0f0; }
+
+        .content { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+
+        /* Profile card */
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .profile-top {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 30px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .avatar {
+            width: 64px;
+            height: 64px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            border: 3px solid rgba(255,255,255,0.5);
+            flex-shrink: 0;
+        }
+
+        .profile-top h2 { color: white; font-size: 1.2em; margin-bottom: 4px; }
+        .profile-top p { color: rgba(255,255,255,0.8); font-size: 0.85em; }
+
+        .profile-body { padding: 20px 24px; }
+
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.92em;
+            color: #555;
+        }
+
+        .profile-row:last-of-type { border-bottom: none; }
+        .profile-row strong { color: #2e7d32; }
+
+        .btn-logout {
+            display: block;
+            width: 100%;
+            padding: 11px;
+            margin-top: 16px;
+            background: #e53935;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-logout:hover { background: #c62828; }
+
+        /* Section titles */
+        .section-title {
+            font-size: 1em;
+            font-weight: bold;
+            color: #2e7d32;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8f0e8;
+        }
+
+        /* Chart card */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 22px 24px;
+            margin-bottom: 24px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .filter-btn {
+            padding: 7px 18px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            font-size: 0.88em;
+            cursor: pointer;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Users table */
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        .users-table th {
+            background: #f8faf8;
+            color: #2e7d32;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .users-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #444;
+        }
+
+        .users-table tr:last-child td { border-bottom: none; }
+
+        .badge-admin {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            font-weight: bold;
+        }
+
+        .badge-user {
+            background: #f5f5f5;
+            color: #777;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+        }
+
+        /* Add user form */
+        .add-user-form {
+            display: none;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid #e8f0e8;
+        }
+
+        .add-user-form.visible { display: block; }
+
+        .form-row { display: flex; gap: 12px; align-items: flex-end; }
+        .form-row .field { flex: 1; }
+
+        .add-user-form label {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .add-user-form input[type="text"],
+        .add-user-form input[type="password"] {
+            width: 100%;
+            padding: 9px 11px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.92em;
+        }
+
+        .btn-add {
+            padding: 9px 20px;
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.92em;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover { opacity: 0.9; }
+
+        /* Toggle switch */
+        .toggle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .toggle-label { font-size: 0.9em; color: #555; font-weight: bold; }
+
+        .toggle {
+            position: relative;
+            width: 46px;
+            height: 24px;
+        }
+
+        .toggle input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #ccc;
+            border-radius: 24px;
+            transition: 0.3s;
+        }
+
+        .slider:before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked + .slider { background: #4CAF50; }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .delete-user-btn {
+            background: none;
+            border: none;
+            color: #e53935;
+            cursor: pointer;
+            font-size: 1em;
+            padding: 0;
+            transition: transform 0.2s;
+        }
+
+        .delete-user-btn:hover { transform: scale(1.2); }
+
+        /* Admin toggle btn in table */
+        .admin-toggle {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            display: inline-block;
+        }
+
+        .admin-toggle input { opacity: 0; width: 0; height: 0; }
+
+        .admin-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #ccc;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .admin-slider:before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked + .admin-slider { background: #4CAF50; }
+        input:checked + .admin-slider:before { transform: translateX(16px); }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background: #2e7d32;
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <div>
+            <div class="subtitle">Gestão de Serviços</div>
+            <h1>Perfil</h1>
+        </div>
+        <a href="/">← Voltar ao Mapa</a>
+    </div>
+
+    <div class="content">
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-top">
+                <div class="avatar">👤</div>
+                <div>
+                    <h2>{{ user.nome }}</h2>
+                    <p>{{ 'Administrador' if user.nome in ['admin123456', 'miguel.pereira'] or user.is_admin else 'Utilizador' }}</p>
+                </div>
+            </div>
+            <div class="profile-body">
+                <div class="profile-row">
+                    <span>Nome de utilizador</span>
+                    <strong>{{ user.nome }}</strong>
+                </div>
+                <div class="profile-row">
+                    <span>Permissões</span>
+                    <strong>{{ 'Administrador' if user.nome in ['admin123456', 'miguel.pereira'] or user.is_admin else 'Utilizador' }}</strong>
+                </div>
+                <div class="profile-row">
+                    <span>Estado</span>
+                    <strong style="color:#4CAF50;">● Ativo</strong>
+                </div>
+                <a href="/ferias" style="display:block; width:100%; padding:11px; margin-top:10px; background:linear-gradient(135deg,#2e7d32,#4CAF50); color:white; border-radius:8px; font-size:0.95em; font-weight:bold; text-align:center; text-decoration:none;">
+    🏖️ Férias
+</a>
+                <a href="/faturas" style="display:block; width:100%; padding:11px; margin-top:10px; background:linear-gradient(135deg,#2e7d32,#4CAF50); color:white; border-radius:8px; font-size:0.95em; font-weight:bold; text-align:center; text-decoration:none;">
+    🧾 As Minhas Faturas
+</a>
+                <a class="btn-logout" href="/logout">🚪 Terminar Sessão</a>
+            </div>
+        </div>
+
+        {% if user.nome in ['admin123456', 'miguel.pereira'] or user.is_admin %}
+
+        <!-- Chart Card -->
+        <div class="card">
+            <div class="section-title">📊 Instalações Registadas</div>
+            <div class="filter-row">
+                <button class="filter-btn active" onclick="filtrarGrafico('dia', this)">Por Dia</button>
+                <button class="filter-btn" onclick="filtrarGrafico('mes', this)">Por Mês</button>
+                <button class="filter-btn" onclick="filtrarGrafico('ano', this)">Por Ano</button>
+            </div>
+            <canvas id="instalacaoChart" height="100"></canvas>
+        </div>
+
+        <!-- Users Card -->
+        <div class="card">
+            <div class="section-title">👥 Utilizadores</div>
+
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Permissão</th>
+                        <th>Admin</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u.nome }}</td>
+                        <td>
+                            {% if u.nome in ['admin123456', 'miguel.pereira'] or u.is_admin %}
+                                <span class="badge-admin">Administrador</span>
+                            {% else %}
+                                <span class="badge-user">Utilizador</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.nome not in ['admin123456', 'miguel.pereira'] %}
+                            <form method="POST" action="/toggle_admin/{{ u.id }}" style="margin:0;">
+                                <label class="admin-toggle">
+                                    <input type="checkbox" {{ 'checked' if u.is_admin else '' }} onchange="this.form.submit()">
+                                    <span class="admin-slider"></span>
+                                </label>
+                            </form>
+                            {% else %}
+                                <span style="color:#ccc; font-size:0.8em;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.nome != 'admin123456' and u.id != user.id %}
+                            <form method="POST" action="/delete_user/{{ u.id }}" style="margin:0;">
+                                <button type="button" class="delete-user-btn"
+                                    onclick="if(confirm('Remover utilizador {{ u.nome }}?')) this.form.submit()">🗑</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Toggle to show add user form -->
+            <div class="toggle-wrapper" style="margin-top:20px;">
+                <label class="toggle">
+                    <input type="checkbox" id="addUserToggle" onchange="toggleAddForm(this)">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label">Adicionar novo utilizador</span>
+            </div>
+
+            <div class="add-user-form" id="addUserForm">
+                <form method="POST" action="/registrar">
+                    <div class="form-row">
+                        <div class="field">
+                            <label>Nome de utilizador</label>
+                            <input type="text" name="nomeForm" placeholder="Nome" required>
+                        </div>
+                        <div class="field">
+                            <label>Password</label>
+                            <input type="password" name="senhaForm" placeholder="Password" required>
+                        </div>
+                        <div style="display:flex; align-items:flex-end; gap:10px;">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85em; color:#555; margin-bottom:0; padding-bottom:9px;">
+                                <input type="checkbox" name="is_admin"> Admin
+                            </label>
+                            <button type="submit" class="btn-add">+ Criar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <footer>&copy; MGP Air Switch</footer>
+
+    <script>
+        // Build registos data from Flask
+        const registosData = JSON.parse('{{ registos_json | safe }}'.replace(/&quot;/g, '"'));
+        let chart = null;
+
+        function filtrarGrafico(tipo, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const counts = {};
+
+            registosData.forEach(r => {
+                if (!r.data_instalacao) return;
+                const parts = r.data_instalacao.split('/');
+                if (parts.length !== 3) return;
+                const [d, m, y] = parts;
+
+                let key;
+                if (tipo === 'dia') key = r.data_instalacao;
+                else if (tipo === 'mes') key = `${m}/${y}`;
+                else key = y;
+
+                counts[key] = (counts[key] || 0) + 1;
+            });
+
+            const labels = Object.keys(counts).sort((a, b) => {
+                const parse = k => {
+                    const p = k.split('/');
+                    if (p.length === 3) return new Date(p[2], p[1]-1, p[0]);
+                    if (p.length === 2) return new Date(p[1], p[0]-1, 1);
+                    return new Date(p[0], 0, 1);
+                };
+                return parse(a) - parse(b);
+            });
+
+            const values = labels.map(l => counts[l]);
+
+            if (chart) chart.destroy();
+
+            const ctx = document.getElementById('instalacaoChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Instalações',
+                        data: values,
+                        backgroundColor: 'rgba(46, 125, 50, 0.7)',
+                        borderColor: '#2e7d32',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ` ${ctx.parsed.y} instalação(ões)`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            grid: { color: '#f0f0f0' }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Init chart on load
+        filtrarGrafico('mes', document.querySelector('.filter-btn.active'));
+
+        function toggleAddForm(toggle) {
+            const form = document.getElementById('addUserForm');
+            form.classList.toggle('visible', toggle.checked);
+        }
+    </script>
+
+</body>
+</html>

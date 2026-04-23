@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faturas</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+        .page-header a {
+            padding: 9px 20px;
+            background: white;
+            color: #2e7d32;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            transition: background 0.2s;
+        }
+
+        .page-header a:hover { background: #f0f0f0; }
+
+        .content { max-width: 900px; margin: 36px auto; padding: 0 20px; }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-bar {
+            flex: 1;
+            min-width: 200px;
+            padding: 9px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.92em;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .toggle-form-btn {
+            padding: 9px 20px;
+            background: white;
+            color: #2e7d32;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+
+        .toggle-form-btn:hover { background: #f0f0f0; }
+
+        .summary-row {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .summary-card {
+            flex: 1;
+            min-width: 140px;
+            background: white;
+            border-radius: 10px;
+            padding: 16px 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            border-left: 4px solid #2e7d32;
+        }
+
+        .summary-card .label { font-size: 0.8em; color: #888; margin-bottom: 4px; }
+        .summary-card .value { font-size: 1.4em; font-weight: bold; color: #2e7d32; }
+
+        .form-container {
+            background: white;
+            border-radius: 10px;
+            padding: 22px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .form-container h3 { color: #2e7d32; font-size: 1em; margin-bottom: 16px; }
+
+        .form-container label {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .form-container input[type="text"],
+        .form-container input[type="number"],
+        .form-container input[type="date"],
+        .form-container textarea {
+            width: 100%;
+            padding: 9px 11px;
+            margin-bottom: 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.92em;
+            font-family: inherit;
+        }
+
+        .form-container textarea { resize: vertical; min-height: 70px; }
+
+        /* File upload area */
+        .file-upload-area {
+            border: 2px dashed #c8e6c9;
+            border-radius: 8px;
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 14px;
+            transition: all 0.2s;
+            background: #f8faf8;
+        }
+
+        .file-upload-area:hover { border-color: #4CAF50; background: #f0f7f0; }
+        .file-upload-area.dragover { border-color: #2e7d32; background: #e8f5e9; }
+
+        .file-upload-area input[type="file"] { display: none; }
+
+        .file-upload-icon { font-size: 1.8em; margin-bottom: 6px; }
+        .file-upload-text { font-size: 0.85em; color: #888; }
+        .file-upload-text strong { color: #2e7d32; }
+
+        .file-preview {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: #e8f5e9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            font-size: 0.88em;
+            color: #2e7d32;
+        }
+
+        .file-preview.visible { display: flex; }
+
+        .file-preview .remove-file {
+            margin-left: auto;
+            cursor: pointer;
+            color: #e53935;
+            font-weight: bold;
+        }
+
+        .form-row { display: flex; gap: 12px; }
+        .form-row .field { flex: 1; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 11px;
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover { opacity: 0.9; }
+
+        .user-filter {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .user-filter-btn {
+            padding: 6px 14px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            font-size: 0.83em;
+            cursor: pointer;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .user-filter-btn.active {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white;
+            border-color: transparent;
+        }
+
+        .fatura-card {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            border-left: 4px solid #2e7d32;
+        }
+
+        .fatura-card.hidden { display: none; }
+
+        .fatura-header {
+            padding: 13px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fatura-info { flex: 1; }
+        .fatura-local { font-weight: bold; color: #2e7d32; font-size: 0.98em; }
+        .fatura-sub { font-size: 0.83em; color: #888; margin-top: 2px; }
+
+        .fatura-valor {
+            font-size: 1.15em;
+            font-weight: bold;
+            color: #2e7d32;
+            white-space: nowrap;
+        }
+
+        .fatura-actions { display: flex; align-items: center; gap: 10px; }
+
+        .toggle-nota-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.3s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .toggle-nota-btn.open { transform: rotate(180deg); }
+
+        .fatura-nota {
+            display: none;
+            padding: 10px 18px 14px 18px;
+            background: #f8faf8;
+            border-top: 1px solid #e8f0e8;
+            font-size: 0.88em;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .fatura-nota strong { color: #2e7d32; }
+
+        .ficheiro-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.85em;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .ficheiro-link:hover { background: #c8e6c9; }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #e53935;
+            font-size: 1em;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s;
+        }
+
+        .delete-btn:hover { transform: scale(1.15); }
+
+        .user-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-size: 0.78em;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .no-results { text-align: center; color: #aaa; padding: 30px 0; font-size: 0.95em; }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: 12px; padding: 30px; width: 360px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); text-align: center; }
+        .modal-icon { font-size: 2.5em; margin-bottom: 10px; }
+        .modal h3 { margin: 0 0 8px 0; color: #333; font-size: 1.1em; }
+        .modal p { color: #777; font-size: 0.9em; margin: 0 0 22px 0; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+        .modal-cancel { padding: 9px 22px; border: 1px solid #ccc; background: white; border-radius: 6px; font-size: 0.95em; cursor: pointer; color: #555; }
+        .modal-cancel:hover { background: #f4f4f4; }
+        .modal-confirm { padding: 9px 22px; background: #e53935; color: white; border: none; border-radius: 6px; font-size: 0.95em; cursor: pointer; }
+        .modal-confirm:hover { background: #c62828; }
+
+        footer { text-align: center; padding: 10px; background: #2e7d32; color: rgba(255,255,255,0.8); font-size: 12px; position: fixed; bottom: 0; width: 100%; }
+
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; gap: 0; }
+            .summary-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <div>
+            <div class="subtitle">Gestão de Serviços</div>
+            <h1>Faturas</h1>
+        </div>
+        <a href="/perfil">← Perfil</a>
+    </div>
+
+    <div class="content">
+
+        <div class="summary-row">
+            <div class="summary-card">
+                <div class="label">Total de Faturas</div>
+                <div class="value" id="totalCount">{{ faturas|length }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Valor Total</div>
+                <div class="value" id="totalValue">{{ "%.2f"|format(total) }} €</div>
+            </div>
+        </div>
+
+        <div class="top-bar">
+            <input class="search-bar" type="text" id="searchInput" placeholder="🔍 Pesquisar por local ou nota..." oninput="pesquisar()">
+            <button class="toggle-form-btn" onclick="toggleForm()">
+                <span id="formIcon">＋</span> Nova Fatura
+            </button>
+        </div>
+
+        <div class="form-container" id="formContainer">
+            <h3>Registar Fatura</h3>
+            <form method="POST" action="/faturas" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="field">
+                        <label>Local / Nome</label>
+                        <input type="text" name="local" placeholder="Ex: Restaurante Central" required>
+                    </div>
+                    <div class="field">
+                        <label>Valor (€)</label>
+                        <input type="number" name="valor" placeholder="Ex: 150.00" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <label>Data</label>
+                <input type="date" name="data" required>
+
+                <label>Nota (opcional)</label>
+                <textarea name="nota" placeholder="Observações adicionais..."></textarea>
+
+                <label>Ficheiro (opcional)</label>
+                <div class="file-upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()"
+                     ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                    <input type="file" id="fileInput" name="ficheiro" accept="image/*,.pdf,.docx,.xlsx" onchange="handleFileSelect(this)">
+                    <div class="file-upload-icon">📎</div>
+                    <div class="file-upload-text">
+                        <strong>Clica para selecionar</strong> ou arrasta um ficheiro<br>
+                        PNG, JPG, PDF, DOCX, XLSX
+                    </div>
+                </div>
+                <div class="file-preview" id="filePreview">
+                    <span id="fileName">—</span>
+                    <span class="remove-file" onclick="removeFile()">✕</span>
+                </div>
+
+                <button type="submit" class="btn-submit">💾 Guardar Fatura</button>
+            </form>
+        </div>
+
+        {% if current_user.is_admin or current_user.nome in ['admin123456', 'miguel.pereira'] %}
+        <div class="user-filter" id="userFilter">
+            <button class="user-filter-btn active" onclick="filtrarUser('todos', this)">Todos</button>
+            {% for u in usuarios %}
+            <button class="user-filter-btn" onclick="filtrarUser('{{ u.nome }}', this)">{{ u.nome }}</button>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div id="faturasList">
+            {% if faturas %}
+                {% for fatura, user in faturas %}
+                <div class="fatura-card" data-search="{{ fatura.local }} {{ fatura.nota }}" data-user="{{ user.nome }}">
+                    <div class="fatura-header">
+                        <div class="fatura-info">
+                            <div class="fatura-local">{{ fatura.local }}</div>
+                            <div class="fatura-sub">
+                                📅 {{ fatura.data }}
+                                {% if current_user.is_admin or current_user.nome in ['admin123456', 'miguel.pereira'] %}
+                                &nbsp;·&nbsp; <span class="user-badge">{{ user.nome }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="fatura-valor">{{ "%.2f"|format(fatura.valor) }} €</div>
+                        <div class="fatura-actions">
+                            {% if fatura.nota or fatura.ficheiro %}
+                            <button class="toggle-nota-btn" onclick="toggleNota(this)">▼</button>
+                            {% endif %}
+                            <form method="POST" action="/faturas/delete/{{ fatura.id }}" style="margin:0;" id="delFatura-{{ fatura.id }}">
+                                <button type="button" class="delete-btn" onclick="openModal('delFatura-{{ fatura.id }}')">🗑</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% if fatura.nota or fatura.ficheiro %}
+                    <div class="fatura-nota">
+                        {% if fatura.nota %}
+                        <div><strong>Nota:</strong> {{ fatura.nota }}</div>
+                        {% endif %}
+                        {% if fatura.ficheiro %}
+                        {% set ext = fatura.ficheiro.rsplit('.', 1)[-1].lower() %}
+                        {% if ext in ['png', 'jpg', 'jpeg', 'gif'] %}
+                        <div style="margin-top:10px;">
+                            <img src="/static/uploads/{{ fatura.ficheiro }}"
+                                style="max-width:100%; max-height:260px; border-radius:8px; cursor:pointer; display:block;"
+                                onclick="openImageModal(this.src)">
+                            <a class="ficheiro-link" href="/static/uploads/{{ fatura.ficheiro }}" download style="margin-top:8px;">
+                                ⬇️ Download imagem
+                            </a>
+                        </div>
+                        {% else %}
+                        <a class="ficheiro-link" href="/static/uploads/{{ fatura.ficheiro }}" target="_blank">
+                            📄 Ver ficheiro
+                        </a>
+                        <a class="ficheiro-link" href="/static/uploads/{{ fatura.ficheiro }}" download style="margin-left:6px;">
+                            ⬇️ Download
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-results">Ainda não há faturas registadas.</div>
+            {% endif %}
+            <div class="no-results" id="noResults" style="display:none;">Nenhuma fatura encontrada.</div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-icon">🗑️</div>
+            <h3>Remover fatura</h3>
+            <p>Tens a certeza que queres remover esta fatura?<br>Esta ação não pode ser desfeita.</p>
+            <div class="modal-buttons">
+                <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+                <button class="modal-confirm" id="modalConfirmBtn">Remover</button>
+            </div>
+        </div>
+    </div>
+    <div id="imageModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:99999; align-items:center; justify-content:center; flex-direction:column; gap:16px;"
+        onclick="if(event.target===this) closeImageModal()">
+        <img id="imageModalImg" src="" style="max-width:90vw; max-height:80vh; border-radius:10px; box-shadow:0 4px 30px rgba(0,0,0,0.5);">
+        <div style="display:flex; gap:12px;">
+            <a id="imageModalDownload" href="" download
+            style="padding:9px 20px; background:white; color:#2e7d32; border-radius:6px; text-decoration:none; font-weight:bold; font-size:0.9em;">
+                ⬇️ Download
+            </a>
+            <button onclick="closeImageModal()"
+                    style="padding:9px 20px; background:#e53935; color:white; border:none; border-radius:6px; font-weight:bold; font-size:0.9em; cursor:pointer;">
+                ✕ Fechar
+            </button>
+        </div>
+    </div>
+
+    <footer>&copy; MGP Air Switch</footer>
+
+    <script>
+        function toggleForm() {
+            const f = document.getElementById('formContainer');
+            const icon = document.getElementById('formIcon');
+            const visible = f.style.display === 'block';
+            f.style.display = visible ? 'none' : 'block';
+            icon.textContent = visible ? '＋' : '－';
+        }
+
+        function toggleNota(btn) {
+            const card = btn.closest('.fatura-card');
+            const nota = card.querySelector('.fatura-nota');
+            const open = nota.style.display === 'block';
+            nota.style.display = open ? 'none' : 'block';
+            btn.classList.toggle('open', !open);
+        }
+
+        // File upload
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                showFilePreview(input.files[0].name);
+            }
+        }
+
+        function showFilePreview(name) {
+            document.getElementById('fileName').textContent = '📎 ' + name;
+            document.getElementById('filePreview').classList.add('visible');
+            document.getElementById('uploadArea').style.display = 'none';
+        }
+
+        function removeFile() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.remove('visible');
+            document.getElementById('uploadArea').style.display = 'block';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            document.getElementById('uploadArea').classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const input = document.getElementById('fileInput');
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                input.files = dt.files;
+                showFilePreview(file.name);
+            }
+        }
+
+        // Filters
+        let activeUser = 'todos';
+
+        function filtrarUser(user, btn) {
+            activeUser = user;
+            document.querySelectorAll('.user-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            aplicarFiltros();
+        }
+
+        function pesquisar() { aplicarFiltros(); }
+
+        function aplicarFiltros() {
+            const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
+            const cards = document.querySelectorAll('.fatura-card');
+            let visiveis = 0;
+            let total = 0;
+
+            cards.forEach(card => {
+                const matchSearch = card.getAttribute('data-search').toLowerCase().includes(query);
+                const matchUser = activeUser === 'todos' || card.getAttribute('data-user') === activeUser;
+                const show = matchSearch && matchUser;
+                card.classList.toggle('hidden', !show);
+                if (show) {
+                    visiveis++;
+                    const val = parseFloat(card.querySelector('.fatura-valor').textContent.replace(' €', '').replace(',', '.'));
+                    if (!isNaN(val)) total += val;
+                }
+            });
+
+            document.getElementById('noResults').style.display = visiveis === 0 && cards.length > 0 ? 'block' : 'none';
+            document.getElementById('totalCount').textContent = visiveis;
+            document.getElementById('totalValue').textContent = total.toFixed(2) + ' €';
+        }
+
+        let formToSubmit = null;
+
+        function openModal(formId) {
+            formToSubmit = document.getElementById(formId);
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeModal() {
+            formToSubmit = null;
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        document.getElementById('modalConfirmBtn').addEventListener('click', function () {
+            if (formToSubmit) formToSubmit.submit();
+        });
+
+        document.getElementById('deleteModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+        function openImageModal(src) {
+            const modal = document.getElementById('imageModal');
+            document.getElementById('imageModalImg').src = src;
+            document.getElementById('imageModalDownload').href = src;
+            modal.style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        // Close with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeImageModal();
+        });
+    </script>
+</body>
+</html>

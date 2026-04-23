@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Férias</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+        .page-header a {
+            padding: 9px 20px;
+            background: white;
+            color: #2e7d32;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            transition: background 0.2s;
+        }
+
+        .page-header a:hover { background: #f0f0f0; }
+
+        .content { max-width: 900px; margin: 36px auto; padding: 0 20px; }
+
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+
+        .toggle-form-btn {
+            padding: 9px 20px;
+            background: white;
+            color: #2e7d32;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            transition: background 0.2s;
+        }
+
+        .toggle-form-btn:hover { background: #f0f0f0; }
+
+        /* Calendar form */
+        .form-container {
+            background: white;
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .form-container h3 { color: #2e7d32; font-size: 1em; margin-bottom: 18px; }
+
+        .form-container label {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .form-container input[type="text"],
+        .form-container textarea {
+            width: 100%;
+            padding: 9px 11px;
+            margin-bottom: 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.92em;
+            font-family: inherit;
+        }
+
+        .form-container textarea { resize: vertical; min-height: 60px; }
+
+        .form-row { display: flex; gap: 12px; }
+        .form-row .field { flex: 1; }
+
+        /* Flatpickr calendar styling */
+        .flatpickr-calendar {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange,
+        .flatpickr-day.selected:hover {
+            background: #2e7d32;
+            border-color: #2e7d32;
+        }
+
+        .flatpickr-day.inRange {
+            background: #c8e6c9;
+            border-color: #c8e6c9;
+            box-shadow: -5px 0 0 #c8e6c9, 5px 0 0 #c8e6c9;
+        }
+
+        .calendar-wrapper {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 11px;
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover { opacity: 0.9; }
+
+        /* Status badges */
+        .badge-pendente {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.78em;
+            font-weight: bold;
+        }
+
+        .badge-aprovado {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.78em;
+            font-weight: bold;
+        }
+
+        .badge-rejeitado {
+            background: #ffebee;
+            color: #c62828;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.78em;
+            font-weight: bold;
+        }
+
+        /* Request cards */
+        .ferias-card {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+        }
+
+        .ferias-card.pendente { border-left: 4px solid #fd7e14; }
+        .ferias-card.aprovado { border-left: 4px solid #2e7d32; }
+        .ferias-card.rejeitado { border-left: 4px solid #e53935; }
+
+        .ferias-header {
+            padding: 13px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ferias-info { flex: 1; }
+        .ferias-dates { font-weight: bold; color: #333; font-size: 0.98em; }
+        .ferias-sub { font-size: 0.82em; color: #888; margin-top: 3px; }
+
+        .ferias-actions { display: flex; align-items: center; gap: 10px; }
+
+        .toggle-detail-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.3s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .toggle-detail-btn.open { transform: rotate(180deg); }
+
+        .ferias-detail {
+            display: none;
+            padding: 14px 18px;
+            background: #f8faf8;
+            border-top: 1px solid #e8f0e8;
+            font-size: 0.88em;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .ferias-detail strong { color: #2e7d32; }
+
+        /* Admin response form */
+        .admin-form {
+            display: none;
+            padding: 16px 18px;
+            background: #f0f7f0;
+            border-top: 1px solid #c8e6c9;
+        }
+
+        .admin-form label {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .admin-form textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.88em;
+            resize: vertical;
+            min-height: 60px;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+
+        .admin-actions { display: flex; gap: 10px; }
+
+        .btn-aprovar {
+            flex: 1;
+            padding: 9px;
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-rejeitar {
+            flex: 1;
+            padding: 9px;
+            background: #e53935;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-aprovar:hover { opacity: 0.9; }
+        .btn-rejeitar:hover { background: #c62828; }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #e53935;
+            font-size: 1em;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s;
+        }
+
+        .delete-btn:hover { transform: scale(1.15); }
+
+        .user-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-size: 0.78em;
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 20px 0 10px 0;
+        }
+
+        .empty-msg { text-align: center; color: #aaa; padding: 30px 0; font-size: 0.95em; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: 12px; padding: 30px; width: 360px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); text-align: center; }
+        .modal-icon { font-size: 2.5em; margin-bottom: 10px; }
+        .modal h3 { margin: 0 0 8px 0; color: #333; font-size: 1.1em; }
+        .modal p { color: #777; font-size: 0.9em; margin: 0 0 22px 0; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+        .modal-cancel { padding: 9px 22px; border: 1px solid #ccc; background: white; border-radius: 6px; font-size: 0.95em; cursor: pointer; color: #555; }
+        .modal-cancel:hover { background: #f4f4f4; }
+        .modal-confirm { padding: 9px 22px; background: #e53935; color: white; border: none; border-radius: 6px; font-size: 0.95em; cursor: pointer; }
+        .modal-confirm:hover { background: #c62828; }
+
+        footer { text-align: center; padding: 10px; background: #2e7d32; color: rgba(255,255,255,0.8); font-size: 12px; position: fixed; bottom: 0; width: 100%; }
+
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; gap: 0; }
+            .admin-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <div>
+            <div class="subtitle">Gestão de Serviços</div>
+            <h1>🏖️ Férias</h1>
+        </div>
+        <a href="/perfil">← Perfil</a>
+    </div>
+
+    <div class="content">
+
+        <div class="top-bar">
+            <button class="toggle-form-btn" onclick="toggleForm()">
+                <span id="formIcon">＋</span> Pedir Férias
+            </button>
+        </div>
+
+        <!-- Request form -->
+        <div class="form-container" id="formContainer">
+            <h3>Novo Pedido de Férias</h3>
+            <form method="POST" action="/ferias">
+                <label>Seleciona o período</label>
+                <div class="calendar-wrapper">
+                    <input type="text" id="calendarInput" placeholder="Clica para selecionar as datas..." readonly style="border:none; border-radius:0; margin:0; background:#fafafa; cursor:pointer;">
+                </div>
+                <input type="hidden" name="data_inicio" id="dataInicio">
+                <input type="hidden" name="data_fim" id="dataFim">
+
+                <label>Nota (opcional)</label>
+                <textarea name="nota" placeholder="Motivo ou observações..."></textarea>
+
+                <button type="submit" class="btn-submit" onclick="return validarDatas()">📤 Enviar Pedido</button>
+            </form>
+        </div>
+
+        <!-- Pending requests (admin sees all, user sees own) -->
+        {% set pendentes = ferias | selectattr('0.estado', 'equalto', 'pendente') | list %}
+        {% set respondidas = ferias | selectattr('0.estado', 'ne', 'pendente') | list %}
+
+        {% if pendentes %}
+        <div class="section-title">⏳ Pendentes ({{ pendentes|length }})</div>
+        {% for f, u in pendentes %}
+        <div class="ferias-card pendente">
+            <div class="ferias-header">
+                <div class="ferias-info">
+                    <div class="ferias-dates">📅 {{ f.data_inicio }} → {{ f.data_fim }}</div>
+                    <div class="ferias-sub">
+                        Pedido em {{ f.created_at }}
+                        {% if is_admin %}&nbsp;·&nbsp; <span class="user-badge">{{ u.nome }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="ferias-actions">
+                    <span class="badge-pendente">⏳ Pendente</span>
+                    {% if f.nota %}
+                    <button class="toggle-detail-btn" onclick="toggleDetail(this)">▼</button>
+                    {% endif %}
+                    {% if is_admin %}
+                    <button class="toggle-detail-btn" onclick="toggleAdminForm(this)" title="Responder">✏️</button>
+                    {% endif %}
+                    <form method="POST" action="/ferias/delete/{{ f.id }}" style="margin:0;" id="delFerias-{{ f.id }}">
+                        <button type="button" class="delete-btn" onclick="openModal('delFerias-{{ f.id }}')">🗑</button>
+                    </form>
+                </div>
+            </div>
+            {% if f.nota %}
+            <div class="ferias-detail">
+                <strong>Nota:</strong> {{ f.nota }}
+            </div>
+            {% endif %}
+            {% if is_admin %}
+            <div class="admin-form">
+                <form method="POST" action="/ferias/responder/{{ f.id }}">
+                    <label>Comentário (opcional)</label>
+                    <textarea name="comentario" placeholder="Adiciona um comentário..."></textarea>
+                    <div class="admin-actions">
+                        <button type="submit" name="estado" value="aprovado" class="btn-aprovar">✅ Aprovar</button>
+                        <button type="submit" name="estado" value="rejeitado" class="btn-rejeitar">❌ Rejeitar</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if respondidas %}
+        <div class="section-title">📋 Histórico ({{ respondidas|length }})</div>
+        {% for f, u in respondidas %}
+        <div class="ferias-card {{ f.estado }}">
+            <div class="ferias-header">
+                <div class="ferias-info">
+                    <div class="ferias-dates">📅 {{ f.data_inicio }} → {{ f.data_fim }}</div>
+                    <div class="ferias-sub">
+                        Pedido em {{ f.created_at }}
+                        {% if is_admin %}&nbsp;·&nbsp; <span class="user-badge">{{ u.nome }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="ferias-actions">
+                    {% if f.estado == 'aprovado' %}
+                    <span class="badge-aprovado">✅ Aprovado</span>
+                    {% else %}
+                    <span class="badge-rejeitado">❌ Rejeitado</span>
+                    {% endif %}
+                    <button class="toggle-detail-btn" onclick="toggleDetail(this)">▼</button>
+                    <form method="POST" action="/ferias/delete/{{ f.id }}" style="margin:0;" id="delFerias-{{ f.id }}">
+                        <button type="button" class="delete-btn" onclick="openModal('delFerias-{{ f.id }}')">🗑</button>
+                    </form>
+                </div>
+            </div>
+            <div class="ferias-detail">
+                {% if f.nota %}<div><strong>Nota:</strong> {{ f.nota }}</div>{% endif %}
+                {% if f.aprovado_por %}<div><strong>{{ 'Aprovado' if f.estado == 'aprovado' else 'Rejeitado' }} por:</strong> {{ f.aprovado_por }}</div>{% endif %}
+                {% if f.comentario_admin %}<div><strong>Comentário:</strong> {{ f.comentario_admin }}</div>{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if not ferias %}
+        <div class="empty-msg">Ainda não há pedidos de férias.</div>
+        {% endif %}
+
+    </div>
+
+    <!-- Delete modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-icon">🗑️</div>
+            <h3>Remover pedido</h3>
+            <p>Tens a certeza que queres remover este pedido?<br>Esta ação não pode ser desfeita.</p>
+            <div class="modal-buttons">
+                <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+                <button class="modal-confirm" id="modalConfirmBtn">Remover</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>&copy; MGP Air Switch</footer>
+
+    <script>
+        // Flatpickr range calendar
+        const fp = flatpickr('#calendarInput', {
+            mode: 'range',
+            locale: 'pt',
+            dateFormat: 'd/m/Y',
+            minDate: 'today',
+            inline: true,
+            appendTo: document.querySelector('.calendar-wrapper'),
+            onChange: function(selectedDates) {
+                if (selectedDates.length === 2) {
+                    const fmt = d => d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\//g, '/');
+                    document.getElementById('dataInicio').value = fmt(selectedDates[0]);
+                    document.getElementById('dataFim').value = fmt(selectedDates[1]);
+                }
+            }
+        });
+
+        function validarDatas() {
+            if (!document.getElementById('dataInicio').value) {
+                alert('Por favor seleciona um período no calendário.');
+                return false;
+            }
+            return true;
+        }
+
+        function toggleForm() {
+            const f = document.getElementById('formContainer');
+            const icon = document.getElementById('formIcon');
+            const visible = f.style.display === 'block';
+            f.style.display = visible ? 'none' : 'block';
+            icon.textContent = visible ? '＋' : '－';
+        }
+
+        function toggleDetail(btn) {
+            const card = btn.closest('.ferias-card');
+            const detail = card.querySelector('.ferias-detail');
+            if (!detail) return;
+            const open = detail.style.display === 'block';
+            detail.style.display = open ? 'none' : 'block';
+            btn.classList.toggle('open', !open);
+        }
+
+        function toggleAdminForm(btn) {
+            const card = btn.closest('.ferias-card');
+            const form = card.querySelector('.admin-form');
+            if (!form) return;
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
+        }
+
+        let formToSubmit = null;
+
+        function openModal(formId) {
+            formToSubmit = document.getElementById(formId);
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeModal() {
+            formToSubmit = null;
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        document.getElementById('modalConfirmBtn').addEventListener('click', function () {
+            if (formToSubmit) formToSubmit.submit();
+        });
+
+        document.getElementById('deleteModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+
+</body>
+</html>

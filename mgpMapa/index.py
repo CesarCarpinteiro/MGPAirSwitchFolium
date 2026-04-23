@@ -72,6 +72,9 @@ def home():
             icon=folium.Icon(color=color, icon='fan', prefix='fa'), tags=[filterValue]
         ).add_to(m)
 
+
+        folium.TileLayer("CartoDB dark_matter").add_to(m)
+
     Geocoder().add_to(m)
 
     # Inject JavaScript to modify the Geocoder placeholder text
