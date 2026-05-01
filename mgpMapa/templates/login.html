@@ -1,101 +1,337 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --green-dark: #1b5e20;
+            --green-mid: #2e7d32;
+            --green-main: #4CAF50;
+            --green-light: #a5d6a7;
+            --green-faint: #e8f5e9;
+            --white: #ffffff;
+            --text-dark: #1a1a1a;
+            --text-muted: #6b7280;
+            --border: rgba(0,0,0,0.08);
+        }
+
+        html, body { height: 100%; font-family: 'DM Sans', sans-serif; }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(120deg, #a8e063, #4CAF50); /* Green Gradient */
             display: flex;
+            min-height: 100vh;
+            background: #f3f6f3;
+            overflow: hidden;
+        }
+
+        /* Left panel */
+        .left-panel {
+            flex: 1;
+            background: var(--green-mid);
+            display: flex;
+            flex-direction: column;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #fff;
+            align-items: flex-start;
+            padding: 60px 56px;
+            position: relative;
+            overflow: hidden;
         }
-        .login-container {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-            text-align: center; /* Center-align text and form elements */
-        }
-        .login-container h1 {
-            margin-bottom: 1.5rem;
-            font-size: 1.8rem;
-            color: #4CAF50;/* Green text for header */
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: #333;
-        }
-        .form-group input {
-            width: 90%; /* Center the inputs */
-            max-width: 300px;
-            padding: 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-            text-align: center; /* Center the text input */
-        }
-        .form-group input:focus {
-            border-color: #56ab2f; /* Green border on focus */
-            outline: none;
-        }
-        .submit-btn {
-            background: #56ab2f;
-            color: #fff;
-            padding: 0.8rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            width: 90%; /* Center the button */
-            max-width: 300px;
-            transition: background 0.3s;
-        }
-        .submit-btn:hover {
-            background: #a8e063; /* Lighter green on hover */
-        }
-        .form-group a {
-            display: block;
-            margin-top: 0.5rem;
-            text-align: center;
-            text-decoration: none;
-            color: #4CAF50; /* Green link */
-            font-size: 0.9rem;
-        }
-        .form-group a:hover {
-            text-decoration: underline;
-        }
+        .left-panel::before { content: ''; position: absolute; top: -120px; right: -120px; width: 420px; height: 420px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+        .left-panel::after { content: ''; position: absolute; bottom: -80px; left: -80px; width: 320px; height: 320px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+
+        .brand-mark { display: flex; align-items: center; gap: 14px; margin-bottom: 52px; position: relative; z-index: 1; }
+        .brand-icon { width: 48px; height: 48px; background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.25); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+        .brand-name { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: white; letter-spacing: 0.3px; }
+        .brand-sub { font-size: 0.72rem; color: rgba(255,255,255,0.55); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
+        .left-headline { font-family: 'DM Serif Display', serif; font-size: 2.6rem; color: white; line-height: 1.2; margin-bottom: 20px; position: relative; z-index: 1; }
+        .left-headline em { font-style: normal; color: var(--green-light); }
+        .left-desc { font-size: 0.92rem; color: rgba(255,255,255,0.65); line-height: 1.7; max-width: 340px; position: relative; z-index: 1; }
+        .features { margin-top: 44px; display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 1; }
+        .feature-item { display: flex; align-items: center; gap: 12px; font-size: 0.88rem; color: rgba(255,255,255,0.75); }
+        .feature-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-light); flex-shrink: 0; }
+
+        /* Right panel */
+        .right-panel { width: 440px; flex-shrink: 0; background: white; display: flex; flex-direction: column; justify-content: center; padding: 56px 48px; position: relative; }
+
+        .login-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--green-main); margin-bottom: 10px; }
+        .login-title { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--text-dark); margin-bottom: 8px; }
+        .login-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 40px; line-height: 1.6; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 500; color: #374151; margin-bottom: 7px; letter-spacing: 0.2px; }
+        .input-wrap { position: relative; }
+        .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.45; pointer-events: none; }
+        .form-group input { width: 100%; padding: 13px 14px 13px 42px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.95rem; font-family: 'DM Sans', sans-serif; color: var(--text-dark); background: #fafafa; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; outline: none; }
+        .form-group input:focus { border-color: var(--green-main); background: white; box-shadow: 0 0 0 3px rgba(76,175,80,0.12); }
+        .form-group input::placeholder { color: #9ca3af; }
+
+        .forgot-btn { background: none; border: none; color: var(--green-mid); font-size: 0.82rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0; float: right; margin-top: -14px; margin-bottom: 20px; }
+        .forgot-btn:hover { text-decoration: underline; }
+
+        .submit-btn { width: 100%; padding: 14px; background: var(--green-mid); color: white; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 8px; letter-spacing: 0.3px; transition: background 0.2s, transform 0.1s, box-shadow 0.2s; }
+        .submit-btn:hover { background: var(--green-dark); box-shadow: 0 4px 16px rgba(46,125,50,0.3); }
+        .submit-btn:active { transform: scale(0.99); }
+        .btn-inner { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        .divider { height: 1px; background: #f0f0f0; margin: 32px 0; }
+        .footer-note { font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.6; }
+
+        .error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 0.85rem; padding: 10px 14px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .success-msg { background: #f0fdf4; border: 1px solid #a5d6a7; color: #2e7d32; font-size: 0.85rem; padding: 10px 14px; border-radius: 8px; margin-bottom: 20px; display: none; }
+
+        .right-panel > * { opacity: 0; transform: translateY(12px); animation: fadeUp 0.5s forwards; }
+        .right-panel > *:nth-child(1) { animation-delay: 0.05s; }
+        .right-panel > *:nth-child(2) { animation-delay: 0.1s; }
+        .right-panel > *:nth-child(3) { animation-delay: 0.15s; }
+        .right-panel > *:nth-child(4) { animation-delay: 0.2s; }
+        .right-panel > *:nth-child(5) { animation-delay: 0.25s; }
+        .right-panel > *:nth-child(6) { animation-delay: 0.3s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* Popups */
+        .popup-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
+        .popup-overlay.active { display: flex; }
+        .popup-box { background: white; border-radius: 16px; padding: 2.5rem 2rem; max-width: 400px; width: 90%; font-family: 'DM Sans', sans-serif; }
+        .popup-icon { width: 56px; height: 56px; border-radius: 50%; background: #eaf3de; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 24px; }
+        .popup-title { font-size: 1.1rem; font-weight: 600; color: #1a1a1a; margin: 0 0 6px; text-align: center; }
+        .popup-subtitle { font-size: 0.85rem; color: #666; line-height: 1.6; margin: 0 0 1.25rem; text-align: center; }
+        .popup-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .popup-group label { font-size: 0.82rem; font-weight: 500; color: #374151; }
+        .popup-group input { width: 100%; padding: 11px 12px 11px 40px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.92rem; font-family: 'DM Sans', sans-serif; color: var(--text-dark); background: #fafafa; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+        .popup-group input:focus { border-color: var(--green-main); background: white; box-shadow: 0 0 0 3px rgba(76,175,80,0.1); }
+        .popup-group input::placeholder { color: #9ca3af; }
+        .popup-error { color: #ef4444; font-size: 0.82rem; margin: 0 0 12px; text-align: center; display: none; }
+        .popup-error.visible { display: block; }
+        .popup-btn { width: 100%; padding: 13px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
+        .popup-btn:hover { background: #1b5e20; }
+        .popup-cancel { width: 100%; padding: 11px; background: transparent; color: #666; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
+        .popup-cancel:hover { background: #f5f5f5; }
+        .code-input { width: 100%; padding: 14px; font-size: 1.8rem; font-weight: 700; letter-spacing: 12px; text-align: center; border: 2px solid #e5e7eb; border-radius: 10px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; margin-bottom: 4px; }
+        .code-input:focus { border-color: #4CAF50; box-shadow: 0 0 0 3px rgba(76,175,80,0.1); }
+
+        @media (max-width: 768px) { .left-panel { display: none; } .right-panel { width: 100%; padding: 40px 28px; } }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h1>Login</h1>
-        <form action="" method="post">
-            <div class="form-group">
-                <input type="text" name="nomeForm" id="nomeForm" placeholder="Username" required>
+
+    <div class="left-panel">
+        <div class="brand-mark">
+            <div class="brand-icon">🌿</div>
+            <div>
+                <div class="brand-name">Gestão de Serviços</div>
+                <div class="brand-sub">Encontre connosco a melhor forma de gerir a sua empresa</div>
             </div>
-            <div class="form-group">
-                <input type="password" name="senhaForm" id="senhaForm" placeholder="Password" required autocomplete="current-password">
-            </div>
-            <button type="submit" class="submit-btn">Login</button>
-            <!--<div class="form-group">
-                <a href="#">Forgot your password?</a>
-            </div>-->
-        </form>
+        </div>
+        <h1 class="left-headline">Gestão inteligente<br>de <em>manutenções</em></h1>
+        <p class="left-desc">Plataforma de controlo de instalações, clientes e equipamentos para a sua equipa.</p>
+        <div class="features">
+            <div class="feature-item"><div class="feature-dot"></div><span>Mapa interativo de clientes e serviços</span></div>
+            <div class="feature-item"><div class="feature-dot"></div><span>Alertas automáticos de manutenção</span></div>
+            <div class="feature-item"><div class="feature-dot"></div><span>Gestão de faturas e horas trabalhadas</span></div>
+        </div>
     </div>
+
+    <div class="right-panel">
+        <div class="login-eyebrow">Bem-vindo</div>
+        <div class="login-title">Entrar na conta</div>
+        <div class="login-subtitle">Introduza as suas credenciais para aceder à plataforma.</div>
+
+        <div class="success-msg" id="successMsg"></div>
+
+        {% if error %}
+        <div style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:0.85rem;padding:11px 16px;border-radius:9px;margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+            ⚠️ Nome de utilizador ou password incorretos.
+        </div>
+        {% endif %}
+
+        <form action="" method="post" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="nomeForm">Nome de utilizador</label>
+                <div class="input-wrap">
+                    <span class="input-icon">👤</span>
+                    <input type="text" name="nomeForm" id="nomeForm" placeholder="O seu nome" required autocomplete="username">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="senhaForm">Password</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" name="senhaForm" id="senhaForm" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+            </div>
+
+            <button type="button" class="forgot-btn" onclick="openForgot()">Esqueceste a password?</button>
+
+            <button type="submit" class="submit-btn">
+                <span class="btn-inner">Entrar →</span>
+            </button>
+            <div style="text-align:center; margin-top: 18px;">
+                <a href="/setup" style="font-size:0.88rem; color: var(--green-main); text-decoration:none; font-weight:500;">
+                    + Criar nova organização
+                </a>
+            </div>
+        </form>
+
+        <div class="divider"></div>
+        <div class="footer-note">© Acesso restrito a utilizadores autorizados</div>
+    </div>
+
+    <!-- Popup 1: Email -->
+    <div class="popup-overlay" id="forgotPopup">
+        <div class="popup-box">
+            <div class="popup-icon">🔑</div>
+            <p class="popup-title">Recuperar password</p>
+            <p class="popup-subtitle">Introduz o teu email. Vamos enviar um código de verificação.</p>
+            <p class="popup-error" id="forgotError"></p>
+            <div class="popup-group">
+                <label>Email</label>
+                <div class="input-wrap">
+                    <span class="input-icon">✉️</span>
+                    <input type="email" id="forgotEmail" placeholder="email@empresa.com">
+                </div>
+            </div>
+            <button class="popup-btn" onclick="sendResetCode()">Enviar código →</button>
+            <button class="popup-cancel" onclick="closeForgot()">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Popup 2: Code + new password -->
+    <div class="popup-overlay" id="resetPopup">
+        <div class="popup-box">
+            <div class="popup-icon">✉️</div>
+            <p class="popup-title">Definir nova password</p>
+            <p class="popup-subtitle">Introduz o código que enviámos para o teu email e define uma nova password.</p>
+            <p class="popup-error" id="resetError"></p>
+            <div class="popup-group">
+                <label>Código de verificação</label>
+                <input type="text" class="code-input" id="resetCode" placeholder="000000" maxlength="6" inputmode="numeric">
+            </div>
+            <div class="popup-group">
+                <label>Nova password</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="newPassword" placeholder="••••••••">
+                </div>
+            </div>
+            <div class="popup-group">
+                <label>Confirmar nova password</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="confirmPassword" placeholder="••••••••">
+                </div>
+            </div>
+            <button class="popup-btn" onclick="submitReset()">Guardar nova password →</button>
+            <button class="popup-cancel" onclick="closeReset()">Cancelar</button>
+        </div>
+    </div>
+
+<script>
+    function handleSubmit(e) {
+        var btn = document.querySelector('.submit-btn');
+        btn.innerHTML = '<span class="btn-inner">A entrar...</span>';
+        btn.disabled = true;
+    }
+
+    function openForgot() {
+        document.getElementById('forgotPopup').classList.add('active');
+        setTimeout(function() { document.getElementById('forgotEmail').focus(); }, 100);
+    }
+    function closeForgot() {
+        document.getElementById('forgotPopup').classList.remove('active');
+        document.getElementById('forgotError').classList.remove('visible');
+        document.getElementById('forgotEmail').value = '';
+    }
+    function closeReset() {
+        document.getElementById('resetPopup').classList.remove('active');
+        document.getElementById('resetError').classList.remove('visible');
+        document.getElementById('resetCode').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+    }
+
+    function sendResetCode() {
+        var email = document.getElementById('forgotEmail').value.trim();
+        var errEl = document.getElementById('forgotError');
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errEl.textContent = 'Introduz um email válido.';
+            errEl.classList.add('visible');
+            return;
+        }
+        errEl.classList.remove('visible');
+        fetch('/forgot_password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                document.getElementById('forgotPopup').classList.remove('active');
+                document.getElementById('resetPopup').classList.add('active');
+                setTimeout(function() { document.getElementById('resetCode').focus(); }, 100);
+            } else {
+                errEl.textContent = data.error || 'Email não encontrado.';
+                errEl.classList.add('visible');
+            }
+        })
+        .catch(function() {
+            errEl.textContent = 'Erro ao enviar. Tenta novamente.';
+            errEl.classList.add('visible');
+        });
+    }
+
+    function submitReset() {
+        var code = document.getElementById('resetCode').value.trim();
+        var newPass = document.getElementById('newPassword').value;
+        var confirmPass = document.getElementById('confirmPassword').value;
+        var errEl = document.getElementById('resetError');
+
+        if (!code || code.length !== 6) {
+            errEl.textContent = 'Introduz o código de 6 dígitos.';
+            errEl.classList.add('visible'); return;
+        }
+        if (newPass.length < 6) {
+            errEl.textContent = 'A password deve ter pelo menos 6 caracteres.';
+            errEl.classList.add('visible'); return;
+        }
+        if (newPass !== confirmPass) {
+            errEl.textContent = 'As passwords não coincidem.';
+            errEl.classList.add('visible'); return;
+        }
+        errEl.classList.remove('visible');
+
+        fetch('/reset_password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, password: newPass })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                closeReset();
+                var msg = document.getElementById('successMsg');
+                msg.textContent = '✅ Password alterada com sucesso. Podes entrar agora.';
+                msg.style.display = 'block';
+            } else {
+                errEl.textContent = data.error || 'Código incorreto. Tenta novamente.';
+                errEl.classList.add('visible');
+            }
+        })
+        .catch(function() {
+            errEl.textContent = 'Erro ao guardar. Tenta novamente.';
+            errEl.classList.add('visible');
+        });
+    }
+
+    document.getElementById('resetCode').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '');
+    });
+</script>
+
 </body>
 </html>

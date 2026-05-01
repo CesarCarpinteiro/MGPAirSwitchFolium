@@ -1,229 +1,142 @@
 <!DOCTYPE html>
-<html>
-<head>
-    
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    
+<html lang="pt">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{ org_nome }} - Mapa de Serviços Executados</title>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+        {{ header|safe }}
+        <!-- Our styles AFTER Bootstrap so we always win the cascade -->
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            html, body { height: 100%; font-family: 'DM Sans', sans-serif !important; background-color: #f0f2f5; display: flex; flex-direction: column; overflow: hidden; }
+
+            .page-header {
+                background: linear-gradient(135deg, #2e7d32, #4CAF50) !important;
+                padding: 18px 24px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-shrink: 0 !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+                font-family: 'DM Sans', sans-serif !important;
+            }
+            .page-header .subtitle {
+                all: unset;
+                display: block;
+                font-size: 0.8em;
+                color: rgba(255,255,255,0.75);
+                font-family: 'DM Sans', sans-serif;
+            }
+            .page-header h1 {
+                all: unset;
+                display: block;
+                font-size: 1.4em;
+                color: white;
+                font-weight: 700;
+                letter-spacing: 0.3px;
+                margin-top: 3px;
+                font-family: 'DM Sans', sans-serif;
+            }
+            .header-actions {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                margin-left: auto !important;
+            }
+            .header-actions a {
+                all: unset;
+                padding: 9px 20px;
+                background: white;
+                color: #2e7d32;
+                text-decoration: none;
+                border-radius: 6px;
+                font-size: 0.9em;
+                font-weight: 600;
+                white-space: nowrap;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+                transition: background 0.2s;
+                cursor: pointer;
+                font-family: 'DM Sans', sans-serif;
+                display: inline-block;
+            }
+            .header-actions a:hover {
+                background: #f0f0f0;
+                color: #2e7d32;
+                text-decoration: none;
+            }
+            .header-actions a.user-pill {
+                all: unset;
+                padding: 9px 16px;
+                background: rgba(255,255,255,0.15);
+                color: white;
+                border: 1px solid rgba(255,255,255,0.3);
+                border-radius: 6px;
+                font-size: 0.85em;
+                font-weight: 500;
+                white-space: nowrap;
+                cursor: pointer;
+                font-family: 'DM Sans', sans-serif;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                box-shadow: none;
+                text-decoration: none;
+            }
+            .header-actions a.user-pill:hover {
+                background: rgba(255,255,255,0.25);
+                color: white;
+                text-decoration: none;
+            }
+
+            .main-content { display: flex; flex: 1; min-height: 0; gap: 10px; padding: 10px; overflow: hidden; }
+            .sidebar { width: 260px; flex-shrink: 0; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+            .sidebar-header { background: #2e7d32; color: white; padding: 12px 16px; font-size: 14px; font-weight: 600; flex-shrink: 0; font-family: 'DM Sans', sans-serif; }
+            .sidebar-search { padding: 8px 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
+            .sidebar-search input { width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; }
+            .sidebar-list { overflow-y: auto; flex: 1; }
+            .sidebar-item { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
+            .sidebar-item:hover { background-color: #f8f8f8; }
+            .map-container { flex: 1; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; min-width: 0; position: relative; }
+            .map-container > div { position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; }
+            .folium-map { width: 100% !important; height: 100% !important; }
+            footer { flex-shrink: 0; text-align: center; padding: 7px; background: #2e7d32; color: rgba(255,255,255,0.8); font-size: 12px; font-family: 'DM Sans', sans-serif; }
+            @media only screen and (max-width: 767px) { .sidebar { display: none; } .main-content { padding: 6px; } .page-header h1 { font-size: 1em !important; } }
+        </style>
+    </head>
+    <body>
+        <div class="page-header">
+            <div>
+                <div class="subtitle">Gestão de Serviços</div>
+                <h1>{{ org_nome }} — Mapa de Serviços Executados</h1>
+            </div>
+            <div class="header-actions">
+                <a href="/test">+ Registo</a>
+                <a href="/perfil" class="user-pill">
+                    👤 {{ current_user.nome }}
+                </a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-header">Clientes ({{ total }})</div>
+                <div class="sidebar-search">
+                    <input type="text" id="sidebarSearch" placeholder="Pesquisar cliente..." oninput="filterSidebar(this.value)">
+                </div>
+                <div class="sidebar-list" id="sidebarList">{{ sidebar_html|safe }}</div>
+            </div>
+            <div class="map-container">{{ body_html|safe }}</div>
+        </div>
+        <footer>&copy; {{ org_nome }}</footer>
         <script>
-            L_NO_TOUCH = false;
-            L_DISABLE_3D = false;
+            {{ script|safe }}
+            function filterSidebar(query) {
+                var items = document.querySelectorAll('.sidebar-item');
+                query = query.toLowerCase();
+                items.forEach(function(item) {
+                    item.style.display = item.textContent.toLowerCase().includes(query) ? 'block' : 'none';
+                });
+            }
         </script>
-    
-    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
-    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
-    
-            <meta name="viewport" content="width=device-width,
-                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-            <style>
-                #map_d1f56b9b910af518510ea96a0fac11bf {
-                    position: relative;
-                    width: 100.0%;
-                    height: 100.0%;
-                    left: 0.0%;
-                    top: 0.0%;
-                }
-                .leaflet-container { font-size: 1rem; }
-            </style>
-        
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
-</head>
-<body>
-    
-    
-            <div class="folium-map" id="map_d1f56b9b910af518510ea96a0fac11bf" ></div>
-        
-</body>
-<script>
-    
-    
-            var map_d1f56b9b910af518510ea96a0fac11bf = L.map(
-                "map_d1f56b9b910af518510ea96a0fac11bf",
-                {
-                    center: [41.5550248, -8.432193000000002],
-                    crs: L.CRS.EPSG3857,
-                    zoom: 13,
-                    zoomControl: true,
-                    preferCanvas: false,
-                }
-            );
-
-            
-
-        
-    
-            var tile_layer_663a8b313e72b72b3ca1600743c725c0 = L.tileLayer(
-                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
-            );
-        
-    
-            tile_layer_663a8b313e72b72b3ca1600743c725c0.addTo(map_d1f56b9b910af518510ea96a0fac11bf);
-        
-    
-            var marker_9f01f2f3c2c74805a7fc52f83adbee1c = L.marker(
-                [41.55793, -8.416057],
-                {}
-            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
-        
-    
-            var icon_925bdb12cbe93ee3279550679b4f0563 = L.AwesomeMarkers.icon(
-                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "red", "prefix": "fa"}
-            );
-            marker_9f01f2f3c2c74805a7fc52f83adbee1c.setIcon(icon_925bdb12cbe93ee3279550679b4f0563);
-        
-    
-        var popup_8565a3abb422d3a33aeed0eb10ec386c = L.popup({"maxWidth": 700});
-
-        
-            
-                var html_87bd78f958514c8d2162bc12037901a3 = $(`<div id="html_87bd78f958514c8d2162bc12037901a3" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Residência.</strong></p>             <p><strong>Cliente:</strong> Luís Carvalho</p>             <p><strong>Instalação Ar Condicionado</strong> executada a <strong>09/10/2023</strong></p>             <p><strong>Próxima Manutenção prevista para Outubro 2024</strong></p>         </div>     </div>`)[0];
-                popup_8565a3abb422d3a33aeed0eb10ec386c.setContent(html_87bd78f958514c8d2162bc12037901a3);
-            
-        
-
-        marker_9f01f2f3c2c74805a7fc52f83adbee1c.bindPopup(popup_8565a3abb422d3a33aeed0eb10ec386c)
-        ;
-
-        
-    
-    
-            var marker_43fcbef6f2f1cb3b3a3dbbf429063258 = L.marker(
-                [41.531206, -8.433738],
-                {}
-            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
-        
-    
-            var icon_0ac2fba9c94ed788f105440bfed27f8b = L.AwesomeMarkers.icon(
-                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "gray", "prefix": "fa"}
-            );
-            marker_43fcbef6f2f1cb3b3a3dbbf429063258.setIcon(icon_0ac2fba9c94ed788f105440bfed27f8b);
-        
-    
-        var popup_6bc06822e88443b734bd6e9987da1270 = L.popup({"maxWidth": 700});
-
-        
-            
-                var html_c8f5600b98c6f01a8cfccee0e660158c = $(`<div id="html_c8f5600b98c6f01a8cfccee0e660158c" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Empresa.</strong></p>             <p><strong>Cliente:</strong> Pom Pom</p>             <p><strong>Instalação Ar Condicionado</strong> executada a <strong>30/10/2024</strong></p>             <p><strong>Próxima Manutenção prevista para Outubro 2025</strong></p>         </div>     </div>`)[0];
-                popup_6bc06822e88443b734bd6e9987da1270.setContent(html_c8f5600b98c6f01a8cfccee0e660158c);
-            
-        
-
-        marker_43fcbef6f2f1cb3b3a3dbbf429063258.bindPopup(popup_6bc06822e88443b734bd6e9987da1270)
-        ;
-
-        
-    
-    
-            var marker_ea1ff7f12aca6a0cb4374fa077ab7378 = L.marker(
-                [41.546754, -8.410735],
-                {}
-            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
-        
-    
-            var icon_b941953faee926a94dc95e9daa60bfe9 = L.AwesomeMarkers.icon(
-                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "gray", "prefix": "fa"}
-            );
-            marker_ea1ff7f12aca6a0cb4374fa077ab7378.setIcon(icon_b941953faee926a94dc95e9daa60bfe9);
-        
-    
-        var popup_030a8fe15688e04b786d320ee0655edc = L.popup({"maxWidth": 700});
-
-        
-            
-                var html_c6f3ebfb2bcf2f6607ea34d458e5634e = $(`<div id="html_c6f3ebfb2bcf2f6607ea34d458e5634e" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Empresa.</strong></p>             <p><strong>Cliente:</strong> Worten</p>             <p><strong>Instalação Ar Condicionado</strong> executada a <strong>01/10/2024</strong></p>             <p><strong>Próxima Manutenção prevista para Outubro 2025</strong></p>         </div>     </div>`)[0];
-                popup_030a8fe15688e04b786d320ee0655edc.setContent(html_c6f3ebfb2bcf2f6607ea34d458e5634e);
-            
-        
-
-        marker_ea1ff7f12aca6a0cb4374fa077ab7378.bindPopup(popup_030a8fe15688e04b786d320ee0655edc)
-        ;
-
-        
-    
-    
-            var marker_a20ad1d33198aa4a3606eb083ea89369 = L.marker(
-                [41.559214, -8.461032],
-                {}
-            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
-        
-    
-            var icon_6551313c098005a997800911d589dcf9 = L.AwesomeMarkers.icon(
-                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "red", "prefix": "fa"}
-            );
-            marker_a20ad1d33198aa4a3606eb083ea89369.setIcon(icon_6551313c098005a997800911d589dcf9);
-        
-    
-        var popup_e6b899af907079757642f2b4dbfa001a = L.popup({"maxWidth": 700});
-
-        
-            
-                var html_9dc195cd54def8652320ad42449e8ffc = $(`<div id="html_9dc195cd54def8652320ad42449e8ffc" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Residência.</strong></p>             <p><strong>Cliente:</strong> Elisabete Macedo</p>             <p><strong>Manutenção Ar Condicionado</strong> executada a <strong>01/08/2023</strong></p>             <p><strong>Próxima Manutenção prevista para Agosto 2024</strong></p>         </div>     </div>`)[0];
-                popup_e6b899af907079757642f2b4dbfa001a.setContent(html_9dc195cd54def8652320ad42449e8ffc);
-            
-        
-
-        marker_a20ad1d33198aa4a3606eb083ea89369.bindPopup(popup_e6b899af907079757642f2b4dbfa001a)
-        ;
-
-        
-    
-    
-            var marker_fac0b445dfde45b83eea1f4a5c7a546c = L.marker(
-                [41.58002, -8.439403],
-                {}
-            ).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
-        
-    
-            var icon_1d4de52d4d6ca84002401b03bc8f9152 = L.AwesomeMarkers.icon(
-                {"extraClasses": "fa-rotate-0", "icon": "fan", "iconColor": "white", "markerColor": "orange", "prefix": "fa"}
-            );
-            marker_fac0b445dfde45b83eea1f4a5c7a546c.setIcon(icon_1d4de52d4d6ca84002401b03bc8f9152);
-        
-    
-        var popup_7baeb98a647f6c23f9601e7211315f8c = L.popup({"maxWidth": 700});
-
-        
-            
-                var html_c39b4f124b644be548bf7fd087c9fa98 = $(`<div id="html_c39b4f124b644be548bf7fd087c9fa98" style="width: 100.0%; height: 100.0%;">         <div style="font-size: 14px;">             <p><strong>Serviço prestado numa Empresa.</strong></p>             <p><strong>Cliente:</strong> Fnac</p>             <p><strong>Manutenção Ar Condicionado</strong> executada a <strong>16/01/2024</strong></p>             <p><strong>Próxima Manutenção prevista para Janeiro 2025</strong></p>         </div>     </div>`)[0];
-                popup_7baeb98a647f6c23f9601e7211315f8c.setContent(html_c39b4f124b644be548bf7fd087c9fa98);
-            
-        
-
-        marker_fac0b445dfde45b83eea1f4a5c7a546c.bindPopup(popup_7baeb98a647f6c23f9601e7211315f8c)
-        ;
-
-        
-    
-    
-
-            var geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa = {"collapsed": false, "defaultMarkGeocode": true, "position": "topright", "provider": "nominatim", "providerOptions": {}, "zoom": 11};
-
-            // note: geocoder name should start with lowercase
-            var geocoderName_geocoder_12a1889748b90f4f0404e36ec9e82cfa = geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa["provider"];
-
-            var customGeocoder_geocoder_12a1889748b90f4f0404e36ec9e82cfa = L.Control.Geocoder[ geocoderName_geocoder_12a1889748b90f4f0404e36ec9e82cfa ](
-                geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa['providerOptions']
-            );
-            geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa["geocoder"] = customGeocoder_geocoder_12a1889748b90f4f0404e36ec9e82cfa;
-
-            L.Control.geocoder(
-                geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa
-            ).on('markgeocode', function(e) {
-                var zoom = geocoderOpts_geocoder_12a1889748b90f4f0404e36ec9e82cfa['zoom'] || map_d1f56b9b910af518510ea96a0fac11bf.getZoom();
-                map_d1f56b9b910af518510ea96a0fac11bf.setView(e.geocode.center, zoom);
-            }).addTo(map_d1f56b9b910af518510ea96a0fac11bf);
-
-        
-</script>
+    </body>
 </html>

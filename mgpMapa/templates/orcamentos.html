@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ org_nome }} — Orçamentos</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .page-header a {
+            padding: 9px 20px; background: white; color: #2e7d32;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em;
+            font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: background 0.2s;
+        }
+        .page-header a:hover { background: #f0f0f0; }
+
+        .content { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+
+        .card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 22px 24px; margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1em; font-weight: bold; color: #2e7d32;
+            margin-bottom: 16px; padding-bottom: 8px;
+            border-bottom: 2px solid #e8f0e8;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Form grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 0.83em; font-weight: bold; color: #555; }
+        .form-group input, .form-group textarea, .form-group select {
+            padding: 9px 11px; border: 1px solid #ddd; border-radius: 7px;
+            font-size: 0.92em; font-family: Arial; color: #333;
+            background: #fafafa; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.1);
+            background: white;
+        }
+        .form-group textarea { resize: vertical; min-height: 70px; }
+
+        .btn-submit {
+            padding: 10px 28px;
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white; border: none; border-radius: 7px;
+            font-size: 0.92em; font-weight: bold; cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-submit:hover { opacity: 0.9; }
+
+        /* Predictor */
+        .predictor-box {
+            background: linear-gradient(135deg, #e8f5e9, #f1f8f1);
+            border: 1.5px solid #c8e6c9;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 16px;
+        }
+
+        .predictor-title {
+            font-size: 0.88em; font-weight: bold; color: #2e7d32;
+            margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+        }
+
+        .predictor-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .predictor-controls label {
+            font-size: 0.8em; font-weight: bold; color: #555;
+            display: block; margin-bottom: 4px;
+        }
+
+        .predictor-controls input[type="number"],
+        .predictor-controls input[type="range"] {
+            width: 100%; padding: 8px 10px;
+            border: 1px solid #ddd; border-radius: 6px;
+            font-size: 0.9em; background: white;
+        }
+
+        .predictor-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .pred-card {
+            background: white;
+            border-radius: 8px;
+            padding: 14px 16px;
+            border: 1px solid #e0f0e0;
+            text-align: center;
+        }
+
+        .pred-card .emp-label {
+            font-size: 0.78em; color: #888; margin-bottom: 6px;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px;
+        }
+
+        .pred-card .pred-hours {
+            font-size: 1.5em; font-weight: bold; color: #2e7d32; line-height: 1.1;
+        }
+
+        .pred-card .pred-days {
+            font-size: 0.82em; color: #666; margin-top: 4px;
+        }
+
+        .pred-card .pred-bar-bg {
+            height: 4px; background: #e8f0e8; border-radius: 99px;
+            margin-top: 10px; overflow: hidden;
+        }
+
+        .pred-card .pred-bar {
+            height: 100%; background: linear-gradient(90deg, #2e7d32, #4CAF50);
+            border-radius: 99px; transition: width 0.4s ease;
+        }
+
+        .horas-note {
+            font-size: 0.78em; color: #888; margin-top: 10px; text-align: center;
+        }
+
+        /* Table */
+        .orcamentos-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .orcamentos-table th {
+            background: #f8faf8; color: #2e7d32; padding: 10px 14px;
+            text-align: left; font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .orcamentos-table td {
+            padding: 11px 14px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle;
+        }
+        .orcamentos-table tr:last-child td { border-bottom: none; }
+        .orcamentos-table tr:hover td { background: #fafff9; }
+
+        .badge {
+            padding: 3px 10px; border-radius: 12px;
+            font-size: 0.8em; font-weight: bold; white-space: nowrap;
+        }
+        .badge-pendente { background: #fff3e0; color: #e65100; }
+        .badge-aprovado { background: #e8f5e9; color: #2e7d32; }
+        .badge-rejeitado { background: #fce4ec; color: #c62828; }
+        .badge-concluido { background: #e3f2fd; color: #1565c0; }
+
+        .estado-select {
+            padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 0.85em; cursor: pointer; background: white;
+        }
+
+        .delete-btn {
+            background: none; border: none; color: #e53935;
+            cursor: pointer; font-size: 1em; transition: transform 0.2s;
+        }
+        .delete-btn:hover { transform: scale(1.2); }
+
+        .empty-state {
+            text-align: center; padding: 40px 20px; color: #aaa;
+        }
+        .empty-state .icon { font-size: 2.5em; margin-bottom: 10px; }
+        .empty-state p { font-size: 0.9em; }
+
+        .summary-row {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;
+        }
+        .summary-card {
+            background: white; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 16px 18px;
+        }
+        .summary-card .s-label { font-size: 0.78em; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+        .summary-card .s-value { font-size: 1.5em; font-weight: bold; color: #2e7d32; }
+        .summary-card .s-sub { font-size: 0.8em; color: #aaa; margin-top: 2px; }
+
+        footer {
+            text-align: center; padding: 10px; background: #2e7d32;
+            color: rgba(255,255,255,0.8); font-size: 12px;
+            position: fixed; bottom: 0; width: 100%;
+        }
+
+        @media (max-width: 700px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-grid .full { grid-column: 1; }
+            .predictor-controls { grid-template-columns: 1fr; }
+            .predictor-results { grid-template-columns: 1fr; }
+            .summary-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <div>
+        <div class="subtitle">Gestão de Serviços</div>
+        <h1>📋 Orçamentos</h1>
+    </div>
+    <a href="/perfil">← Voltar ao Perfil</a>
+</div>
+
+<div class="content">
+
+    <!-- Summary cards -->
+    <div class="summary-row">
+        <div class="summary-card">
+            <div class="s-label">Total</div>
+            <div class="s-value">{{ orcamentos | length }}</div>
+            <div class="s-sub">orçamentos</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-label">Pendentes</div>
+            <div class="s-value" style="color:#e65100;">
+                {{ orcamentos | selectattr('0.estado', 'equalto', 'Pendente') | list | length }}
+            </div>
+            <div class="s-sub">a aguardar</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-label">Aprovados</div>
+            <div class="s-value" style="color:#2e7d32;">
+                {{ orcamentos | selectattr('0.estado', 'equalto', 'Aprovado') | list | length }}
+            </div>
+            <div class="s-sub">confirmados</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-label">Valor Total</div>
+            <div class="s-value">
+                {{ '%.0f€' % (orcamentos | sum(attribute='0.valor') if orcamentos else 0) }}
+            </div>
+            <div class="s-sub">em orçamentos</div>
+        </div>
+    </div>
+
+    <!-- New quote form -->
+    <div class="card">
+        <div class="section-title">➕ Novo Orçamento</div>
+        <form method="POST" action="/orcamentos">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Cliente *</label>
+                    <input type="text" name="cliente" placeholder="Nome do cliente" required>
+                </div>
+                <div class="form-group">
+                    <label>Nº de Máquinas</label>
+                    <input type="number" name="num_maquinas" id="formMaquinas" min="1" placeholder="Ex: 5" oninput="updatePredictor()">
+                </div>
+                <div class="form-group">
+                    <label>Valor (€)</label>
+                    <input type="number" name="valor" step="0.01" placeholder="Ex: 350.00">
+                </div>
+                <div class="form-group full">
+                    <label>Descrição do trabalho</label>
+                    <textarea name="descricao" placeholder="Descreva o trabalho a realizar..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">+ Criar Orçamento</button>
+        </form>
+
+        <!-- Predictor -->
+        <div class="predictor-box">
+            <div class="predictor-title">⏱️ Previsão de Duração do Trabalho</div>
+            <div class="predictor-controls">
+                <div>
+                    <label>Nº de Máquinas</label>
+                    <input type="number" id="predMaquinas" min="1" value="5" oninput="syncMaquinas('pred'); calcPredictor()">
+                </div>
+                <div>
+                    <label>Horas por máquina</label>
+                    <input type="number" id="predHorasMaquina" min="0.5" step="0.5" value="2" oninput="calcPredictor()">
+                </div>
+                <div>
+                    <label>Horas de trabalho/dia</label>
+                    <input type="number" id="predHораsDia" min="1" max="24" value="8" oninput="calcPredictor()">
+                </div>
+            </div>
+            <div class="predictor-results" id="predResults"></div>
+            <div class="horas-note" id="predNote"></div>
+        </div>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+        <div class="section-title">📄 Lista de Orçamentos</div>
+        {% if orcamentos %}
+        <table class="orcamentos-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cliente</th>
+                    <th>Descrição</th>
+                    <th>Máquinas</th>
+                    <th>Valor</th>
+                    <th>Data</th>
+                    <th>Estado</th>
+                    {% if is_admin %}<th>Criado por</th>{% endif %}
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o, u in orcamentos %}
+                <tr>
+                    <td style="color:#aaa; font-size:0.85em;">#{{ o.id }}</td>
+                    <td><strong>{{ o.cliente }}</strong></td>
+                    <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#666;">
+                        {{ o.descricao or '—' }}
+                    </td>
+                    <td>{{ o.num_maquinas or '—' }}</td>
+                    <td><strong style="color:#2e7d32;">{{ '%.2f €' % o.valor if o.valor else '—' }}</strong></td>
+                    <td style="color:#888; font-size:0.88em;">{{ o.created_at or '—' }}</td>
+                    <td>
+                        {% if is_admin %}
+                        <form method="POST" action="/orcamentos/estado/{{ o.id }}" style="margin:0;">
+                            <select class="estado-select" name="estado" onchange="this.form.submit()">
+                                <option value="Pendente" {{ 'selected' if o.estado == 'Pendente' }}>Pendente</option>
+                                <option value="Aprovado" {{ 'selected' if o.estado == 'Aprovado' }}>Aprovado</option>
+                                <option value="Rejeitado" {{ 'selected' if o.estado == 'Rejeitado' }}>Rejeitado</option>
+                                <option value="Concluído" {{ 'selected' if o.estado == 'Concluído' }}>Concluído</option>
+                            </select>
+                        </form>
+                        {% else %}
+                            {% if o.estado == 'Pendente' %}
+                                <span class="badge badge-pendente">Pendente</span>
+                            {% elif o.estado == 'Aprovado' %}
+                                <span class="badge badge-aprovado">Aprovado</span>
+                            {% elif o.estado == 'Rejeitado' %}
+                                <span class="badge badge-rejeitado">Rejeitado</span>
+                            {% else %}
+                                <span class="badge badge-concluido">{{ o.estado }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    {% if is_admin %}
+                    <td style="font-size:0.85em; color:#888;">{{ u.nome }}</td>
+                    {% endif %}
+                    <td>
+                        <form method="POST" action="/orcamentos/delete/{{ o.id }}" style="margin:0;">
+                            <button type="button" class="delete-btn"
+                                onclick="if(confirm('Remover orçamento de {{ o.cliente }}?')) this.form.submit()">🗑</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📋</div>
+            <p>Ainda não há orçamentos. Crie o primeiro acima!</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<footer>&copy; {{ org_nome }}</footer>
+
+<script>
+    var EMPLOYEE_CONFIGS = [
+        { label: '1 Técnico', count: 1, color: '#e65100' },
+        { label: '2 Técnicos', count: 2, color: '#2e7d32' },
+        { label: '3 Técnicos', count: 3, color: '#1565c0' },
+    ];
+
+    function calcPredictor() {
+        var maquinas = parseFloat(document.getElementById('predMaquinas').value) || 0;
+        var horasPorMaquina = parseFloat(document.getElementById('predHorasMaquina').value) || 2;
+        var horasDia = parseFloat(document.getElementById('predHораsDia').value) || 8;
+
+        var totalHoras = maquinas * horasPorMaquina;
+        var container = document.getElementById('predResults');
+        var note = document.getElementById('predNote');
+
+        if (maquinas <= 0) {
+            container.innerHTML = '<div style="color:#aaa; font-size:0.85em; grid-column:1/-1; text-align:center; padding:10px;">Introduza o número de máquinas para ver a previsão.</div>';
+            note.textContent = '';
+            return;
+        }
+
+        var maxHours = Math.max(...EMPLOYEE_CONFIGS.map(function(e) { return totalHoras / e.count; }));
+
+        container.innerHTML = EMPLOYEE_CONFIGS.map(function(emp) {
+            var horas = totalHoras / emp.count;
+            var dias = horas / horasDia;
+            var horasDisplay = horas % 1 === 0 ? horas + 'h' : horas.toFixed(1) + 'h';
+            var diasDisplay = dias < 1
+                ? Math.round(dias * horasDia) + 'h no dia'
+                : (dias % 1 < 0.1 ? Math.round(dias) : dias.toFixed(1)) + ' dias';
+            var barWidth = Math.round((horas / maxHours) * 100);
+
+            return '<div class="pred-card">' +
+                '<div class="emp-label">' + emp.label + '</div>' +
+                '<div class="pred-hours" style="color:' + emp.color + '">' + horasDisplay + '</div>' +
+                '<div class="pred-days">' + diasDisplay + '</div>' +
+                '<div class="pred-bar-bg"><div class="pred-bar" style="width:' + barWidth + '%; background:' + emp.color + ';"></div></div>' +
+                '</div>';
+        }).join('');
+
+        note.textContent = maquinas + ' máquina(s) × ' + horasPorMaquina + 'h cada = ' + totalHoras + 'h total de trabalho';
+    }
+
+    function syncMaquinas(source) {
+        var predVal = document.getElementById('predMaquinas').value;
+        var formVal = document.getElementById('formMaquinas').value;
+        if (source === 'pred') {
+            document.getElementById('formMaquinas').value = predVal;
+        } else {
+            document.getElementById('predMaquinas').value = formVal;
+        }
+    }
+
+    function updatePredictor() {
+        syncMaquinas('form');
+        calcPredictor();
+    }
+
+    // Init
+    calcPredictor();
+</script>
+
+</body>
+</html>

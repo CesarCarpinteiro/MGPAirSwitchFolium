@@ -3,283 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instalação de Ar Condicionados</title>
+    <title>Registos de Instalação</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; }
+        body { font-family: 'DM Sans', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
 
         .page-header {
             background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 18px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-
-        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
         .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
-
-        .page-header a {
-            padding: 9px 20px;
-            background: white;
-            color: #2e7d32;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.9em;
-            font-weight: bold;
-            white-space: nowrap;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-            transition: background 0.2s;
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; letter-spacing: 0.3px; margin-top: 3px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a {
+            all: unset; padding: 9px 20px; background: white; color: #2e7d32;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: 600;
+            white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            transition: background 0.2s; cursor: pointer; font-family: 'DM Sans', sans-serif; display: inline-block;
         }
-
-        .page-header a:hover { background: #f0f0f0; }
-
-        .toggle-form-wrapper {
-            width: 55%;
-            margin: 30px auto 0 auto;
-            display: flex;
-            justify-content: flex-end;
+        .header-actions a:hover { background: #f0f0f0; color: #2e7d32; text-decoration: none; }
+        .header-actions a.user-pill {
+            all: unset; padding: 9px 16px; background: rgba(255,255,255,0.15); color: white;
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; font-size: 0.85em;
+            font-weight: 500; white-space: nowrap; cursor: pointer; font-family: 'DM Sans', sans-serif;
+            display: flex; align-items: center; gap: 8px; box-shadow: none; text-decoration: none;
         }
+        .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); color: white; }
 
-        .toggle-form-btn {
-            padding: 9px 20px;
-            background: white;
-            color: #2e7d32;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.9em;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .toolbar {
+            width: 60%; margin: 28px auto 0 auto;
+            display: flex; justify-content: space-between; align-items: center; gap: 12px;
         }
+        .search-box { flex: 1; position: relative; }
+        .search-box input {
+            width: 100%; padding: 9px 14px 9px 38px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 0.9em; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            font-family: 'DM Sans', sans-serif; color: #333;
+        }
+        .search-box input:focus { outline: none; border-color: #4CAF50; }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 0.95em; pointer-events: none; }
+        .btn-new {
+            padding: 9px 20px; background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white; border: none; border-radius: 6px; font-size: 0.9em; font-weight: 600;
+            cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: opacity 0.2s;
+            white-space: nowrap; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 6px;
+        }
+        .btn-new:hover { opacity: 0.9; }
 
-        .toggle-form-btn:hover { background: #f0f0f0; }
-
+        /* Form novo registo */
         .form-container {
-            width: 55%;
-            margin: 10px auto 20px auto;
-            background: white;
-            padding: 28px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: none;
+            width: 60%; margin: 14px auto 0 auto; background: white; padding: 28px 30px;
+            border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: none;
         }
-
-        .form-container h2 { margin-bottom: 18px; color: #2e7d32; font-size: 1.05em; }
-
-        .form-container label {
-            font-weight: bold;
-            color: #555;
-            display: block;
-            margin-bottom: 4px;
-            font-size: 0.88em;
+        .form-container h2 { margin-bottom: 22px; color: #1a1a1a; font-size: 1em; font-weight: 600; }
+        .form-section {
+            font-size: 0.72em; font-weight: 700; color: #2e7d32; text-transform: uppercase;
+            letter-spacing: 0.8px; margin: 20px 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid #e8f0e8;
         }
-
-        .form-container input {
-            width: 100%;
-            padding: 9px 11px;
-            margin-bottom: 14px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.92em;
+        .form-section:first-of-type { margin-top: 0; }
+        .form-container label { font-weight: 500; color: #555; display: block; margin-bottom: 5px; font-size: 0.85em; }
+        .form-container input, .form-container select {
+            width: 100%; padding: 9px 12px; margin-bottom: 14px; border: 1px solid #e0e0e0;
+            border-radius: 6px; font-size: 0.9em; font-family: 'DM Sans', sans-serif; color: #333; transition: border-color 0.2s;
         }
-
-        .form-section-title {
-            font-size: 0.8em;
-            font-weight: bold;
-            color: #2e7d32;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin: 6px 0 12px 0;
-            padding-bottom: 6px;
-            border-bottom: 1px solid #e8f0e8;
-        }
-
-        .form-row { display: flex; gap: 12px; }
+        .form-container input:focus, .form-container select:focus { outline: none; border-color: #4CAF50; }
+        .form-row { display: flex; gap: 14px; }
         .form-row .field { flex: 1; }
-        .form-row .field-small { flex: 0 0 90px; }
-
-        .form-container button[type="submit"] {
-            width: 100%;
-            padding: 11px;
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.95em;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 6px;
-        }
-
-        .form-container button[type="submit"]:hover { opacity: 0.9; }
-
+        .form-row .field-sm { flex: 0 0 100px; }
         .autocomplete-wrapper { position: relative; flex: 1; }
-
         .suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ccc;
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: absolute; top: calc(100% - 14px); left: 0; right: 0; background: white;
+            border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px;
+            max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
-        .suggestions div { padding: 10px 14px; cursor: pointer; font-size: 0.9em; color: #333; }
-        .suggestions div:hover { background-color: #f0f0f0; }
-
+        .suggestions div { padding: 10px 14px; cursor: pointer; font-size: 0.88em; color: #333; border-bottom: 1px solid #f5f5f5; }
+        .suggestions div:hover { background: #f5fdf5; }
         .coords-display {
-            background: #f0f7f0;
-            border: 1px solid #4CAF50;
-            border-radius: 6px;
-            padding: 9px 13px;
-            font-size: 0.83em;
-            color: #333;
-            margin-bottom: 14px;
-            display: none;
+            background: #f5fdf5; border: 1px solid #c8e6c9; border-radius: 6px;
+            padding: 8px 12px; font-size: 0.82em; color: #2e7d32; margin-bottom: 14px; display: none;
+        }
+        .btn-submit {
+            width: 100%; padding: 11px; margin-top: 6px; background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white; border: none; border-radius: 6px; font-size: 0.95em; font-weight: 600;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s;
+        }
+        .btn-submit:hover { opacity: 0.9; }
+
+        /* Page info */
+        .page-info {
+            width: 60%; margin: 20px auto 8px auto; font-size: 0.82em; color: #999;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        .coords-display span { color: #2e7d32; font-weight: bold; }
-
-        .search-wrapper {
-            width: 55%;
-            margin: 20px auto 10px auto;
-        }
-
-        .search-wrapper input {
-            width: 100%;
-            padding: 10px 16px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.95em;
-            background: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-        }
-
-        .registos-container { width: 55%; margin: 0 auto 80px auto; }
-        .registos-container h3 { color: #333; margin-bottom: 10px; font-size: 1em; }
-
+        /* Cards */
+        .registos-container { width: 60%; margin: 0 auto; }
         .registo-card {
-            background: white;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            border-left: 4px solid #2e7d32;
+            background: white; border-radius: 10px; margin-bottom: 10px; overflow: hidden;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.07); border-left: 3px solid #2e7d32; transition: box-shadow 0.2s;
         }
-
+        .registo-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
         .registo-card.hidden { display: none; }
-
         .registo-header {
-            padding: 13px 18px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
         }
-
-        .registo-header .info { font-size: 0.92em; color: #333; }
-        .registo-header .info .client-name { font-weight: bold; font-size: 1em; color: #2e7d32; margin-bottom: 2px; }
-        .registo-header .info .client-sub { color: #777; font-size: 0.88em; }
-
-        .registo-header .right { display: flex; align-items: center; gap: 10px; }
-
-        .badge {
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            color: white;
-            border-radius: 50%;
-            width: 26px;
-            height: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.8em;
-            flex-shrink: 0;
+        .client-name {
+            font-weight: 600; font-size: 0.95em; color: #1a1a1a; margin-bottom: 3px;
+            display: flex; align-items: center; gap: 8px;
         }
-
-        .toggle-btn { background: none; border: none; color: #555; font-size: 1.1em; cursor: pointer; transition: transform 0.3s; padding: 0; line-height: 1; }
+        .client-sub { color: #888; font-size: 0.82em; }
+        .client-sub span { margin-right: 10px; }
+        .valor-badge {
+            background: #e8f5e9; color: #2e7d32; padding: 2px 9px; border-radius: 10px;
+            font-size: 0.78em; font-weight: 600;
+        }
+        .tipo-badge {
+            background: #e3f0ff; color: #2c5fa5; padding: 2px 9px; border-radius: 10px;
+            font-size: 0.75em; font-weight: 600;
+        }
+        .card-actions { display: flex; align-items: center; gap: 8px; }
+        .card-num {
+            background: #f0f7f0; color: #2e7d32; border-radius: 50%; width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75em; flex-shrink: 0;
+        }
+        .icon-btn {
+            background: none; border: none; cursor: pointer; color: #aaa; font-size: 0.95em;
+            padding: 4px; transition: color 0.15s, transform 0.15s; line-height: 1;
+        }
+        .icon-btn:hover { color: #555; transform: scale(1.15); }
+        .icon-btn.danger:hover { color: #e53935; }
+        .icon-btn.edit:hover { color: #2e7d32; }
+        .toggle-btn { transition: transform 0.25s; }
         .toggle-btn.open { transform: rotate(180deg); }
 
+        /* Detail */
         .registo-detail {
-            display: none;
-            padding: 12px 18px;
-            background: #f8faf8;
-            border-top: 1px solid #e8f0e8;
-            font-size: 0.88em;
-            line-height: 2;
-            color: #444;
+            display: none; padding: 0 18px 14px 18px;
+            background: #fafcfa; border-top: 1px solid #f0f0f0;
         }
 
-        .registo-detail strong { color: #2e7d32; }
+        /* Servicos list inside card */
+        .servicos-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0 8px 0;
+        }
+        .servicos-title { font-size: 0.72em; font-weight: 700; color: #2e7d32; text-transform: uppercase; letter-spacing: 0.8px; }
+        .btn-add-servico {
+            padding: 5px 12px; background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white; border: none; border-radius: 5px; font-size: 0.78em; font-weight: 600;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s;
+        }
+        .btn-add-servico:hover { opacity: 0.9; }
 
+        .servico-item {
+            background: white; border: 1px solid #e8f0e8; border-radius: 8px;
+            padding: 10px 14px; margin-bottom: 6px; font-size: 0.85em;
+        }
+        .servico-item-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+        }
+        .servico-tipo { font-weight: 600; color: #1a1a1a; font-size: 0.88em; }
+        .servico-data { color: #888; font-size: 0.82em; }
+        .servico-detail { color: #666; font-size: 0.82em; margin-top: 2px; }
+        .servico-actions { display: flex; gap: 6px; margin-top: 6px; }
+        .btn-servico-del {
+            background: none; border: 1px solid #fca5a5; color: #e53935; border-radius: 4px;
+            padding: 2px 8px; font-size: 0.75em; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-servico-del:hover { background: #fef2f2; }
+
+        /* Add servico form inside card */
+        .add-servico-form {
+            display: none; background: #f0f7f0; border: 1px solid #c8e6c9;
+            border-radius: 8px; padding: 16px; margin-top: 8px;
+        }
+        .add-servico-form input, .add-servico-form select {
+            width: 100%; padding: 8px 10px; margin-bottom: 10px; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 0.88em; font-family: 'DM Sans', sans-serif; color: #333;
+        }
+        .add-servico-form input:focus, .add-servico-form select:focus { outline: none; border-color: #4CAF50; }
+        .add-servico-form label { font-size: 0.8em; font-weight: 500; color: #555; display: block; margin-bottom: 4px; }
+        .add-servico-actions { display: flex; gap: 8px; margin-top: 4px; }
+        .btn-save {
+            flex: 1; padding: 8px; background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white; border: none; border-radius: 6px; font-size: 0.85em;
+            font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-cancel-s {
+            flex: 1; padding: 8px; background: white; color: #666; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 0.85em; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        }
+
+        /* Edit card form */
         .edit-form {
-            display: none;
-            padding: 16px 18px;
-            background: #f0f7f0;
-            border-top: 1px solid #c8e6c9;
+            display: none; padding: 16px 18px; background: #f5fdf5; border-top: 1px solid #c8e6c9;
         }
-
-        .edit-form label { font-weight: bold; color: #555; font-size: 0.85em; display: block; margin-bottom: 3px; }
-        .edit-form input { width: 100%; padding: 8px 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.88em; }
-        .edit-form-row { display: flex; gap: 10px; }
-        .edit-form-row .field { flex: 1; }
-
-        .edit-section-title {
-            font-size: 0.78em;
-            font-weight: bold;
-            color: #2e7d32;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin: 4px 0 10px 0;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #c8e6c9;
+        .edit-form label { font-weight: 500; color: #555; font-size: 0.83em; display: block; margin-bottom: 4px; }
+        .edit-form input {
+            width: 100%; padding: 8px 10px; margin-bottom: 12px; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 0.88em; font-family: 'DM Sans', sans-serif;
         }
-
+        .edit-form input:focus { outline: none; border-color: #4CAF50; }
+        .edit-row { display: flex; gap: 10px; }
+        .edit-row .field { flex: 1; }
+        .edit-section {
+            font-size: 0.72em; font-weight: 700; color: #2e7d32; text-transform: uppercase;
+            letter-spacing: 0.8px; margin: 4px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #c8e6c9;
+        }
         .edit-actions { display: flex; gap: 10px; margin-top: 4px; }
+        .btn-cancel {
+            flex: 1; padding: 9px; background: white; color: #666; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 0.88em; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-cancel:hover { background: #f5f5f5; }
 
-        .btn-save { flex: 1; padding: 9px; background: linear-gradient(135deg, #2e7d32, #4CAF50); color: white; border: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; cursor: pointer; }
-        .btn-save:hover { opacity: 0.9; }
+        .no-results { text-align: center; color: #bbb; font-size: 0.9em; padding: 30px 0; display: none; }
 
-        .btn-cancel-edit { flex: 1; padding: 9px; background: white; color: #555; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9em; cursor: pointer; }
-        .btn-cancel-edit:hover { background: #f4f4f4; }
+        /* Pagination */
+        .pagination {
+            width: 60%; margin: 16px auto 80px auto;
+            display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap;
+        }
+        .pagination a, .pagination span {
+            padding: 6px 12px; border-radius: 6px; font-size: 0.85em; text-decoration: none;
+            border: 1px solid #e0e0e0; background: white; color: #2e7d32; font-weight: 500;
+            transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+        }
+        .pagination a:hover { background: #f5fdf5; border-color: #a5d6a7; }
+        .pagination .active { background: linear-gradient(135deg, #2e7d32, #4CAF50); color: white; border-color: transparent; }
+        .pagination .disabled { color: #ccc; pointer-events: none; }
 
-        .edit-btn { background: none; border: none; color: #2e7d32; font-size: 1em; cursor: pointer; padding: 0; line-height: 1; transition: transform 0.2s; }
-        .edit-btn:hover { transform: scale(1.15); }
-
-        .delete-btn { background: none; border: none; color: #e53935; font-size: 1em; cursor: pointer; padding: 0; line-height: 1; transition: transform 0.2s; }
-        .delete-btn:hover { transform: scale(1.15); }
-
-        .no-results { text-align: center; color: #999; font-size: 0.95em; padding: 20px 0; display: none; }
-
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            z-index: 9999; align-items: center; justify-content: center;
+        }
         .modal-overlay.active { display: flex; }
-        .modal { background: white; border-radius: 12px; padding: 30px; width: 380px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); text-align: center; }
-        .modal-icon { font-size: 2.5em; margin-bottom: 10px; }
-        .modal h3 { margin: 0 0 8px 0; color: #333; font-size: 1.2em; }
-        .modal p { color: #777; font-size: 0.95em; margin: 0 0 24px 0; }
-        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
-        .modal-cancel { padding: 10px 24px; border: 1px solid #ccc; background: white; border-radius: 6px; font-size: 1em; cursor: pointer; color: #555; }
-        .modal-cancel:hover { background: #f4f4f4; }
-        .modal-confirm { padding: 10px 24px; background: #e53935; color: white; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; }
+        .modal {
+            background: white; border-radius: 12px; padding: 32px 28px; width: 360px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2); text-align: center;
+        }
+        .modal-title { font-size: 1.1em; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+        .modal-sub { color: #888; font-size: 0.88em; margin-bottom: 24px; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; }
+        .modal-cancel { padding: 9px 22px; border: 1px solid #ddd; background: white; border-radius: 6px; font-size: 0.9em; cursor: pointer; color: #555; font-family: 'DM Sans', sans-serif; }
+        .modal-cancel:hover { background: #f5f5f5; }
+        .modal-confirm { padding: 9px 22px; background: #e53935; color: white; border: none; border-radius: 6px; font-size: 0.9em; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; }
         .modal-confirm:hover { background: #c62828; }
 
         footer { text-align: center; padding: 10px; background: #2e7d32; color: rgba(255,255,255,0.8); font-size: 12px; position: fixed; bottom: 0; width: 100%; }
 
         @media (max-width: 767px) {
-            .form-container, .registos-container, .search-wrapper, .toggle-form-wrapper { width: 92%; }
-            .form-row, .edit-form-row { flex-direction: column; gap: 0; }
+            .form-container, .registos-container, .toolbar, .pagination, .page-info { width: 92%; }
+            .form-row, .edit-row { flex-direction: column; gap: 0; }
             .modal { width: 90%; }
         }
     </style>
@@ -291,46 +269,54 @@
             <div class="subtitle">Gestão de Serviços</div>
             <h1>Instalação de Ar Condicionados</h1>
         </div>
-        <a href="/">← Voltar ao Mapa</a>
+        <div class="header-actions">
+            <a href="/">← Mapa</a>
+            <a href="/perfil" class="user-pill">👤 {{ current_user.nome }}</a>
+        </div>
     </div>
 
-    <div class="toggle-form-wrapper">
-        <button class="toggle-form-btn" onclick="toggleForm()">
-            <span id="formBtnIcon">＋</span> Novo Registo
+    <div class="toolbar">
+        {% if registos %}
+        <div class="search-box">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="searchInput" placeholder="Pesquisar por nome, contacto ou morada..." oninput="pesquisar()">
+        </div>
+        {% endif %}
+        <button class="btn-new" onclick="toggleForm()">
+            <span id="formBtnIcon">+</span> Novo Cliente
         </button>
     </div>
 
+    <!-- Form novo cliente -->
     <div class="form-container" id="formContainer">
-        <h2>Novo Registo</h2>
-
+        <h2>Novo Cliente + Primeiro Serviço</h2>
         <form method="POST" action="/test">
-            <div class="form-section-title">👤 Cliente</div>
+            <div class="form-section">Cliente</div>
             <label>Nome do Cliente</label>
             <input type="text" name="nome" placeholder="Nome completo" required>
+            <label>Contacto</label>
+            <input type="text" name="contacto" placeholder="Ex: 965803866">
 
-            <div class="form-row">
-                <div class="field">
-                    <label>📞 Contacto</label>
-                    <input type="text" name="contacto" placeholder="Ex: 965803866">
-                </div>
-            </div>
-
-            <div class="form-section-title" style="margin-top:8px;">⚙️ Equipamento</div>
+            <div class="form-section">Primeiro Serviço</div>
+            <label>Tipo de Serviço</label>
+            <select name="tipo_servico">
+                <option value="">Selecionar...</option>
+                <option value="Instalação AC">Instalação de Ar Condicionado</option>
+                <option value="Limpeza AC">Limpeza / Manutenção de Ar Condicionado</option>
+            </select>
             <div class="form-row">
                 <div class="field">
                     <label>Marca</label>
-                    <input type="text" name="marca" placeholder="Ex: MITSUBISHI">
+                    <input type="text" name="marca" placeholder="Ex: Mitsubishi">
                 </div>
-                <div class="field-small">
-                    <label>Nº Máquinas</label>
+                <div class="field-sm">
+                    <label>N.º Máquinas</label>
                     <input type="number" name="num_maquinas" placeholder="Ex: 4" min="1">
                 </div>
             </div>
-
-            <div class="form-section-title" style="margin-top:8px;">📅 Datas</div>
             <div class="form-row">
                 <div class="field">
-                    <label>Data de Instalação</label>
+                    <label>Data do Serviço</label>
                     <input type="date" name="data_instalacao">
                 </div>
                 <div class="field">
@@ -339,14 +325,20 @@
                 </div>
             </div>
 
-            <div class="form-section-title" style="margin-top:8px;">📍 Localização</div>
+            {% if is_admin %}
+            <div class="form-section">Financeiro</div>
+            <label>Valor Pago (€)</label>
+            <input type="number" name="valor_pago" placeholder="Ex: 1500.00" step="0.01" min="0">
+            {% endif %}
+
+            <div class="form-section">Localização</div>
             <div class="form-row">
                 <div class="autocomplete-wrapper">
                     <input type="text" id="ruaInput" placeholder="Nome da rua" autocomplete="off">
                     <div class="suggestions" id="suggestions"></div>
                 </div>
-                <div class="field-small">
-                    <input type="text" id="numeroInput" placeholder="Nº" autocomplete="off">
+                <div class="field-sm">
+                    <input type="text" id="numeroInput" placeholder="N.º" autocomplete="off">
                 </div>
             </div>
             <div class="form-row">
@@ -357,96 +349,145 @@
                     <input type="text" id="cpInput" placeholder="Código postal" autocomplete="off">
                 </div>
             </div>
-
             <input type="hidden" name="morada" id="moradaFinal">
             <input type="hidden" name="latitude" id="latInput">
             <input type="hidden" name="longitude" id="lonInput">
-
-            <div class="coords-display" id="coordsDisplay">
-                📍 <span id="coordsText"></span>
-            </div>
-
-            <button type="submit" onclick="return prepararSubmit()">💾 Guardar Registo</button>
+            <div class="coords-display" id="coordsDisplay"></div>
+            <button type="submit" class="btn-submit" onclick="return prepararSubmit()">Guardar</button>
         </form>
     </div>
 
     {% if registos %}
-    <div class="search-wrapper">
-        <input type="text" id="searchInput" placeholder="🔍 Pesquisar por nome, contacto ou morada..." oninput="pesquisar()">
+    <div class="page-info">
+        <span>A mostrar {{ registos|length }} de {{ total_registos }} registos &nbsp;·&nbsp; Página {{ page }} de {{ total_pages }}</span>
+        <span id="registosCount">{{ total_registos }} registos no total</span>
     </div>
 
     <div class="registos-container">
-        <h3 id="registosTitle">Registos ({{ registos|length }})</h3>
         <div id="noResults" class="no-results">Nenhum registo encontrado.</div>
 
         {% for r in registos %}
-        <div class="registo-card" data-search="{{ r.nome }} {{ r.contacto }} {{ r.morada }} {{ r.marca }}">
+        {% set ultimo = r.servicos | sort(attribute='data_servico', reverse=True) | first if r.servicos else none %}
+        <div class="registo-card" data-search="{{ r.nome }} {{ r.contacto }} {{ r.morada }}">
             <div class="registo-header">
-                <div class="info">
-                    <div class="client-name">{{ r.nome }}</div>
+                <div>
+                    <div class="client-name">
+                        {{ r.nome }}
+                        {% if ultimo and ultimo.tipo_servico %}
+                        <span class="tipo-badge">{{ ultimo.tipo_servico }}</span>
+                        {% endif %}
+                        {% if is_admin and ultimo and ultimo.valor_pago %}
+                        <span class="valor-badge">{{ "%.2f"|format(ultimo.valor_pago) }} €</span>
+                        {% endif %}
+                    </div>
                     <div class="client-sub">
-                        📞 {{ r.contacto or '—' }} &nbsp;|&nbsp;
-                        ⚙️ {{ r.num_maquinas or '—' }}x {{ r.marca or '—' }} &nbsp;|&nbsp;
-                        📅 {{ r.data_instalacao or '—' }}
+                        <span>{{ r.contacto or '—' }}</span>
+                        <span>{{ r.morada or '—' }}</span>
+                        {% if ultimo %}
+                        <span>Último serviço: {{ ultimo.data_servico or '—' }}</span>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="right">
-                    <div class="badge">{{ loop.index }}</div>
-                    <button class="toggle-btn" onclick="toggleDetail(this)">▼</button>
-                    <button class="edit-btn" onclick="toggleEdit(this)" title="Editar">✏️</button>
+                <div class="card-actions">
+                    <div class="card-num">{{ loop.index + (page - 1) * 25 }}</div>
+                    <button class="icon-btn toggle-btn" onclick="toggleDetail(this)" title="Histórico">&#9660;</button>
+                    <button class="icon-btn edit" onclick="toggleEdit(this)" title="Editar cliente">&#9998;</button>
                     <form method="POST" action="/test/delete/{{ r.id }}" style="margin:0;" id="deleteForm-{{ r.id }}">
-                        <button type="button" class="delete-btn" onclick="openModal('deleteForm-{{ r.id }}')">🗑</button>
+                        <button type="button" class="icon-btn danger" onclick="openModal('deleteForm-{{ r.id }}')">&#128465;</button>
                     </form>
                 </div>
             </div>
 
+            <!-- Histórico de serviços -->
             <div class="registo-detail">
-                <div>📞 <strong>Contacto:</strong> {{ r.contacto or 'N/A' }}</div>
-                <div>⚙️ <strong>Nº Máquinas:</strong> {{ r.num_maquinas or 'N/A' }} &nbsp;|&nbsp; <strong>Marca:</strong> {{ r.marca or 'N/A' }}</div>
-                <div>📅 <strong>Instalação:</strong> {{ r.data_instalacao or 'N/A' }}</div>
-                <div>🔧 <strong>Próx. Manutenção:</strong> {{ r.proxima_manutencao or 'N/A' }}</div>
-                <div>📍 <strong>Morada:</strong> {{ r.morada or 'N/A' }}</div>
-                {% if r.latitude and r.longitude %}
-                <div>🌐 <strong>Lat:</strong> {{ r.latitude }} &nbsp;|&nbsp; <strong>Lon:</strong> {{ r.longitude }}</div>
+                <div class="servicos-header">
+                    <span class="servicos-title">Histórico de Serviços ({{ r.servicos | length }})</span>
+                    <button class="btn-add-servico" onclick="toggleAddServico(this)">+ Novo Serviço</button>
+                </div>
+
+                <!-- Form adicionar serviço -->
+                <div class="add-servico-form">
+                    <form method="POST" action="/test/add_servico/{{ r.id }}">
+                        <label>Tipo de Serviço</label>
+                        <select name="tipo_servico" required>
+                            <option value="">Selecionar...</option>
+                            <option value="Instalação AC">Instalação de Ar Condicionado</option>
+                            <option value="Limpeza AC">Limpeza / Manutenção de Ar Condicionado</option>
+                        </select>
+                        <div class="form-row">
+                            <div class="field">
+                                <label>Data do Serviço</label>
+                                <input type="date" name="data_servico" required>
+                            </div>
+                            <div class="field">
+                                <label>Próxima Manutenção</label>
+                                <input type="date" name="proxima_manutencao">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="field">
+                                <label>Marca</label>
+                                <input type="text" name="marca" placeholder="Ex: Mitsubishi">
+                            </div>
+                            <div class="field">
+                                <label>N.º Máquinas</label>
+                                <input type="number" name="num_maquinas" placeholder="Ex: 4" min="1">
+                            </div>
+                        </div>
+                        {% if is_admin %}
+                        <label>Valor Pago (€)</label>
+                        <input type="number" name="valor_pago" placeholder="Ex: 800.00" step="0.01" min="0">
+                        {% endif %}
+                        <label>Notas</label>
+                        <input type="text" name="notas" placeholder="Observações opcionais">
+                        <div class="add-servico-actions">
+                            <button type="submit" class="btn-save">Guardar Serviço</button>
+                            <button type="button" class="btn-cancel-s" onclick="toggleAddServico(this.closest('.add-servico-form').previousElementSibling.querySelector('.btn-add-servico'))">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Lista de serviços -->
+                {% if r.servicos %}
+                    {% for s in r.servicos | sort(attribute='data_servico', reverse=True) %}
+                    <div class="servico-item">
+                        <div class="servico-item-header">
+                            <span class="servico-tipo">{{ s.tipo_servico or '—' }}</span>
+                            <span class="servico-data">{{ s.data_servico or '—' }}</span>
+                        </div>
+                        <div class="servico-detail">
+                            {% if s.marca %}Marca: {{ s.marca }}{% endif %}
+                            {% if s.num_maquinas %} &nbsp;·&nbsp; {{ s.num_maquinas }} máquina(s){% endif %}
+                            {% if s.proxima_manutencao %} &nbsp;·&nbsp; Próx.: {{ s.proxima_manutencao }}{% endif %}
+                            {% if is_admin and s.valor_pago %} &nbsp;·&nbsp; {{ "%.2f"|format(s.valor_pago) }} €{% endif %}
+                        </div>
+                        {% if s.notas %}
+                        <div class="servico-detail" style="color:#888;margin-top:3px;font-style:italic;">{{ s.notas }}</div>
+                        {% endif %}
+                        <div class="servico-actions">
+                            <form method="POST" action="/servico/delete/{{ s.id }}" style="margin:0;">
+                                <button type="submit" class="btn-servico-del" onclick="return confirm('Remover este serviço?')">Remover</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="color:#bbb;font-size:0.85em;padding:10px 0;text-align:center;">Nenhum serviço registado.</div>
                 {% endif %}
             </div>
 
+            <!-- Edit cliente -->
             <div class="edit-form" id="editForm-{{ r.id }}">
                 <form method="POST" action="/test/edit/{{ r.id }}">
-                    <div class="edit-section-title">👤 Cliente</div>
+                    <div class="edit-section">Cliente</div>
                     <label>Nome</label>
                     <input type="text" name="nome" value="{{ r.nome }}" required>
                     <label>Contacto</label>
                     <input type="text" name="contacto" value="{{ r.contacto or '' }}">
-
-                    <div class="edit-section-title">⚙️ Equipamento</div>
-                    <div class="edit-form-row">
-                        <div class="field">
-                            <label>Marca</label>
-                            <input type="text" name="marca" value="{{ r.marca or '' }}">
-                        </div>
-                        <div class="field">
-                            <label>Nº Máquinas</label>
-                            <input type="number" name="num_maquinas" value="{{ r.num_maquinas or '' }}" min="1">
-                        </div>
-                    </div>
-
-                    <div class="edit-section-title">📅 Datas</div>
-                    <div class="edit-form-row">
-                        <div class="field">
-                            <label>Data de Instalação</label>
-                            <input type="date" name="data_instalacao" value="{{ r.data_instalacao.split('/')|reverse|join('-') if r.data_instalacao else '' }}">
-                        </div>
-                        <div class="field">
-                            <label>Próxima Manutenção</label>
-                            <input type="date" name="proxima_manutencao" value="{{ r.proxima_manutencao.split('/')|reverse|join('-') if r.proxima_manutencao else '' }}">
-                        </div>
-                    </div>
-
-                    <div class="edit-section-title">📍 Localização</div>
+                    <div class="edit-section">Localização</div>
                     <label>Morada</label>
                     <input type="text" name="morada" value="{{ r.morada or '' }}">
-                    <div class="edit-form-row">
+                    <div class="edit-row">
                         <div class="field">
                             <label>Latitude</label>
                             <input type="text" name="latitude" value="{{ r.latitude or '' }}" placeholder="Ex: 41.1579">
@@ -456,23 +497,44 @@
                             <input type="text" name="longitude" value="{{ r.longitude or '' }}" placeholder="Ex: -8.6291">
                         </div>
                     </div>
-
                     <div class="edit-actions">
-                        <button type="submit" class="btn-save">💾 Guardar</button>
-                        <button type="button" class="btn-cancel-edit" onclick="toggleEdit(this.closest('.edit-form').previousElementSibling.previousElementSibling.querySelector('.edit-btn'))">Cancelar</button>
+                        <button type="submit" class="btn-save">Guardar</button>
+                        <button type="button" class="btn-cancel"
+                            onclick="toggleEdit(this.closest('.edit-form').previousElementSibling.previousElementSibling.querySelector('.icon-btn.edit'))">
+                            Cancelar
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
         {% endfor %}
     </div>
+
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="{{ url_for('nova_pagina', page=1) }}">«</a>
+        <a href="{{ url_for('nova_pagina', page=page-1) }}">‹</a>
+        {% else %}
+        <span class="disabled">«</span>
+        <span class="disabled">‹</span>
+        {% endif %}
+        {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+        <a href="{{ url_for('nova_pagina', page=p) }}" class="{{ 'active' if p == page else '' }}">{{ p }}</a>
+        {% endfor %}
+        {% if page < total_pages %}
+        <a href="{{ url_for('nova_pagina', page=page+1) }}">›</a>
+        <a href="{{ url_for('nova_pagina', page=total_pages) }}">»</a>
+        {% else %}
+        <span class="disabled">›</span>
+        <span class="disabled">»</span>
+        {% endif %}
+    </div>
     {% endif %}
 
     <div class="modal-overlay" id="deleteModal">
         <div class="modal">
-            <div class="modal-icon">🗑️</div>
-            <h3>Remover registo</h3>
-            <p>Tens a certeza que queres remover este registo?<br>Esta ação não pode ser desfeita.</p>
+            <div class="modal-title">Remover cliente</div>
+            <div class="modal-sub">Tens a certeza? Todos os serviços associados serão removidos.<br>Esta ação não pode ser desfeita.</div>
             <div class="modal-buttons">
                 <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
                 <button class="modal-confirm" id="modalConfirmBtn">Remover</button>
@@ -480,7 +542,7 @@
         </div>
     </div>
 
-    <footer>&copy; MGP Air Switch</footer>
+    <footer>&copy; {{ org_nome }}</footer>
 
     <script>
         const GEOAPIFY_KEY = 'd38a65e0fee84a80a00f32720e6a53ff';
@@ -490,7 +552,7 @@
             const icon = document.getElementById('formBtnIcon');
             const isVisible = form.style.display === 'block';
             form.style.display = isVisible ? 'none' : 'block';
-            icon.textContent = isVisible ? '＋' : '－';
+            icon.textContent = isVisible ? '+' : '−';
         }
 
         function pesquisar() {
@@ -504,7 +566,7 @@
                 if (match) visiveis++;
             });
             noResults.style.display = visiveis === 0 ? 'block' : 'none';
-            document.getElementById('registosTitle').textContent = `Registos (${visiveis})`;
+            document.getElementById('registosCount').textContent = visiveis + ' resultados';
         }
 
         function toggleDetail(btn) {
@@ -521,22 +583,26 @@
             editForm.style.display = editForm.style.display === 'block' ? 'none' : 'block';
         }
 
-        let formToSubmit = null;
+        function toggleAddServico(btn) {
+            const detail = btn.closest('.registo-detail');
+            const form = detail.querySelector('.add-servico-form');
+            const isOpen = form.style.display === 'block';
+            form.style.display = isOpen ? 'none' : 'block';
+            btn.textContent = isOpen ? '+ Novo Serviço' : '− Cancelar';
+        }
 
+        let formToSubmit = null;
         function openModal(formId) {
             formToSubmit = document.getElementById(formId);
             document.getElementById('deleteModal').classList.add('active');
         }
-
         function closeModal() {
             formToSubmit = null;
             document.getElementById('deleteModal').classList.remove('active');
         }
-
         document.getElementById('modalConfirmBtn').addEventListener('click', function () {
             if (formToSubmit) formToSubmit.submit();
         });
-
         document.getElementById('deleteModal').addEventListener('click', function (e) {
             if (e.target === this) closeModal();
         });
@@ -550,45 +616,47 @@
         const lonInput = document.getElementById('lonInput');
         const moradaFinal = document.getElementById('moradaFinal');
         const coordsDisplay = document.getElementById('coordsDisplay');
-        const coordsText = document.getElementById('coordsText');
         let debounceTimer;
 
-        ruaInput.addEventListener('input', function () {
-            clearTimeout(debounceTimer);
-            const query = this.value.trim();
-            if (query.length < 3) { suggestions.innerHTML = ''; return; }
-            debounceTimer = setTimeout(() => {
-                const fullQuery = [query, numeroInput.value.trim(), cidadeInput.value.trim(), cpInput.value.trim(), 'Portugal'].filter(Boolean).join(', ');
-                fetch(`https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(fullQuery)}&lang=pt&limit=5&apiKey=${GEOAPIFY_KEY}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        suggestions.innerHTML = '';
-                        data.features.forEach(item => {
-                            const props = item.properties;
-                            const div = document.createElement('div');
-                            div.textContent = props.formatted;
-                            div.addEventListener('click', () => {
-                                ruaInput.value = props.street || query;
-                                if (props.housenumber) numeroInput.value = props.housenumber;
-                                if (props.city) cidadeInput.value = props.city;
-                                if (props.postcode) cpInput.value = props.postcode;
-                                latInput.value = props.lat;
-                                lonInput.value = props.lon;
-                                suggestions.innerHTML = '';
-                                coordsDisplay.style.display = 'block';
-                                coordsText.textContent = `Lat: ${parseFloat(props.lat).toFixed(6)}, Lon: ${parseFloat(props.lon).toFixed(6)}`;
+        if (ruaInput) {
+            ruaInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                const query = this.value.trim();
+                if (query.length < 3) { suggestions.innerHTML = ''; return; }
+                debounceTimer = setTimeout(() => {
+                    const fullQuery = [query, numeroInput.value.trim(), cidadeInput.value.trim(), cpInput.value.trim(), 'Portugal'].filter(Boolean).join(', ');
+                    fetch(`https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(fullQuery)}&lang=pt&limit=5&apiKey=${GEOAPIFY_KEY}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            suggestions.innerHTML = '';
+                            data.features.forEach(item => {
+                                const props = item.properties;
+                                const div = document.createElement('div');
+                                div.textContent = props.formatted;
+                                div.addEventListener('click', () => {
+                                    ruaInput.value = props.street || query;
+                                    if (props.housenumber) numeroInput.value = props.housenumber;
+                                    if (props.city) cidadeInput.value = props.city;
+                                    if (props.postcode) cpInput.value = props.postcode;
+                                    latInput.value = props.lat;
+                                    lonInput.value = props.lon;
+                                    suggestions.innerHTML = '';
+                                    coordsDisplay.style.display = 'block';
+                                    coordsDisplay.textContent = `Lat: ${parseFloat(props.lat).toFixed(6)}, Lon: ${parseFloat(props.lon).toFixed(6)}`;
+                                });
+                                suggestions.appendChild(div);
                             });
-                            suggestions.appendChild(div);
                         });
-                    });
-            }, 300);
-        });
+                }, 300);
+            });
 
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.autocomplete-wrapper')) suggestions.innerHTML = '';
-        });
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.autocomplete-wrapper')) suggestions.innerHTML = '';
+            });
+        }
 
         function prepararSubmit() {
+            if (!ruaInput) return true;
             const rua = ruaInput.value.trim();
             const numero = numeroInput.value.trim();
             const cidade = cidadeInput.value.trim();
@@ -604,7 +672,7 @@
                             lonInput.value = data.features[0].properties.lon;
                         }
                         moradaFinal.value = [rua, numero, cidade, cp].filter(Boolean).join(', ');
-                        document.querySelector('form').submit();
+                        document.querySelector('#formContainer form').submit();
                     });
                 return false;
             }

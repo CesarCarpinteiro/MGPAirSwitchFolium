@@ -127,7 +127,7 @@ def home():
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>MGP Air Switch - Mapa de Serviços Executados</title>
+                <title>{{ org_nome }} - Mapa de Serviços Executados</title>
                 <style>
                     /* Global Styling */
                     body {
@@ -196,13 +196,13 @@ def home():
                 {{ header|safe }}
             </head>
             <body>
-                <h1>MGP Air Switch - Mapa de Serviços Executados</h1>
+                <h1>{{ org_nome }} - Mapa de Serviços Executados</h1>
                 <div class="map-container">
                     {{ body_html|safe }}
                 </div>
                 <div class="footer-spacer"></div>
                 <footer>
-                    <p>&copy; MGP Air Switch</p>
+                    <p>&copy; {{ org_nome }}</p>
                 </footer>
                 <script>
                     {{ script|safe }}

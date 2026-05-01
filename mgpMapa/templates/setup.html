@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Organização</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --green-dark: #1b5e20;
+            --green-mid: #2e7d32;
+            --green-main: #4CAF50;
+            --text-dark: #1a1a1a;
+            --text-muted: #6b7280;
+        }
+        html, body { min-height: 100%; font-family: 'DM Sans', sans-serif; background: #f3f6f3; }
+        body { display: flex; justify-content: center; align-items: flex-start; padding: 40px 20px 60px; }
+        {% if show_popup %}
+        body { overflow: hidden; }
+        {% endif %}
+        .container { width: 100%; max-width: 620px; }
+
+        .page-header { text-align: center; margin-bottom: 32px; }
+        .brand-mark { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 28px; background: white; padding: 10px 20px; border-radius: 50px; border: 1px solid rgba(0,0,0,0.07); }
+        .brand-icon { width: 32px; height: 32px; background: var(--green-mid); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .brand-name { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--text-dark); }
+        .page-title { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--text-dark); margin-bottom: 8px; }
+        .page-subtitle { font-size: 0.92rem; color: var(--text-muted); line-height: 1.6; }
+
+        /* Steps */
+        .steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 28px 0 32px; }
+        .step { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 500; color: var(--text-muted); }
+        .step.active { color: var(--green-mid); }
+        .step.done { color: var(--green-main); }
+        .step-num { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #d1d5db; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 600; background: white; transition: all 0.2s; }
+        .step.active .step-num { background: var(--green-mid); border-color: var(--green-mid); color: white; }
+        .step.done .step-num { background: var(--green-main); border-color: var(--green-main); color: white; }
+        .step-line { width: 48px; height: 1.5px; background: #e5e7eb; margin: 0 4px; }
+
+        /* Cards */
+        .card { background: white; border-radius: 16px; border: 1px solid rgba(0,0,0,0.07); overflow: hidden; margin-bottom: 16px; }
+        .card-header { padding: 20px 28px 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 12px; }
+        .card-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--green-mid); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .card-title { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+        .card-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 1px; }
+        .card-body { padding: 24px 28px; }
+
+        /* Form */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.82rem; font-weight: 500; color: #374151; letter-spacing: 0.2px; }
+        .form-group label .required { color: #ef4444; margin-left: 2px; }
+        .input-wrap { position: relative; }
+        .input-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 15px; opacity: 0.4; pointer-events: none; }
+        .form-group input, .form-group select { width: 100%; padding: 11px 12px 11px 40px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.92rem; font-family: 'DM Sans', sans-serif; color: var(--text-dark); background: #fafafa; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; outline: none; appearance: none; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--green-main); background: white; box-shadow: 0 0 0 3px rgba(76,175,80,0.1); }
+        .form-group input::placeholder { color: #9ca3af; }
+        .form-group input.error { border-color: #ef4444; }
+        .field-error { font-size: 0.78rem; color: #ef4444; display: none; }
+        .field-error.visible { display: block; }
+
+        .password-strength { margin-top: 6px; display: none; }
+        .strength-bar { height: 3px; border-radius: 99px; background: #e5e7eb; overflow: hidden; margin-bottom: 4px; }
+        .strength-fill { height: 100%; border-radius: 99px; transition: width 0.3s, background 0.3s; width: 0%; }
+        .strength-label { font-size: 0.75rem; color: var(--text-muted); }
+
+        .select-wrap::after { content: '▾'; position: absolute; right: 13px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #9ca3af; pointer-events: none; }
+
+        .terms-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 4px; }
+        .terms-row input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--green-mid); flex-shrink: 0; padding: 0; }
+        .terms-row label { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; font-weight: 400; }
+
+        .submit-btn { width: 100%; padding: 14px; background: var(--green-mid); color: white; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 20px; letter-spacing: 0.3px; transition: background 0.2s, box-shadow 0.2s, transform 0.1s; }
+        .submit-btn:hover { background: var(--green-dark); box-shadow: 0 4px 16px rgba(46,125,50,0.3); }
+        .submit-btn:active { transform: scale(0.99); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .login-link { text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-top: 20px; }
+        .login-link a { color: var(--green-mid); text-decoration: none; font-weight: 500; }
+        .login-link a:hover { text-decoration: underline; }
+
+        .server-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 0.85rem; padding: 11px 16px; border-radius: 9px; margin-bottom: 20px; display: none; }
+
+        .container > * { opacity: 0; transform: translateY(10px); animation: fadeUp 0.45s forwards; }
+        .container > *:nth-child(1) { animation-delay: 0.05s; }
+        .container > *:nth-child(2) { animation-delay: 0.1s; }
+        .container > *:nth-child(3) { animation-delay: 0.15s; }
+        .container > *:nth-child(4) { animation-delay: 0.2s; }
+        .container > *:nth-child(5) { animation-delay: 0.25s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* Popup */
+        #emailPopup {
+            display: {% if show_popup %}flex{% else %}none{% endif %};
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .popup-box { background: white; border-radius: 16px; padding: 2.5rem 2rem; max-width: 400px; width: 90%; text-align: center; font-family: 'DM Sans', sans-serif; }
+        .popup-icon { width: 64px; height: 64px; border-radius: 50%; background: #eaf3de; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 28px; }
+        .popup-title { font-size: 1.15rem; font-weight: 600; color: #1a1a1a; margin: 0 0 8px; }
+        .popup-text { font-size: 0.88rem; color: #666; line-height: 1.6; margin: 0 0 1rem; }
+        .popup-hint { background: #eaf3de; border-radius: 8px; padding: 10px 14px; margin-bottom: 1.25rem; }
+        .popup-hint p { font-size: 0.82rem; color: #3b6d11; margin: 0; }
+        .code-input { width: 100%; padding: 14px; font-size: 1.8rem; font-weight: 700; letter-spacing: 12px; text-align: center; border: 2px solid #e5e7eb; border-radius: 10px; margin-bottom: 10px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+        .code-input:focus { border-color: #4CAF50; box-shadow: 0 0 0 3px rgba(76,175,80,0.1); }
+        .code-error { color: #ef4444; font-size: 0.83rem; margin: 0 0 12px; text-align: center; }
+        .popup-btn { width: 100%; padding: 13px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s; }
+        .popup-btn:hover { background: #1b5e20; }
+
+        @media (max-width: 560px) {
+            body { padding: 20px 16px 40px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-grid .full { grid-column: 1; }
+            .card-body { padding: 20px 18px; }
+            .card-header { padding: 16px 18px 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <div class="brand-mark">
+            <div class="brand-icon">🌿</div>
+            <div class="brand-name">Gestão de Serviços</div>
+        </div>
+        <h1 class="page-title">Criar organização</h1>
+        <p class="page-subtitle">Configure a sua organização e crie a primeira conta de administrador.</p>
+    </div>
+
+    <div class="steps">
+        <div class="step {% if show_popup %}done{% else %}active{% endif %}" id="step1">
+            <div class="step-num">{% if show_popup %}✓{% else %}1{% endif %}</div>
+            <span>Organização</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step {% if show_popup %}done{% endif %}" id="step2">
+            <div class="step-num">{% if show_popup %}✓{% else %}2{% endif %}</div>
+            <span>Administrador</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step {% if show_popup %}active{% endif %}" id="step3">
+            <div class="step-num">3</div>
+            <span>Confirmação</span>
+        </div>
+    </div>
+
+    <form action="/setup" method="POST" id="setupForm" novalidate>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🏢</div>
+                <div>
+                    <div class="card-title">Informações da Organização</div>
+                    <div class="card-desc">Dados da empresa ou negócio</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Nome da organização <span class="required">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🏢</span>
+                            <input type="text" name="org_nome" placeholder="Ex: MGP Air Switch Lda." required>
+                        </div>
+                        <span class="field-error" id="err-org_nome">Campo obrigatório.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>País <span class="required">*</span></label>
+                        <div class="input-wrap select-wrap">
+                            <span class="input-icon">🌍</span>
+                            <select name="pais" required>
+                                <option value="" disabled selected>Selecionar país</option>
+                                <option value="PT">🇵🇹 Portugal</option>
+                                <option value="BR">🇧🇷 Brasil</option>
+                                <option value="ES">🇪🇸 Espanha</option>
+                                <option value="FR">🇫🇷 França</option>
+                                <option value="DE">🇩🇪 Alemanha</option>
+                                <option value="GB">🇬🇧 Reino Unido</option>
+                                <option value="US">🇺🇸 Estados Unidos</option>
+                                <option value="OTHER">Outro</option>
+                            </select>
+                        </div>
+                        <span class="field-error" id="err-pais">Campo obrigatório.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone da organização</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">📞</span>
+                            <input type="tel" name="org_telefone" placeholder="+351 9XX XXX XXX">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">👤</div>
+                <div>
+                    <div class="card-title">Conta de Administrador</div>
+                    <div class="card-desc">Primeiro utilizador com acesso total</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="server-error" id="serverError">
+                    {% if error %}Este nome de utilizador já existe. Escolha outro.{% endif %}
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome completo <span class="required">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon">👤</span>
+                            <input type="text" name="nome_completo" placeholder="Ex: Miguel Pereira" required>
+                        </div>
+                        <span class="field-error" id="err-nome_completo">Campo obrigatório.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo / Função <span class="required">*</span></label>
+                        <div class="input-wrap select-wrap">
+                            <span class="input-icon">💼</span>
+                            <select name="cargo" required>
+                                <option value="" disabled selected>Selecionar cargo</option>
+                                <option value="CEO">CEO / Diretor Geral</option>
+                                <option value="manager">Gerente</option>
+                                <option value="tech">Técnico</option>
+                                <option value="admin">Administrador de Sistemas</option>
+                                <option value="other">Outro</option>
+                            </select>
+                        </div>
+                        <span class="field-error" id="err-cargo">Campo obrigatório.</span>
+                    </div>
+                    <div class="form-group full">
+                        <label>Email <span class="required">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon">✉️</span>
+                            <input type="email" name="email" placeholder="email@empresa.com" required>
+                        </div>
+                        <span class="field-error" id="err-email">Introduza um email válido.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Telemóvel</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">📱</span>
+                            <input type="tel" name="telefone" placeholder="9XX XXX XXX">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nome de utilizador <span class="required">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔑</span>
+                            <input type="text" name="nomeForm" placeholder="nome.utilizador" required autocomplete="username">
+                        </div>
+                        <span class="field-error" id="err-nomeForm">Campo obrigatório.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Password <span class="required">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" name="senhaForm" id="senhaInput" placeholder="••••••••" required autocomplete="new-password" oninput="checkStrength(this.value)">
+                        </div>
+                        <div class="password-strength" id="strengthWrap">
+                            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+                            <div class="strength-label" id="strengthLabel"></div>
+                        </div>
+                        <span class="field-error" id="err-senhaForm">Mínimo de 6 caracteres.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Password <span class="required">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" name="senhaConfirm" id="senhaConfirm" placeholder="••••••••" required autocomplete="new-password">
+                        </div>
+                        <span class="field-error" id="err-senhaConfirm">As passwords não coincidem.</span>
+                    </div>
+                </div>
+                <div class="terms-row" style="margin-top: 20px;">
+                    <input type="checkbox" id="termos" name="termos" required>
+                    <label for="termos">Confirmo que sou o responsável por esta organização e aceito os termos de utilização da plataforma.</label>
+                </div>
+                <span class="field-error" id="err-termos">Deve aceitar os termos para continuar.</span>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+            Criar organização →
+        </button>
+    </form>
+
+    <div class="login-link">
+        Já tem conta? <a href="/login">Entrar aqui</a>
+    </div>
+</div>
+
+<!-- Popup -->
+<div id="emailPopup">
+    <div class="popup-box">
+        <div class="popup-icon">✉️</div>
+        <p class="popup-title">Verifica o teu email</p>
+        <p class="popup-text">Enviámos um código de 6 dígitos para o teu email. Introduz-o abaixo para confirmar a tua conta.</p>
+        <div class="popup-hint">
+            <p>Se não encontrares o email, verifica também a pasta de spam.</p>
+        </div>
+        <form action="/setup" method="POST" id="verifyForm">
+            <input type="hidden" name="step" value="verify">
+            <input type="text" name="codigo" id="codigoInput"
+                class="code-input"
+                placeholder="000000"
+                maxlength="6"
+                autocomplete="one-time-code"
+                inputmode="numeric">
+            {% if code_error %}
+            <p class="code-error">Código incorreto. Tenta novamente.</p>
+            {% endif %}
+            <button type="submit" class="popup-btn">Confirmar e entrar na plataforma →</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    {% if error %}
+    document.getElementById('serverError').style.display = 'block';
+    {% endif %}
+
+    {% if show_popup %}
+    // Focus the code input automatically when popup is visible
+    document.addEventListener('DOMContentLoaded', function() {
+        var inp = document.getElementById('codigoInput');
+        if (inp) inp.focus();
+    });
+    {% endif %}
+
+    function checkStrength(val) {
+        var wrap = document.getElementById('strengthWrap');
+        var fill = document.getElementById('strengthFill');
+        var label = document.getElementById('strengthLabel');
+        if (!val) { wrap.style.display = 'none'; return; }
+        wrap.style.display = 'block';
+        var score = 0;
+        if (val.length >= 6) score++;
+        if (val.length >= 10) score++;
+        if (/[A-Z]/.test(val)) score++;
+        if (/[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+        var configs = [
+            { w: '20%', bg: '#ef4444', text: 'Muito fraca' },
+            { w: '40%', bg: '#f97316', text: 'Fraca' },
+            { w: '60%', bg: '#eab308', text: 'Média' },
+            { w: '80%', bg: '#22c55e', text: 'Boa' },
+            { w: '100%', bg: '#16a34a', text: 'Muito forte' },
+        ];
+        var c = configs[Math.min(score - 1, 4)];
+        fill.style.width = c.w;
+        fill.style.background = c.bg;
+        label.textContent = c.text;
+        label.style.color = c.bg;
+    }
+
+    document.getElementById('setupForm').addEventListener('submit', function(e) {
+        var valid = true;
+        var fields = [
+            { name: 'org_nome', check: function(v) { return v.trim() !== ''; } },
+            { name: 'pais', check: function(v) { return v !== ''; } },
+            { name: 'nome_completo', check: function(v) { return v.trim() !== ''; } },
+            { name: 'cargo', check: function(v) { return v !== ''; } },
+            { name: 'email', check: function(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); } },
+            { name: 'nomeForm', check: function(v) { return v.trim() !== ''; } },
+            { name: 'senhaForm', check: function(v) { return v.length >= 6; } },
+            { name: 'senhaConfirm', check: function(v) { return v === document.getElementById('senhaInput').value && v.length >= 6; } },
+        ];
+        fields.forEach(function(f) {
+            var el = document.querySelector('[name="' + f.name + '"]');
+            var err = document.getElementById('err-' + f.name);
+            if (!f.check(el.value)) {
+                el.classList.add('error');
+                if (err) err.classList.add('visible');
+                valid = false;
+            } else {
+                el.classList.remove('error');
+                if (err) err.classList.remove('visible');
+            }
+        });
+        var termos = document.getElementById('termos');
+        var errTermos = document.getElementById('err-termos');
+        if (!termos.checked) {
+            errTermos.classList.add('visible');
+            valid = false;
+        } else {
+            errTermos.classList.remove('visible');
+        }
+        if (!valid) { e.preventDefault(); return; }
+
+        // Advance steps visually before POST
+        var s1 = document.getElementById('step1');
+        var s2 = document.getElementById('step2');
+        var s3 = document.getElementById('step3');
+        s1.classList.remove('active'); s1.classList.add('done');
+        s1.querySelector('.step-num').textContent = '✓';
+        s2.classList.add('done');
+        s2.querySelector('.step-num').textContent = '✓';
+        s3.classList.add('active');
+
+        var btn = document.getElementById('submitBtn');
+        btn.textContent = 'A criar...';
+        btn.disabled = true;
+    });
+
+    document.querySelectorAll('input, select').forEach(function(el) {
+        el.addEventListener('input', function() {
+            el.classList.remove('error');
+            var err = document.getElementById('err-' + el.name);
+            if (err) err.classList.remove('visible');
+        });
+    });
+
+    // Only allow digits in code input
+    var codigoInput = document.getElementById('codigoInput');
+    if (codigoInput) {
+        codigoInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+        });
+    }
+</script>
+
+</body>
+</html>

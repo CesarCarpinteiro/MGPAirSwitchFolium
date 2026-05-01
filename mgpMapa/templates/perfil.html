@@ -3,400 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil</title>
+    <title>{{ org_nome }} — Perfil</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+        body { font-family: 'DM Sans', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
 
         .page-header {
             background: linear-gradient(135deg, #2e7d32, #4CAF50);
             padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-
         .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
         .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
-
         .page-header a {
-            padding: 9px 20px;
-            background: white;
-            color: #2e7d32;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.9em;
-            font-weight: bold;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-            transition: background 0.2s;
+            padding: 9px 20px; background: white; color: #2e7d32;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em;
+            font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: background 0.2s;
+            font-family: 'DM Sans', sans-serif;
         }
-
         .page-header a:hover { background: #f0f0f0; }
 
-        .content { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .content { max-width: 960px; margin: 30px auto; padding: 0 20px; }
 
-        /* Profile card */
-        .profile-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-
-        .profile-top {
+        .profile-banner {
             background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            padding: 30px 24px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
+            border-radius: 12px; padding: 28px 24px;
+            display: flex; align-items: center; gap: 20px;
+            margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
         }
-
         .avatar {
-            width: 64px;
-            height: 64px;
-            background: rgba(255,255,255,0.25);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8em;
-            border: 3px solid rgba(255,255,255,0.5);
-            flex-shrink: 0;
+            width: 72px; height: 72px; background: rgba(255,255,255,0.25);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 2em; border: 3px solid rgba(255,255,255,0.5); flex-shrink: 0;
+        }
+        .profile-banner h2 { color: white; font-size: 1.3em; margin-bottom: 4px; font-weight: 700; }
+        .profile-banner p { color: rgba(255,255,255,0.8); font-size: 0.85em; }
+        .profile-banner .org-tag {
+            margin-left: auto;
+            background: rgba(255,255,255,0.2); color: white;
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 0.82em; font-weight: 600; white-space: nowrap;
         }
 
-        .profile-top h2 { color: white; font-size: 1.2em; margin-bottom: 4px; }
-        .profile-top p { color: rgba(255,255,255,0.8); font-size: 0.85em; }
+        .tabs {
+            display: flex; gap: 4px; margin-bottom: 20px;
+            background: white; padding: 6px; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .tab-btn {
+            flex: 1; padding: 10px 16px; border: none; background: transparent;
+            border-radius: 7px; font-size: 0.88em; font-weight: 600; color: #888;
+            cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+        }
+        .tab-btn:hover { background: #f0f0f0; color: #333; }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white; box-shadow: 0 2px 6px rgba(46,125,50,0.3);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
 
-        .profile-body { padding: 20px 24px; }
-
+        .card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.07);
+            padding: 22px 24px; margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 0.72em; font-weight: 700; color: #2e7d32;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            margin-bottom: 16px; padding-bottom: 8px;
+            border-bottom: 1px solid #eef4ee;
+        }
         .profile-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 11px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.92em;
-            color: #555;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 11px 0; border-bottom: 1px solid #f5f5f5;
+            font-size: 0.9em; color: #666;
         }
-
         .profile-row:last-of-type { border-bottom: none; }
-        .profile-row strong { color: #2e7d32; }
+        .profile-row strong { color: #1a1a1a; font-weight: 600; }
+
+        .actions-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;
+        }
+        .action-btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px; border-radius: 10px; text-decoration: none;
+            font-size: 0.88em; font-weight: 600; color: white;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .action-btn .icon {
+            font-size: 1.3em; width: 34px; height: 34px;
+            background: rgba(255,255,255,0.2); border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .action-btn.green { background: linear-gradient(135deg, #2e7d32, #4CAF50); }
+        .action-btn.blue { background: linear-gradient(135deg, #1565c0, #1976d2); }
+        .action-btn.teal { background: linear-gradient(135deg, #00695c, #00897b); }
 
         .btn-logout {
-            display: block;
-            width: 100%;
-            padding: 11px;
-            margin-top: 16px;
-            background: #e53935;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95em;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            transition: background 0.2s;
+            display: flex; align-items: center; gap: 10px; width: 100%;
+            padding: 13px 16px; margin-top: 10px; background: #fef2f2;
+            color: #dc2626; border: 1px solid #fecaca; border-radius: 10px;
+            font-size: 0.88em; font-weight: 600; cursor: pointer; text-align: left;
+            text-decoration: none; transition: background 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-logout:hover { background: #fee2e2; }
+        .btn-logout .icon {
+            font-size: 1.3em; width: 34px; height: 34px;
+            background: rgba(220,38,38,0.1); border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .btn-logout:hover { background: #c62828; }
-
-        /* Section titles */
-        .section-title {
-            font-size: 1em;
-            font-weight: bold;
-            color: #2e7d32;
-            margin-bottom: 14px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e8f0e8;
-        }
-
-        /* Chart card */
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            padding: 22px 24px;
-            margin-bottom: 24px;
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 18px;
-        }
-
+        /* Charts */
+        .filter-row { display: flex; gap: 6px; margin-bottom: 18px; }
         .filter-btn {
-            padding: 7px 18px;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 6px;
-            font-size: 0.88em;
-            cursor: pointer;
-            color: #555;
-            transition: all 0.2s;
+            padding: 6px 16px; border: 1px solid #e0e0e0; background: white;
+            border-radius: 6px; font-size: 0.83em; font-weight: 500;
+            cursor: pointer; color: #666; transition: all 0.18s;
+            font-family: 'DM Sans', sans-serif;
         }
-
+        .filter-btn:hover { border-color: #4CAF50; color: #2e7d32; }
         .filter-btn.active {
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            color: white;
-            border-color: transparent;
+            background: #2e7d32; color: white; border-color: #2e7d32;
+        }
+        .filter-btn-valor {
+            padding: 6px 16px; border: 1px solid #e0e0e0; background: white;
+            border-radius: 6px; font-size: 0.83em; font-weight: 500;
+            cursor: pointer; color: #666; transition: all 0.18s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .filter-btn-valor:hover { border-color: #4CAF50; color: #2e7d32; }
+        .filter-btn-valor.active {
+            background: #2e7d32; color: white; border-color: #2e7d32;
         }
 
         /* Users table */
-        .users-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9em;
-        }
-
+        .users-table { width: 100%; border-collapse: collapse; font-size: 0.86em; }
         .users-table th {
-            background: #f8faf8;
-            color: #2e7d32;
-            padding: 10px 14px;
-            text-align: left;
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
+            background: #fafafa; color: #aaa; padding: 9px 12px;
+            text-align: left; font-size: 0.72em; text-transform: uppercase;
+            letter-spacing: 0.5px; font-weight: 600; border-bottom: 1px solid #f0f0f0;
         }
-
-        .users-table td {
-            padding: 10px 14px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #444;
-        }
-
+        .users-table td { padding: 10px 12px; border-bottom: 1px solid #f5f5f5; color: #444; }
         .users-table tr:last-child td { border-bottom: none; }
+        .users-table tr:hover td { background: #fafff9; }
 
         .badge-admin {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.82em;
-            font-weight: bold;
+            background: #e8f5e9; color: #2e7d32; padding: 3px 10px;
+            border-radius: 10px; font-size: 0.8em; font-weight: 600;
         }
-
         .badge-user {
-            background: #f5f5f5;
-            color: #777;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.82em;
+            background: #f5f5f5; color: #999; padding: 3px 10px;
+            border-radius: 10px; font-size: 0.8em;
         }
-
-        /* Add user form */
-        .add-user-form {
-            display: none;
-            margin-top: 18px;
-            padding-top: 18px;
-            border-top: 1px solid #e8f0e8;
-        }
-
-        .add-user-form.visible { display: block; }
-
-        .form-row { display: flex; gap: 12px; align-items: flex-end; }
-        .form-row .field { flex: 1; }
-
-        .add-user-form label {
-            font-size: 0.85em;
-            font-weight: bold;
-            color: #555;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .add-user-form input[type="text"],
-        .add-user-form input[type="password"] {
-            width: 100%;
-            padding: 9px 11px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.92em;
-        }
-
-        .btn-add {
-            padding: 9px 20px;
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.92em;
-            font-weight: bold;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .btn-add:hover { opacity: 0.9; }
-
-        /* Toggle switch */
-        .toggle-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .toggle-label { font-size: 0.9em; color: #555; font-weight: bold; }
-
-        .toggle {
-            position: relative;
-            width: 46px;
-            height: 24px;
-        }
-
-        .toggle input { opacity: 0; width: 0; height: 0; }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            inset: 0;
-            background: #ccc;
-            border-radius: 24px;
-            transition: 0.3s;
-        }
-
-        .slider:before {
-            content: '';
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            left: 3px;
-            bottom: 3px;
-            background: white;
-            border-radius: 50%;
-            transition: 0.3s;
-        }
-
-        input:checked + .slider { background: #4CAF50; }
-        input:checked + .slider:before { transform: translateX(22px); }
-
         .delete-user-btn {
-            background: none;
-            border: none;
-            color: #e53935;
-            cursor: pointer;
-            font-size: 1em;
-            padding: 0;
-            transition: transform 0.2s;
+            background: none; border: none; color: #ccc;
+            cursor: pointer; font-size: 1em; padding: 0; transition: color 0.15s;
         }
+        .delete-user-btn:hover { color: #e53935; }
 
-        .delete-user-btn:hover { transform: scale(1.2); }
-
-        /* Admin toggle btn in table */
-        .admin-toggle {
-            position: relative;
-            width: 36px;
-            height: 20px;
-            display: inline-block;
-        }
-
+        .admin-toggle { position: relative; width: 34px; height: 18px; display: inline-block; }
         .admin-toggle input { opacity: 0; width: 0; height: 0; }
-
         .admin-slider {
-            position: absolute;
-            cursor: pointer;
-            inset: 0;
-            background: #ccc;
-            border-radius: 20px;
-            transition: 0.3s;
+            position: absolute; cursor: pointer; inset: 0;
+            background: #ddd; border-radius: 18px; transition: 0.25s;
         }
-
         .admin-slider:before {
-            content: '';
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            left: 3px;
-            bottom: 3px;
-            background: white;
-            border-radius: 50%;
-            transition: 0.3s;
+            content: ''; position: absolute; width: 12px; height: 12px;
+            left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s;
         }
-
         input:checked + .admin-slider { background: #4CAF50; }
         input:checked + .admin-slider:before { transform: translateX(16px); }
 
+        /* Org info card */
+        .org-info-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px;
+        }
+        .org-info-item { font-size: 0.88em; color: #555; }
+        .org-info-item span { display: block; font-size: 0.72em; color: #bbb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .org-info-item strong { color: #1a1a1a; font-weight: 600; }
+
+        /* Add user form */
+        .toggle-wrapper { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .toggle-label { font-size: 0.88em; color: #666; font-weight: 500; }
+        .toggle { position: relative; width: 44px; height: 22px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: #ddd; border-radius: 22px; transition: 0.25s;
+        }
+        .slider:before {
+            content: ''; position: absolute; width: 16px; height: 16px;
+            left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s;
+        }
+        input:checked + .slider { background: #4CAF50; }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .add-user-form { display: none; margin-top: 18px; padding-top: 18px; border-top: 1px solid #f0f0f0; }
+        .add-user-form.visible { display: block; }
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .form-grid-2 .full { grid-column: 1 / -1; }
+        .add-user-form label { font-size: 0.8em; font-weight: 600; color: #666; display: block; margin-bottom: 4px; }
+        .add-user-form input[type="text"],
+        .add-user-form input[type="password"],
+        .add-user-form input[type="email"],
+        .add-user-form input[type="tel"] {
+            width: 100%; padding: 9px 11px; border: 1px solid #e0e0e0;
+            border-radius: 6px; font-size: 0.9em; font-family: 'DM Sans', sans-serif;
+            color: #1a1a1a; transition: border-color 0.18s;
+        }
+        .add-user-form input:focus { outline: none; border-color: #4CAF50; }
+        .form-footer-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+        .btn-add {
+            padding: 9px 20px; background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white; border: none; border-radius: 6px;
+            font-size: 0.88em; font-weight: 600; cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-add:hover { opacity: 0.9; }
+
         footer {
-            text-align: center;
-            padding: 10px;
-            background: #2e7d32;
-            color: rgba(255,255,255,0.8);
-            font-size: 12px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+            text-align: center; padding: 10px; background: #2e7d32;
+            color: rgba(255,255,255,0.8); font-size: 12px;
+            position: fixed; bottom: 0; width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .actions-grid { grid-template-columns: 1fr; }
+            .tabs { flex-wrap: wrap; }
+            .profile-banner .org-tag { display: none; }
+            .form-grid-2 { grid-template-columns: 1fr; }
+            .form-grid-2 .full { grid-column: 1; }
+            .org-info-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <div class="page-header">
+<div class="page-header">
+    <div>
+        <div class="subtitle">{{ org_nome }}</div>
+        <h1>Perfil</h1>
+    </div>
+    <a href="/">← Voltar ao Mapa</a>
+</div>
+
+<div class="content">
+
+    <div class="profile-banner">
+        <div class="avatar">👤</div>
         <div>
-            <div class="subtitle">Gestão de Serviços</div>
-            <h1>Perfil</h1>
+            <h2>{{ user.nome_completo or user.nome }}</h2>
+            <p>{{ user.cargo or ('Administrador' if user.is_admin else 'Utilizador') }}</p>
+            {% if user.email %}
+            <p style="margin-top:4px; font-size:0.8em; opacity:0.7;">✉️ {{ user.email }}</p>
+            {% endif %}
         </div>
-        <a href="/">← Voltar ao Mapa</a>
+        <div class="org-tag">🏢 {{ org_nome }}</div>
     </div>
 
-    <div class="content">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('perfil', this)">👤 Perfil</button>
+        {% if user.is_admin %}
+        <button class="tab-btn" onclick="switchTab('grafico', this)">📊 Gráfico</button>
+        <button class="tab-btn" onclick="switchTab('admin', this)">🛠️ Admin</button>
+        {% endif %}
+    </div>
 
-        <!-- Profile Card -->
-        <div class="profile-card">
-            <div class="profile-top">
-                <div class="avatar">👤</div>
-                <div>
-                    <h2>{{ user.nome }}</h2>
-                    <p>{{ 'Administrador' if user.nome in ['admin123456', 'miguel.pereira'] or user.is_admin else 'Utilizador' }}</p>
-                </div>
+    <!-- Tab: Perfil -->
+    <div class="tab-panel active" id="tab-perfil">
+        <div class="card">
+            <div class="section-title">Informações</div>
+            <div class="profile-row">
+                <span>Nome de utilizador</span>
+                <strong>{{ user.nome }}</strong>
             </div>
-            <div class="profile-body">
-                <div class="profile-row">
-                    <span>Nome de utilizador</span>
-                    <strong>{{ user.nome }}</strong>
-                </div>
-                <div class="profile-row">
-                    <span>Permissões</span>
-                    <strong>{{ 'Administrador' if user.nome in ['admin123456', 'miguel.pereira'] or user.is_admin else 'Utilizador' }}</strong>
-                </div>
-                <div class="profile-row">
-                    <span>Estado</span>
-                    <strong style="color:#4CAF50;">● Ativo</strong>
-                </div>
-                <a href="/ferias" style="display:block; width:100%; padding:11px; margin-top:10px; background:linear-gradient(135deg,#2e7d32,#4CAF50); color:white; border-radius:8px; font-size:0.95em; font-weight:bold; text-align:center; text-decoration:none;">
-    🏖️ Férias
-</a>
-                <a href="/faturas" style="display:block; width:100%; padding:11px; margin-top:10px; background:linear-gradient(135deg,#2e7d32,#4CAF50); color:white; border-radius:8px; font-size:0.95em; font-weight:bold; text-align:center; text-decoration:none;">
-    🧾 As Minhas Faturas
-</a>
-                <a class="btn-logout" href="/logout">🚪 Terminar Sessão</a>
+            {% if user.nome_completo %}
+            <div class="profile-row">
+                <span>Nome completo</span>
+                <strong>{{ user.nome_completo }}</strong>
+            </div>
+            {% endif %}
+            {% if user.email %}
+            <div class="profile-row">
+                <span>Email</span>
+                <strong>{{ user.email }}</strong>
+            </div>
+            {% endif %}
+            {% if user.telefone %}
+            <div class="profile-row">
+                <span>Telemóvel</span>
+                <strong>{{ user.telefone }}</strong>
+            </div>
+            {% endif %}
+            {% if user.cargo %}
+            <div class="profile-row">
+                <span>Cargo</span>
+                <strong>{{ user.cargo }}</strong>
+            </div>
+            {% endif %}
+            <div class="profile-row">
+                <span>Permissões</span>
+                <strong>{{ 'Administrador' if user.is_admin else 'Utilizador' }}</strong>
+            </div>
+            <div class="profile-row">
+                <span>Estado</span>
+                <strong style="color:#4CAF50;">● Ativo</strong>
             </div>
         </div>
 
-        {% if user.nome in ['admin123456', 'miguel.pereira'] or user.is_admin %}
-
-        <!-- Chart Card -->
+        {% if user.is_admin and org %}
         <div class="card">
-            <div class="section-title">📊 Instalações Registadas</div>
+            <div class="section-title">Organização</div>
+            <div class="org-info-grid">
+                <div class="org-info-item">
+                    <span>Nome</span>
+                    <strong>{{ org.nome or '—' }}</strong>
+                </div>
+                <div class="org-info-item">
+                    <span>País</span>
+                    <strong>{{ org.pais or '—' }}</strong>
+                </div>
+                <div class="org-info-item">
+                    <span>Telefone</span>
+                    <strong>{{ org.telefone or '—' }}</strong>
+                </div>
+                <div class="org-info-item">
+                    <span>Criada em</span>
+                    <strong>{{ org.created_at or '—' }}</strong>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="section-title">Acesso Rápido</div>
+            <div class="actions-grid">
+                <a href="/orcamentos" class="action-btn blue">
+                    <div class="icon">📋</div>
+                    <span>Orçamentos</span>
+                </a>
+                <a href="/horas" class="action-btn green">
+                    <div class="icon">⏱</div>
+                    <span>Horas de Trabalho</span>
+                </a>
+                <a href="/ferias" class="action-btn teal">
+                    <div class="icon">🏖️</div>
+                    <span>Férias</span>
+                </a>
+                <a href="/faturas" class="action-btn green">
+                    <div class="icon">🧾</div>
+                    <span>As Minhas Faturas</span>
+                </a>
+            </div>
+            <a class="btn-logout" href="/logout">
+                <div class="icon">🚪</div>
+                <span>Terminar Sessão</span>
+            </a>
+        </div>
+    </div>
+
+    {% if user.is_admin %}
+
+    <!-- Tab: Gráfico -->
+    <div class="tab-panel" id="tab-grafico">
+
+        <!-- Clientes chart -->
+        <div class="card">
+            <div class="section-title">Número de Clientes</div>
             <div class="filter-row">
                 <button class="filter-btn active" onclick="filtrarGrafico('dia', this)">Por Dia</button>
                 <button class="filter-btn" onclick="filtrarGrafico('mes', this)">Por Mês</button>
                 <button class="filter-btn" onclick="filtrarGrafico('ano', this)">Por Ano</button>
             </div>
+            <div id="metaInstCard" style="display:none; background:#f0f7f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
+                <div>
+                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div>
+                    <div style="font-size:1.05em; font-weight:700; color:#555;" id="metaInstBase">—</div>
+                </div>
+                <div style="font-size:1.1em; color:#ddd;">→</div>
+                <div>
+                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Meta</div>
+                    <div style="font-size:1.05em; font-weight:700; color:#fd7e14;" id="metaInstMeta">—</div>
+                </div>
+                <div style="font-size:1.1em; color:#ddd;">→</div>
+                <div>
+                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mês Atual</div>
+                    <div style="font-size:1.05em; font-weight:700; color:#2e7d32;" id="metaInstAtual">—</div>
+                </div>
+                <div style="flex:1; min-width:160px;">
+                    <div style="background:#e0e0e0; border-radius:20px; height:8px; overflow:hidden; margin-bottom:5px;">
+                        <div id="metaInstBar" style="height:100%; background:linear-gradient(135deg,#2e7d32,#4CAF50); border-radius:20px; transition:width 0.6s; width:0%;"></div>
+                    </div>
+                    <div style="font-size:0.78em; color:#888;" id="metaInstPct">—</div>
+                </div>
+                <div id="metaInstBadge" style="padding:5px 12px; border-radius:16px; font-size:0.78em; font-weight:600; white-space:nowrap;">—</div>
+            </div>
             <canvas id="instalacaoChart" height="100"></canvas>
         </div>
 
-        <!-- Users Card -->
+        <!-- Valor pago chart -->
         <div class="card">
-            <div class="section-title">👥 Utilizadores</div>
+            <div class="section-title">Valor Pago por Clientes</div>
+            <div class="filter-row">
+                <button class="filter-btn-valor active" onclick="filtrarValor('mes', this)">Por Mês</button>
+                <button class="filter-btn-valor" onclick="filtrarValor('ano', this)">Por Ano</button>
+            </div>
+            <div id="metaValCard" style="display:none; background:#e8f0fc; border:1px solid #bbdefb; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
+                <div>
+                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div>
+                    <div style="font-size:1.05em; font-weight:700; color:#555;" id="metaValBase">—</div>
+                </div>
+                <div style="font-size:1.1em; color:#ddd;">→</div>
+                <div>
+                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Meta</div>
+                    <div style="font-size:1.05em; font-weight:700; color:#fd7e14;" id="metaValMeta">—</div>
+                </div>
+                <div style="font-size:1.1em; color:#ddd;">→</div>
+                <div>
+                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mês Atual</div>
+                    <div style="font-size:1.05em; font-weight:700; color:#1565c0;" id="metaValAtual">—</div>
+                </div>
+                <div style="flex:1; min-width:160px;">
+                    <div style="background:#e0e0e0; border-radius:20px; height:8px; overflow:hidden; margin-bottom:5px;">
+                        <div id="metaValBar" style="height:100%; background:linear-gradient(135deg,#1565c0,#1976d2); border-radius:20px; transition:width 0.6s; width:0%;"></div>
+                    </div>
+                    <div style="font-size:0.78em; color:#888;" id="metaValPct">—</div>
+                </div>
+                <div id="metaValBadge" style="padding:5px 12px; border-radius:16px; font-size:0.78em; font-weight:600; white-space:nowrap;">—</div>
+            </div>
+            <canvas id="valorChart" height="100"></canvas>
+        </div>
 
+    </div>
+
+    <!-- Tab: Admin -->
+    <div class="tab-panel" id="tab-admin">
+        <div class="card">
+            <div class="section-title">Utilizadores</div>
             <table class="users-table">
                 <thead>
                     <tr>
-                        <th>Nome</th>
+                        <th>Utilizador</th>
+                        <th>Nome Completo</th>
+                        <th>Email</th>
+                        <th>Telefone</th>
+                        <th>Cargo</th>
                         <th>Permissão</th>
                         <th>Admin</th>
                         <th></th>
@@ -405,16 +462,20 @@
                 <tbody>
                     {% for u in usuarios %}
                     <tr>
-                        <td>{{ u.nome }}</td>
+                        <td><strong>{{ u.nome }}</strong></td>
+                        <td>{{ u.nome_completo or '—' }}</td>
+                        <td>{{ u.email or '—' }}</td>
+                        <td>{{ u.telefone or '—' }}</td>
+                        <td>{{ u.cargo or '—' }}</td>
                         <td>
-                            {% if u.nome in ['admin123456', 'miguel.pereira'] or u.is_admin %}
+                            {% if u.is_admin %}
                                 <span class="badge-admin">Administrador</span>
                             {% else %}
                                 <span class="badge-user">Utilizador</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if u.nome not in ['admin123456', 'miguel.pereira'] %}
+                            {% if u.id != user.id %}
                             <form method="POST" action="/toggle_admin/{{ u.id }}" style="margin:0;">
                                 <label class="admin-toggle">
                                     <input type="checkbox" {{ 'checked' if u.is_admin else '' }} onchange="this.form.submit()">
@@ -426,7 +487,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if u.nome != 'admin123456' and u.id != user.id %}
+                            {% if u.id != user.id %}
                             <form method="POST" action="/delete_user/{{ u.id }}" style="margin:0;">
                                 <button type="button" class="delete-user-btn"
                                     onclick="if(confirm('Remover utilizador {{ u.nome }}?')) this.form.submit()">🗑</button>
@@ -438,7 +499,6 @@
                 </tbody>
             </table>
 
-            <!-- Toggle to show add user form -->
             <div class="toggle-wrapper" style="margin-top:20px;">
                 <label class="toggle">
                     <input type="checkbox" id="addUserToggle" onchange="toggleAddForm(this)">
@@ -449,115 +509,220 @@
 
             <div class="add-user-form" id="addUserForm">
                 <form method="POST" action="/registrar">
-                    <div class="form-row">
-                        <div class="field">
-                            <label>Nome de utilizador</label>
-                            <input type="text" name="nomeForm" placeholder="Nome" required>
+                    <div class="form-grid-2">
+                        <div>
+                            <label>Nome de utilizador *</label>
+                            <input type="text" name="nomeForm" placeholder="nome.utilizador" required>
                         </div>
-                        <div class="field">
-                            <label>Password</label>
+                        <div>
+                            <label>Password *</label>
                             <input type="password" name="senhaForm" placeholder="Password" required>
                         </div>
-                        <div style="display:flex; align-items:flex-end; gap:10px;">
-                            <label style="display:flex; align-items:center; gap:6px; font-size:0.85em; color:#555; margin-bottom:0; padding-bottom:9px;">
-                                <input type="checkbox" name="is_admin"> Admin
-                            </label>
-                            <button type="submit" class="btn-add">+ Criar</button>
+                        <div>
+                            <label>Email</label>
+                            <input type="email" name="emailForm" placeholder="email@empresa.com">
                         </div>
+                        <div>
+                            <label>Telemóvel</label>
+                            <input type="tel" name="telefoneForm" placeholder="9XX XXX XXX">
+                        </div>
+                    </div>
+                    <div class="form-footer-row">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:0.85em; color:#666; font-weight:500;">
+                            <input type="checkbox" name="is_admin"> Administrador
+                        </label>
+                        <button type="submit" class="btn-add">+ Criar utilizador</button>
                     </div>
                 </form>
             </div>
         </div>
-
-        {% endif %}
-
     </div>
 
-    <footer>&copy; MGP Air Switch</footer>
+    {% endif %}
 
-    <script>
-        // Build registos data from Flask
-        const registosData = JSON.parse('{{ registos_json | safe }}'.replace(/&quot;/g, '"'));
-        let chart = null;
+</div>
 
-        function filtrarGrafico(tipo, btn) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+<footer>&copy; {{ org_nome }}</footer>
 
-            const counts = {};
+<script id="registos-data" type="application/json">{{ registos_json | safe }}</script>
 
-            registosData.forEach(r => {
-                if (!r.data_instalacao) return;
-                const parts = r.data_instalacao.split('/');
-                if (parts.length !== 3) return;
-                const [d, m, y] = parts;
+<script>
+    var chartInitialized = false;
+    var chart = null;
+    var valorChart = null;
+    var registosData = JSON.parse(document.getElementById('registos-data').textContent);
 
-                let key;
-                if (tipo === 'dia') key = r.data_instalacao;
-                else if (tipo === 'mes') key = `${m}/${y}`;
-                else key = y;
+    var now = new Date();
+    var currentMonth = now.getMonth() + 1;
+    var currentYear = now.getFullYear();
+    var currentMonthKey = String(currentMonth).padStart(2, '0') + '/' + currentYear;
+    var currentYearKey = String(currentYear);
+    var prevYearMonthKey = String(currentMonth).padStart(2, '0') + '/' + (currentYear - 1);
+    var prevYearKey = String(currentYear - 1);
 
-                counts[key] = (counts[key] || 0) + 1;
-            });
-
-            const labels = Object.keys(counts).sort((a, b) => {
-                const parse = k => {
-                    const p = k.split('/');
-                    if (p.length === 3) return new Date(p[2], p[1]-1, p[0]);
-                    if (p.length === 2) return new Date(p[1], p[0]-1, 1);
-                    return new Date(p[0], 0, 1);
-                };
-                return parse(a) - parse(b);
-            });
-
-            const values = labels.map(l => counts[l]);
-
-            if (chart) chart.destroy();
-
-            const ctx = document.getElementById('instalacaoChart').getContext('2d');
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Instalações',
-                        data: values,
-                        backgroundColor: 'rgba(46, 125, 50, 0.7)',
-                        borderColor: '#2e7d32',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => ` ${ctx.parsed.y} instalação(ões)`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 },
-                            grid: { color: '#f0f0f0' }
-                        },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
+    function holtWinters(ys, horizon) {
+        var n = ys.length;
+        if (n < 2) return new Array(horizon).fill(ys[n-1] || 0);
+        var period = 12, alpha = 0.3, beta = 0.1, gamma = 0.2;
+        if (n < period * 2) {
+            var L = ys[0], T = (ys[n-1] - ys[0]) / (n - 1);
+            for (var i = 1; i < n; i++) { var Lp=L,Tp=T; L=alpha*ys[i]+(1-alpha)*(Lp+Tp); T=beta*(L-Lp)+(1-beta)*Tp; }
+            return Array.from({length:horizon},function(_,h){return Math.max(0,L+T*(h+1));});
         }
+        var L0=0; for(var i=0;i<period;i++)L0+=ys[i]; L0/=period;
+        var T0=0; for(var i=0;i<period;i++)T0+=(ys[period+i]-ys[i])/period; T0/=period;
+        var S=new Array(period).fill(0),numP=Math.floor(n/period);
+        for(var j=0;j<period;j++){for(var p=0;p<numP;p++)S[j]+=ys[p*period+j];S[j]=S[j]/numP-L0;}
+        var Lc=L0,Tc=T0,Sc=S.slice();
+        for(var i=0;i<n;i++){var si=i%period,Lp=Lc,Tp=Tc;Lc=alpha*(ys[i]-Sc[si])+(1-alpha)*(Lp+Tp);Tc=beta*(Lc-Lp)+(1-beta)*Tp;Sc[si]=gamma*(ys[i]-Lp-Tp)+(1-gamma)*Sc[si];}
+        return Array.from({length:horizon},function(_,h){return Math.max(0,Lc+Tc*(h+1)+Sc[(n+h)%period]);});
+    }
 
-        // Init chart on load
-        filtrarGrafico('mes', document.querySelector('.filter-btn.active'));
+    function nextMonthKeys(lastKey,count){var p=lastKey.split('/'),m=parseInt(p[0]),y=parseInt(p[1]),k=[];for(var i=0;i<count;i++){m++;if(m>12){m=1;y++;}k.push(String(m).padStart(2,'0')+'/'+y);}return k;}
+    function nextYearKeys(lastKey,count){var y=parseInt(lastKey),k=[];for(var i=0;i<count;i++){y++;k.push(String(y));}return k;}
 
-        function toggleAddForm(toggle) {
-            const form = document.getElementById('addUserForm');
-            form.classList.toggle('visible', toggle.checked);
+    function sortKeys(keys){
+        return keys.slice().sort(function(a,b){
+            var parse=function(k){var p=k.split('/');if(p.length===3)return new Date(p[2],p[1]-1,p[0]);if(p.length===2)return new Date(p[1],p[0]-1,1);return new Date(p[0],0,1);};
+            return parse(a)-parse(b);
+        });
+    }
+
+    function switchTab(name, btn) {
+        document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.getElementById('tab-' + name).classList.add('active');
+        btn.classList.add('active');
+        if (name === 'grafico' && !chartInitialized) {
+            filtrarGrafico('mes', document.querySelector('#tab-grafico .filter-btn.active'));
+            filtrarValor('mes', document.querySelector('.filter-btn-valor.active'));
+            chartInitialized = true;
         }
-    </script>
+    }
+
+    function calcularMetaInst(counts,tipo){
+        var ck=tipo==='mes'?currentMonthKey:currentYearKey,rk=tipo==='mes'?prevYearMonthKey:prevYearKey;
+        var current=counts[ck]||0;
+        if(counts[rk]===undefined)return null;
+        var base=Math.round(counts[rk]),pct=base>0?Math.round((current/base)*100):100;
+        return{current:current,base:base,meta:base,baseLabel:tipo==='mes'?'mesmo mês '+(currentYear-1):'ano '+(currentYear-1),pct:pct,diff:current-base,achieved:current>=base};
+    }
+
+    function calcularMetaVal(counts,tipo){
+        var ck=tipo==='mes'?currentMonthKey:currentYearKey,rk=tipo==='mes'?prevYearMonthKey:prevYearKey;
+        var current=counts[ck]||0;
+        if(counts[rk]===undefined)return null;
+        var base=parseFloat(counts[rk].toFixed(2)),pct=base>0?(current/base)*100:100,diffPct=base>0?Math.round(((current-base)/base)*100):0;
+        return{current:current,base:base,meta:base,baseLabel:tipo==='mes'?'mesmo mês '+(currentYear-1):'ano '+(currentYear-1),pct:Math.round(pct),diffPct:diffPct,achieved:current>=base};
+    }
+
+    function renderMetaCard(prefix, metaObj, isCurrency) {
+        if (!metaObj) { document.getElementById(prefix+'Card').style.display='none'; return; }
+        var fmt=function(v){return isCurrency?v.toFixed(2)+' €':Math.round(v)+' clientes';};
+        document.getElementById(prefix+'Card').style.display='flex';
+        document.getElementById(prefix+'Base').textContent=fmt(metaObj.base)+' ('+metaObj.baseLabel+')';
+        document.getElementById(prefix+'Meta').textContent=fmt(metaObj.meta);
+        document.getElementById(prefix+'Atual').textContent=fmt(metaObj.current);
+        document.getElementById(prefix+'Bar').style.width=Math.min(metaObj.pct,100)+'%';
+        var badge=document.getElementById(prefix+'Badge'),pctEl=document.getElementById(prefix+'Pct');
+        if(metaObj.achieved){
+            var over=isCurrency?metaObj.diffPct:metaObj.diff;
+            pctEl.textContent=metaObj.pct+'% da meta atingida';pctEl.style.color='#2e7d32';
+            badge.textContent=isCurrency?'Meta superada! +'+over+'%':'Meta superada! +'+over+' clientes';
+            badge.style.background='#e8f5e9';badge.style.color='#2e7d32';
+        }else{
+            pctEl.textContent=metaObj.pct+'% — faltam '+fmt(metaObj.meta-metaObj.current);pctEl.style.color='#e65100';
+            var under=isCurrency?Math.abs(metaObj.diffPct):(metaObj.meta-metaObj.current);
+            if((isCurrency&&under<=10)||(!isCurrency&&under<=1)){badge.textContent='Quase lá!';badge.style.background='#fff3e0';badge.style.color='#e65100';}
+            else if((isCurrency&&under<=25)||(!isCurrency&&under<=3)){badge.textContent='Abaixo da meta';badge.style.background='#fff8e1';badge.style.color='#f57f17';}
+            else{badge.textContent='Vamos lá!';badge.style.background='#f5f5f5';badge.style.color='#888';}
+        }
+    }
+
+    function buildForecast(histLabels,histValues,currentKey,tipo,isInt){
+        if(tipo==='dia'||histLabels.length<2)return null;
+        var trainLabels=histLabels.filter(function(l){return l!==currentKey;});
+        var trainValues=trainLabels.map(function(l){return histValues[histLabels.indexOf(l)];});
+        var hw=holtWinters(trainValues,7);
+        var cf=isInt?Math.max(0,Math.round(hw[0])):Math.max(0,parseFloat(hw[0].toFixed(2)));
+        var nk=tipo==='mes'?nextMonthKeys(currentKey,6):nextYearKeys(currentKey,6);
+        var nf=hw.slice(1).map(function(v){return isInt?Math.max(0,Math.round(v)):Math.max(0,parseFloat(v.toFixed(2)));});
+        return{currentForecast:cf,nextKeys:nk,nextForecasts:nf};
+    }
+
+    function filtrarGrafico(tipo, btn) {
+        document.querySelectorAll('#tab-grafico .filter-btn').forEach(function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        var counts={};
+        registosData.forEach(function(r){
+            if(!r.data_instalacao)return;
+            var parts=r.data_instalacao.split('/');if(parts.length!==3)return;
+            var key=tipo==='dia'?r.data_instalacao:tipo==='mes'?parts[1]+'/'+parts[2]:parts[2];
+            counts[key]=(counts[key]||0)+1;
+        });
+        var ck=tipo==='mes'?currentMonthKey:currentYearKey;
+        var hl=sortKeys(Object.keys(counts)),hv=hl.map(function(l){return counts[l];});
+        var fc=tipo!=='dia'?buildForecast(hl,hv,ck,tipo,true):null;
+        var metaObj=null;
+        if(tipo!=='dia'){
+            metaObj=calcularMetaInst(counts,tipo);
+            if(fc&&metaObj){metaObj.meta=fc.currentForecast;metaObj.pct=metaObj.meta>0?Math.round((metaObj.current/metaObj.meta)*100):100;metaObj.diff=metaObj.current-metaObj.meta;metaObj.achieved=metaObj.current>=metaObj.meta;}
+        }
+        renderMetaCard('metaInst',metaObj,false);
+        var al=hl.concat(fc?fc.nextKeys:[]);
+        var barData=hl.map(function(l){return l===ck?null:counts[l];}).concat(fc?new Array(fc.nextKeys.length).fill(null):[]);
+        var curBar=al.map(function(l){return l===ck?(counts[ck]||0):null;});
+        var fLine=fc?al.map(function(l){if(l===ck)return fc.currentForecast;var i=fc.nextKeys.indexOf(l);return i>=0?fc.nextForecasts[i]:null;}):null;
+        var ds=[
+            {label:'Clientes',data:barData,backgroundColor:'rgba(46,125,50,0.75)',borderColor:'#2e7d32',borderWidth:1,borderRadius:5,order:2},
+            {label:'Mês em curso',data:curBar,backgroundColor:'rgba(253,126,20,0.3)',borderColor:'#fd7e14',borderWidth:1,borderRadius:5,order:2}
+        ];
+        if(fLine)ds.push({label:'Previsão Holt-Winters',data:fLine,type:'line',borderColor:'#fd7e14',backgroundColor:'rgba(253,126,20,0.06)',borderWidth:2,borderDash:[5,4],pointRadius:3,pointBackgroundColor:'#fd7e14',fill:true,tension:0.3,order:0});
+        if(metaObj)ds.push({label:'Meta ('+metaObj.baseLabel+')',data:al.map(function(l){return fc&&fc.nextKeys.indexOf(l)>=0?null:metaObj.meta;}),type:'line',borderColor:'#43a047',borderWidth:1.5,borderDash:[4,3],pointRadius:0,fill:false,tension:0,order:0});
+        if(chart)chart.destroy();
+        chart=new Chart(document.getElementById('instalacaoChart').getContext('2d'),{
+            type:'bar',data:{labels:al,datasets:ds},
+            options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'DM Sans'},boxWidth:16,padding:14}},tooltip:{callbacks:{label:function(c){if(c.parsed.y===null)return null;if(c.dataset.label==='Previsão Holt-Winters')return' Previsão: '+c.parsed.y+' clientes';if(c.dataset.label==='Mês em curso')return' Em curso: '+c.parsed.y+' clientes';if(c.dataset.label&&c.dataset.label.startsWith('Meta'))return' Meta: '+c.parsed.y+' clientes';return' '+c.parsed.y+' cliente(s)';}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{family:'DM Sans'}},grid:{color:'#f5f5f5'}},x:{grid:{display:false},ticks:{font:{family:'DM Sans'}}}}}
+        });
+    }
+
+    function filtrarValor(tipo, btn) {
+        document.querySelectorAll('.filter-btn-valor').forEach(function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        var totais={};
+        registosData.forEach(function(r){
+            if(!r.data_instalacao||!r.valor_pago)return;
+            var parts=r.data_instalacao.split('/');if(parts.length!==3)return;
+            var key=tipo==='mes'?parts[1]+'/'+parts[2]:parts[2];
+            totais[key]=(totais[key]||0)+r.valor_pago;
+        });
+        var ck=tipo==='mes'?currentMonthKey:currentYearKey;
+        var hl=sortKeys(Object.keys(totais)),hv=hl.map(function(l){return parseFloat(totais[l].toFixed(2));});
+        var fc=buildForecast(hl,hv,ck,tipo,false);
+        var metaObj=calcularMetaVal(totais,tipo);
+        if(fc&&metaObj){metaObj.meta=fc.currentForecast;metaObj.pct=metaObj.meta>0?Math.round((metaObj.current/metaObj.meta)*100):100;metaObj.diffPct=metaObj.meta>0?Math.round(((metaObj.current-metaObj.meta)/metaObj.meta)*100):0;metaObj.achieved=metaObj.current>=metaObj.meta;}
+        renderMetaCard('metaVal',metaObj,true);
+        var al=hl.concat(fc?fc.nextKeys:[]);
+        var barData=hl.map(function(l){return l===ck?null:parseFloat(totais[l].toFixed(2));}).concat(fc?new Array(fc.nextKeys.length).fill(null):[]);
+        var curBar=al.map(function(l){return l===ck?parseFloat((totais[ck]||0).toFixed(2)):null;});
+        var fLine=fc?al.map(function(l){if(l===ck)return fc.currentForecast;var i=fc.nextKeys.indexOf(l);return i>=0?fc.nextForecasts[i]:null;}):null;
+        var ds=[
+            {label:'Valor Pago (€)',data:barData,backgroundColor:'rgba(21,101,192,0.75)',borderColor:'#1565c0',borderWidth:1,borderRadius:5,order:2},
+            {label:'Mês em curso',data:curBar,backgroundColor:'rgba(253,126,20,0.3)',borderColor:'#fd7e14',borderWidth:1,borderRadius:5,order:2}
+        ];
+        if(fLine)ds.push({label:'Previsão Holt-Winters',data:fLine,type:'line',borderColor:'#fd7e14',backgroundColor:'rgba(253,126,20,0.06)',borderWidth:2,borderDash:[5,4],pointRadius:3,pointBackgroundColor:'#fd7e14',fill:true,tension:0.3,order:0});
+        if(metaObj)ds.push({label:'Meta ('+metaObj.baseLabel+')',data:al.map(function(l){return fc&&fc.nextKeys.indexOf(l)>=0?null:parseFloat(metaObj.meta.toFixed(2));}),type:'line',borderColor:'#1565c0',borderWidth:1.5,borderDash:[4,3],pointRadius:0,fill:false,tension:0,order:0});
+        if(valorChart)valorChart.destroy();
+        valorChart=new Chart(document.getElementById('valorChart').getContext('2d'),{
+            type:'bar',data:{labels:al,datasets:ds},
+            options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'DM Sans'},boxWidth:16,padding:14}},tooltip:{callbacks:{label:function(c){if(c.parsed.y===null)return null;if(c.dataset.label==='Previsão Holt-Winters')return' Previsão: '+c.parsed.y.toFixed(2)+' €';if(c.dataset.label==='Mês em curso')return' Em curso: '+c.parsed.y.toFixed(2)+' €';if(c.dataset.label&&c.dataset.label.startsWith('Meta'))return' Meta: '+c.parsed.y.toFixed(2)+' €';return' '+c.parsed.y.toFixed(2)+' €';}}}},scales:{y:{beginAtZero:true,grid:{color:'#f5f5f5'},ticks:{callback:function(v){return v.toFixed(0)+' €';},font:{family:'DM Sans'}}},x:{grid:{display:false},ticks:{font:{family:'DM Sans'}}}}}
+        });
+    }
+
+    function toggleAddForm(toggle) {
+        document.getElementById('addUserForm').classList.toggle('visible', toggle.checked);
+    }
+</script>
 
 </body>
 </html>

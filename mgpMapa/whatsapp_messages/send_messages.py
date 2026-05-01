@@ -1,20 +1,18 @@
 import requests
-import json
 
 url = "https://graph.facebook.com/v22.0/523539340842961/messages"
 
 headers = {
-    "Authorization": "Bearer EAAMQSMOnEykBRdd5EFQ5HFCrncxKwKrEXO6ubSXuOoXIX1OXtgopkTz0sTVEVCpyF198I0O5lO1Mia0B4pm811tOYuT0ZCWw83bV7YI6eUfQcyv9S3lvysRvtUXw2H1GygRMncZAovzEE6rhO3XeY1YZCgm3bPZC5QjmuZC2S3ZC8sBZC8AOi540BEAWZAxX0CrvDpguoQUjkW7LmQytLEHALSV00OxZASDlDsfIn9XpjBAkMGtSEr832OtUv7Phs4cmBptn5asBD3srAgcBt2wjF4YU3",
+    "Authorization": "Bearer EAAMQSMOnEykBRfN4eBE8vE1BCqR7h2XZBNsjIcK4Xw4yJ6WbznZCtQpXZBKwltRGAItX8LHM7dEpI2MoUiGJi9icpk0VGHeFMLstQD13KYyXcc2VPZAlpm3aHnCO44Yzk6HB7mMDQt7ZBo4PG6DBeASqV7tMm28nzlH2oBnCCzZCthWeGwI0bBK7kuN0IJNCCIDIz03EkrbU11TsGmDPJRnUHrpEE2RMh6wBZA2P8Rc5rZCL8OeAxgQFbyd79A8oyjgNRLC6I9WbvaMoZAmrwPcCg7OdU",
     "Content-Type": "application/json"
 }
 
 payload = {
-    "messaging_product": "test",
+    "messaging_product": "whatsapp",  # ← fix here
     "to": "351967592167",
-    "type": "template",
-    "template": {
-        "name": "hello_world",
-        "language": { "code": "en_US" }
+    "type": "text",
+    "text": {
+        "body": "Olá! Esta é uma mensagem de teste."
     }
 }
 

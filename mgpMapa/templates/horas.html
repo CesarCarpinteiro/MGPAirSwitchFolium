@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horas de Trabalho</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .page-header a {
+            padding: 9px 20px; background: white; color: #2e7d32;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em;
+            font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .page-header a:hover { background: #f0f0f0; }
+
+        .content { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+
+        .card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 22px 24px; margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 1em; font-weight: bold; color: #2e7d32;
+            margin-bottom: 16px; padding-bottom: 8px;
+            border-bottom: 2px solid #e8f0e8;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .month-nav {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+        }
+        .month-nav a {
+            padding: 7px 14px; background: #f0f0f0; color: #333;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em;
+            transition: background 0.2s;
+        }
+        .month-nav a:hover { background: #ddd; }
+        .month-nav .current-month {
+            font-weight: bold; font-size: 1.1em; color: #2e7d32;
+            min-width: 140px; text-align: center;
+        }
+
+        .add-form {
+            display: grid;
+            grid-template-columns: 60px 80px 80px 80px 80px 1fr 1fr auto;
+            gap: 8px; align-items: end; margin-bottom: 20px;
+        }
+
+        .add-form label {
+            font-size: 0.78em; font-weight: bold; color: #666;
+            display: block; margin-bottom: 4px;
+        }
+
+        .add-form input, .add-form select {
+            width: 100%; padding: 8px 10px;
+            border: 1px solid #ddd; border-radius: 6px;
+            font-size: 0.9em; outline: none;
+        }
+
+        .add-form input:focus, .add-form select:focus { border-color: #4CAF50; }
+
+        .btn-green {
+            padding: 9px 18px;
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            color: white; border: none; border-radius: 6px;
+            font-size: 0.9em; font-weight: bold; cursor: pointer;
+            white-space: nowrap; height: 36px;
+        }
+        .btn-green:hover { opacity: 0.9; }
+
+        .hours-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+
+        .hours-table th {
+            background: #f8faf8; color: #2e7d32; padding: 10px 12px;
+            text-align: left; font-size: 0.82em; text-transform: uppercase;
+            letter-spacing: 0.4px; white-space: nowrap;
+        }
+
+        .hours-table td {
+            padding: 9px 12px; border-bottom: 1px solid #f0f0f0;
+            color: #444; vertical-align: middle;
+        }
+
+        .hours-table tr:last-child td { border-bottom: none; }
+        .hours-table tr:hover td { background: #fafff8; }
+
+        .hours-table input[type="number"],
+        .hours-table input[type="text"] {
+            width: 100%; padding: 5px 8px; border: 1px solid #ddd;
+            border-radius: 5px; font-size: 0.88em; background: #fafafa;
+        }
+
+        .hours-table input:focus { border-color: #4CAF50; outline: none; background: white; }
+
+        .total-cell { font-weight: bold; color: #2e7d32; }
+
+        .btn-save {
+            padding: 5px 12px; background: #2e7d32; color: white;
+            border: none; border-radius: 5px; font-size: 0.82em;
+            cursor: pointer; margin-right: 4px;
+        }
+        .btn-save:hover { background: #1b5e20; }
+
+        .btn-delete {
+            background: none; border: none; color: #e53935;
+            cursor: pointer; font-size: 1em; padding: 0;
+            transition: transform 0.2s;
+        }
+        .btn-delete:hover { transform: scale(1.2); }
+
+        .day-badge {
+            background: #e8f5e9; color: #2e7d32; font-weight: bold;
+            padding: 3px 10px; border-radius: 10px; font-size: 0.85em;
+        }
+
+        .user-badge {
+            background: #f0f0f0; color: #555; padding: 3px 10px;
+            border-radius: 10px; font-size: 0.82em;
+        }
+
+        .summary-row td {
+            background: #f8faf8; font-weight: bold;
+            color: #2e7d32; border-top: 2px solid #c8e6c9;
+        }
+
+        .empty-state {
+            text-align: center; padding: 40px 20px;
+            color: #aaa; font-size: 0.95em;
+        }
+
+        .admin-filter {
+            display: flex; gap: 8px; align-items: center;
+            margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .admin-filter label { font-size: 0.85em; color: #555; font-weight: bold; }
+        .admin-filter select {
+            padding: 6px 10px; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 0.88em; outline: none;
+        }
+
+        footer {
+            text-align: center; padding: 10px; background: #2e7d32;
+            color: rgba(255,255,255,0.8); font-size: 12px;
+            position: fixed; bottom: 0; width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .add-form { grid-template-columns: 1fr 1fr; }
+            .hours-table { font-size: 0.8em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <div>
+        <div class="subtitle">Gestão de Serviços</div>
+        <h1>⏱ Horas de Trabalho</h1>
+    </div>
+    <a href="/perfil">← Voltar ao Perfil</a>
+</div>
+
+<div class="content">
+
+    {% set prev_mes = mes - 1 if mes > 1 else 12 %}
+    {% set prev_ano = ano if mes > 1 else ano - 1 %}
+    {% set next_mes = mes + 1 if mes < 12 else 1 %}
+    {% set next_ano = ano if mes < 12 else ano + 1 %}
+    {% set meses_nomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] %}
+
+    <div class="month-nav">
+        <a href="/horas?mes={{ prev_mes }}&ano={{ prev_ano }}">← {{ meses_nomes[prev_mes] }}</a>
+        <div class="current-month">{{ meses_nomes[mes] }} {{ ano }}</div>
+        <a href="/horas?mes={{ next_mes }}&ano={{ next_ano }}">{{ meses_nomes[next_mes] }} →</a>
+    </div>
+
+    <div class="card">
+        <div class="section-title">
+            <span>📋 Registar Horas</span>
+            <div style="display:flex; gap:8px;">
+                <button onclick="exportPDF()" class="btn-green" style="font-size:0.85em; padding:7px 14px;">🖨️ Exportar PDF</button>
+                <button onclick="exportPDFMes()" class="btn-green" style="font-size:0.85em; padding:7px 14px; background: linear-gradient(135deg, #1565c0, #1976d2);">📅 Exportar Mês Completo</button>
+            </div>
+        </div>
+
+        <form method="POST" action="/horas/add">
+            <input type="hidden" name="mes" value="{{ mes }}">
+            <input type="hidden" name="ano" value="{{ ano }}">
+            <div class="add-form">
+                <div>
+                    <label>Dia</label>
+                    <select name="dia">
+                        {% for d in range(1, 32) %}
+                        <option value="{{ d }}" {{ 'selected' if d == today_dia else '' }}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Manhã (h)</label>
+                    <input type="number" name="manha" min="0" max="12" step="0.5" value="0">
+                </div>
+                <div>
+                    <label>Tarde (h)</label>
+                    <input type="number" name="tarde" min="0" max="12" step="0.5" value="0">
+                </div>
+                <div>
+                    <label>Extra (h)</label>
+                    <input type="number" name="extra" min="0" max="12" step="0.5" value="0">
+                </div>
+                <div>
+                    <label>Total</label>
+                    <input type="number" id="totalDisplay" readonly value="0" style="background:#f0f0f0; color:#2e7d32; font-weight:bold;">
+                </div>
+                <div>
+                    <label>Local</label>
+                    <input type="text" name="local" placeholder="Ex: Guimarães">
+                </div>
+                <div>
+                    <label>Observações</label>
+                    <input type="text" name="observacoes" placeholder="Opcional">
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-green">+ Adicionar</button>
+                </div>
+            </div>
+        </form>
+
+        {% if is_admin %}
+        <div class="admin-filter">
+            <label>Filtrar por utilizador:</label>
+            <select id="userFilter" onchange="filterByUser(this.value)">
+                <option value="all">Todos</option>
+                {% for u in usuarios %}
+                <option value="{{ u.nome }}">{{ u.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        {% if registos %}
+        <table class="hours-table" id="hoursTable">
+            <thead>
+                <tr>
+                    <th>Dia</th>
+                    {% if is_admin %}<th>Funcionário</th>{% endif %}
+                    <th>Manhã (h)</th>
+                    <th>Tarde (h)</th>
+                    <th>Extra (h)</th>
+                    <th>Total (h)</th>
+                    <th>Local</th>
+                    <th>Observações</th>
+                    <th>Guardar</th>
+                    <th>Apagar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set total_manha = namespace(v=0) %}
+                {% set total_tarde = namespace(v=0) %}
+                {% set total_extra = namespace(v=0) %}
+                {% set total_total = namespace(v=0) %}
+
+                {% for r in registos %}
+                {% set total_manha.v = total_manha.v + r.manha %}
+                {% set total_tarde.v = total_tarde.v + r.tarde %}
+                {% set total_extra.v = total_extra.v + r.extra %}
+                {% set total_total.v = total_total.v + r.total %}
+                <tr data-user="{{ r.user_nome }}">
+                    <td><span class="day-badge">{{ r.dia }}</span></td>
+                    {% if is_admin %}<td><span class="user-badge">{{ r.user_nome }}</span></td>{% endif %}
+                    <form method="POST" action="/horas/edit/{{ r.id }}" id="form-{{ r.id }}">
+                        <td><input type="number" name="manha" value="{{ r.manha }}" min="0" max="12" step="0.5" onchange="recalcTotal('{{ r.id }}')"></td>
+                        <td><input type="number" name="tarde" value="{{ r.tarde }}" min="0" max="12" step="0.5" onchange="recalcTotal('{{ r.id }}')"></td>
+                        <td><input type="number" name="extra" value="{{ r.extra }}" min="0" max="12" step="0.5" onchange="recalcTotal('{{ r.id }}')"></td>
+                        <td class="total-cell" id="total-{{ r.id }}">{{ r.total }}h</td>
+                        <td><input type="text" name="local" value="{{ r.local }}"></td>
+                        <td><input type="text" name="observacoes" value="{{ r.observacoes }}"></td>
+                        <td><button type="submit" class="btn-save">💾 Guardar</button></td>
+                    </form>
+                    <td>
+                        <form method="POST" action="/horas/delete/{{ r.id }}" style="display:inline;">
+                            <button type="button" class="btn-delete"
+                                onclick="if(confirm('Remover dia {{ r.dia }}?')) this.form.submit()">🗑</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                <tr class="summary-row">
+                    <td>Total</td>
+                    {% if is_admin %}<td></td>{% endif %}
+                    <td>{{ total_manha.v }}h</td>
+                    <td>{{ total_tarde.v }}h</td>
+                    <td>{{ total_extra.v }}h</td>
+                    <td>{{ total_total.v }}h</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            📭 Sem registos para {{ meses_nomes[mes] }} {{ ano }}. Adiciona o primeiro acima!
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<footer>&copy; {{ org_nome }}</footer>
+
+<script>
+    // Auto-calculate total in add form
+    ['manha', 'tarde', 'extra'].forEach(function(f) {
+        document.querySelector('input[name="' + f + '"]').addEventListener('input', function() {
+            var m = parseFloat(document.querySelector('input[name="manha"]').value) || 0;
+            var t = parseFloat(document.querySelector('input[name="tarde"]').value) || 0;
+            var e = parseFloat(document.querySelector('input[name="extra"]').value) || 0;
+            document.getElementById('totalDisplay').value = (m + t + e).toFixed(1);
+        });
+    });
+
+    // Recalc total in edit rows
+    function recalcTotal(id) {
+        var form = document.getElementById('form-' + id);
+        var m = parseFloat(form.querySelector('[name="manha"]').value) || 0;
+        var t = parseFloat(form.querySelector('[name="tarde"]').value) || 0;
+        var e = parseFloat(form.querySelector('[name="extra"]').value) || 0;
+        document.getElementById('total-' + id).textContent = (m + t + e).toFixed(1) + 'h';
+    }
+
+    // Admin filter by user
+    function filterByUser(val) {
+        document.querySelectorAll('#hoursTable tbody tr[data-user]').forEach(function(row) {
+            row.style.display = (val === 'all' || row.dataset.user === val) ? '' : 'none';
+        });
+    }
+
+    // --- EXPORT PDF (current view) ---
+    function exportPDF() {
+        var mes = {{ mes }};
+        var ano = {{ ano }};
+        var mesesNomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        var mesNome = mesesNomes[mes];
+        var isAdmin = {{ 'true' if is_admin else 'false' }};
+
+        var rows = [...document.querySelectorAll('#hoursTable tbody tr[data-user]')]
+            .filter(function(r) { return r.style.display !== 'none'; });
+
+        if (rows.length === 0) { alert('Sem registos para exportar.'); return; }
+
+        var userFilter = document.getElementById('userFilter');
+        var filterVal = userFilter ? userFilter.value : 'all';
+        var userName = (isAdmin && filterVal !== 'all') ? filterVal : '{{ current_user.nome }}';
+        var showUserCol = isAdmin && filterVal === 'all';
+
+        var tableRows = '';
+        var totalManha = 0, totalTarde = 0, totalExtra = 0, totalTotal = 0;
+
+        rows.forEach(function(row) {
+            var dia = row.querySelector('.day-badge') ? row.querySelector('.day-badge').textContent.trim() : '';
+            var user = row.querySelector('.user-badge') ? row.querySelector('.user-badge').textContent.trim() : '';
+            var inputs = row.querySelectorAll('input[type="number"]');
+            var manha = parseFloat(inputs[0] ? inputs[0].value : 0) || 0;
+            var tarde = parseFloat(inputs[1] ? inputs[1].value : 0) || 0;
+            var extra = parseFloat(inputs[2] ? inputs[2].value : 0) || 0;
+            var total = manha + tarde + extra;
+            var textInputs = row.querySelectorAll('input[type="text"]');
+            var local = textInputs[0] ? textInputs[0].value : '';
+            var obs = textInputs[1] ? textInputs[1].value : '';
+
+            totalManha += manha;
+            totalTarde += tarde;
+            totalExtra += extra;
+            totalTotal += total;
+
+            tableRows += '<tr>' +
+                '<td>' + dia + '</td>' +
+                (showUserCol ? '<td>' + user + '</td>' : '') +
+                '<td>' + manha + 'h</td>' +
+                '<td>' + tarde + 'h</td>' +
+                '<td>' + extra + 'h</td>' +
+                '<td><strong>' + total.toFixed(1) + 'h</strong></td>' +
+                '<td>' + local + '</td>' +
+                '<td>' + obs + '</td>' +
+                '</tr>';
+        });
+
+        var userColHeader = showUserCol ? '<th>Funcionário</th>' : '';
+        var userColSummary = showUserCol ? '<td></td>' : '';
+        var subtitle = showUserCol ? 'Todos os funcionários' : 'Funcionário: <strong>' + userName + '</strong>';
+
+        var html = buildPDFHtml({
+            title: '⏱ Horas de Trabalho',
+            subtitle: subtitle,
+            mesNome: mesNome, ano: ano, tableRows: tableRows,
+            totalManha: totalManha, totalTarde: totalTarde,
+            totalExtra: totalExtra, totalTotal: totalTotal,
+            accentColor: '#2e7d32',
+            userColHeader: userColHeader,
+            userColSummary: userColSummary
+        });
+
+        openPrint(html);
+    }
+
+    // --- EXPORT PDF MÊS COMPLETO ---
+    function exportPDFMes() {
+        var mes = {{ mes }};
+        var ano = {{ ano }};
+        var mesesNomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        var mesNome = mesesNomes[mes];
+        var isAdmin = {{ 'true' if is_admin else 'false' }};
+
+        var userFilter = document.getElementById('userFilter');
+        var selectedUser = (isAdmin && userFilter && userFilter.value !== 'all') ? userFilter.value : null;
+
+        var allRows = [...document.querySelectorAll('#hoursTable tbody tr[data-user]')];
+        var users = {};
+
+        allRows.forEach(function(row) {
+            var user = row.dataset.user;
+            if (selectedUser && user !== selectedUser) return;
+            if (!users[user]) users[user] = [];
+            users[user].push(row);
+        });
+
+        if (Object.keys(users).length === 0) { alert('Sem registos para exportar.'); return; }
+
+        var sections = '';
+
+        Object.entries(users).forEach(function(entry) {
+            var userName = entry[0];
+            var rows = entry[1];
+            var tableRows = '';
+            var totalManha = 0, totalTarde = 0, totalExtra = 0, totalTotal = 0;
+
+            rows.forEach(function(row) {
+                var dia = row.querySelector('.day-badge') ? row.querySelector('.day-badge').textContent.trim() : '';
+                var inputs = row.querySelectorAll('input[type="number"]');
+                var manha = parseFloat(inputs[0] ? inputs[0].value : 0) || 0;
+                var tarde = parseFloat(inputs[1] ? inputs[1].value : 0) || 0;
+                var extra = parseFloat(inputs[2] ? inputs[2].value : 0) || 0;
+                var total = manha + tarde + extra;
+                var textInputs = row.querySelectorAll('input[type="text"]');
+                var local = textInputs[0] ? textInputs[0].value : '';
+                var obs = textInputs[1] ? textInputs[1].value : '';
+
+                totalManha += manha;
+                totalTarde += tarde;
+                totalExtra += extra;
+                totalTotal += total;
+
+                tableRows += '<tr>' +
+                    '<td>' + dia + '</td>' +
+                    '<td>' + manha + 'h</td>' +
+                    '<td>' + tarde + 'h</td>' +
+                    '<td>' + extra + 'h</td>' +
+                    '<td><strong>' + total.toFixed(1) + 'h</strong></td>' +
+                    '<td>' + local + '</td>' +
+                    '<td>' + obs + '</td>' +
+                    '</tr>';
+            });
+
+            sections +=
+                '<div class="user-section">' +
+                '<div class="user-title">👤 Funcionário: ' + userName + '</div>' +
+                '<table>' +
+                '<thead><tr><th>Dia</th><th>Manhã</th><th>Tarde</th><th>Extra</th><th>Total</th><th>Local</th><th>Observações</th></tr></thead>' +
+                '<tbody>' +
+                tableRows +
+                '<tr class="summary-row">' +
+                '<td>Total</td>' +
+                '<td>' + totalManha.toFixed(1) + 'h</td>' +
+                '<td>' + totalTarde.toFixed(1) + 'h</td>' +
+                '<td>' + totalExtra.toFixed(1) + 'h</td>' +
+                '<td>' + totalTotal.toFixed(1) + 'h</td>' +
+                '<td></td><td></td>' +
+                '</tr>' +
+                '</tbody></table></div>';
+        });
+
+        var html = '<!DOCTYPE html><html lang="pt"><head>' +
+            '<meta charset="UTF-8">' +
+            '<title>Horas - ' + mesNome + ' ' + ano + '</title>' +
+            '<style>' +
+            '* { box-sizing:border-box; margin:0; padding:0; }' +
+            'body { font-family:Arial,sans-serif; padding:40px; color:#222; }' +
+            '.header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; padding-bottom:16px; border-bottom:3px solid #1565c0; }' +
+            '.header h1 { font-size:1.4em; color:#1565c0; }' +
+            '.header .meta { font-size:0.85em; color:#666; margin-top:4px; }' +
+            '.header .logo { font-size:1.1em; font-weight:bold; color:#1565c0; text-align:right; }' +
+            '.header .logo span { display:block; font-size:0.75em; color:#888; font-weight:normal; }' +
+            '.user-section { margin-bottom:36px; page-break-inside:avoid; }' +
+            '.user-title { font-size:1em; font-weight:bold; color:#1565c0; margin-bottom:10px; padding:8px 12px; background:#e3f2fd; border-left:4px solid #1565c0; border-radius:4px; }' +
+            'table { width:100%; border-collapse:collapse; font-size:0.88em; }' +
+            'th { background:#1565c0; color:white; padding:9px 12px; text-align:left; font-size:0.82em; text-transform:uppercase; letter-spacing:0.4px; }' +
+            'td { padding:8px 12px; border-bottom:1px solid #e0e0e0; color:#333; }' +
+            'tr:nth-child(even) td { background:#f5f9ff; }' +
+            '.summary-row td { background:#e3f2fd; font-weight:bold; color:#1565c0; border-top:2px solid #1565c0; }' +
+            '.footer { margin-top:30px; font-size:0.78em; color:#aaa; text-align:center; border-top:1px solid #eee; padding-top:12px; }' +
+            '@media print { body { padding:20px; } @page { margin:1.5cm; } .user-section { page-break-after:always; } .user-section:last-child { page-break-after:avoid; } }' +
+            '</style></head><body>' +
+            '<div class="header">' +
+            '<div>' +
+            '<h1>📅 Horas de Trabalho — ' + mesNome + ' ' + ano + '</h1>' +
+            '<div class="meta">Período: <strong>' + mesNome + ' ' + ano + '</strong></div>' +
+            '<div class="meta">Gerado em: <strong>' + new Date().toLocaleDateString('pt-PT') + '</strong></div>' +
+            '</div>' +
+            '<div class="logo">M.G.P. Air Switch, Unipessoal, Lda<span>Folha de Ponto</span></div>' +
+            '</div>' +
+            sections +
+            '<div class="footer">{{ org_nome }} &mdash; Documento gerado automaticamente em ' + new Date().toLocaleString('pt-PT') + '</div>' +
+            '</body></html>';
+
+        openPrint(html);
+    }
+
+    // --- Shared helpers ---
+    function buildPDFHtml(opts) {
+        var title = opts.title, subtitle = opts.subtitle, mesNome = opts.mesNome;
+        var ano = opts.ano, tableRows = opts.tableRows;
+        var totalManha = opts.totalManha, totalTarde = opts.totalTarde;
+        var totalExtra = opts.totalExtra, totalTotal = opts.totalTotal;
+        var accentColor = opts.accentColor;
+        var userColHeader = opts.userColHeader || '';
+        var userColSummary = opts.userColSummary || '';
+
+        return '<!DOCTYPE html><html lang="pt"><head>' +
+            '<meta charset="UTF-8">' +
+            '<title>' + title + ' - ' + mesNome + ' ' + ano + '</title>' +
+            '<style>' +
+            '* { box-sizing:border-box; margin:0; padding:0; }' +
+            'body { font-family:Arial,sans-serif; padding:40px; color:#222; }' +
+            '.header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; padding-bottom:16px; border-bottom:3px solid ' + accentColor + '; }' +
+            '.header h1 { font-size:1.4em; color:' + accentColor + '; }' +
+            '.header .meta { font-size:0.85em; color:#666; margin-top:4px; }' +
+            '.header .logo { font-size:1.1em; font-weight:bold; color:' + accentColor + '; text-align:right; }' +
+            '.header .logo span { display:block; font-size:0.75em; color:#888; font-weight:normal; }' +
+            'table { width:100%; border-collapse:collapse; font-size:0.88em; }' +
+            'th { background:' + accentColor + '; color:white; padding:9px 12px; text-align:left; font-size:0.82em; text-transform:uppercase; letter-spacing:0.4px; }' +
+            'td { padding:8px 12px; border-bottom:1px solid #e0e0e0; color:#333; }' +
+            'tr:nth-child(even) td { background:#f9f9f9; }' +
+            '.summary-row td { background:#e8f5e9; font-weight:bold; color:' + accentColor + '; border-top:2px solid ' + accentColor + '; }' +
+            '.footer { margin-top:30px; font-size:0.78em; color:#aaa; text-align:center; border-top:1px solid #eee; padding-top:12px; }' +
+            '@media print { body { padding:20px; } @page { margin:1.5cm; } }' +
+            '</style></head><body>' +
+            '<div class="header">' +
+            '<div>' +
+            '<h1>' + title + '</h1>' +
+            '<div class="meta">' + subtitle + '</div>' +
+            '<div class="meta">Período: <strong>' + mesNome + ' ' + ano + '</strong></div>' +
+            '<div class="meta">Gerado em: <strong>' + new Date().toLocaleDateString('pt-PT') + '</strong></div>' +
+            '</div>' +
+            '<div class="logo">M.G.P. Air Switch, Unipessoal, Lda<span>Folha de Ponto</span></div>' +
+            '</div>' +
+            '<table>' +
+            '<thead><tr>' +
+            '<th>Dia</th>' + userColHeader +
+            '<th>Manhã</th><th>Tarde</th><th>Extra</th>' +
+            '<th>Total</th><th>Local</th><th>Observações</th>' +
+            '</tr></thead>' +
+            '<tbody>' +
+            tableRows +
+            '<tr class="summary-row">' +
+            '<td>Total</td>' + userColSummary +
+            '<td>' + totalManha.toFixed(1) + 'h</td>' +
+            '<td>' + totalTarde.toFixed(1) + 'h</td>' +
+            '<td>' + totalExtra.toFixed(1) + 'h</td>' +
+            '<td>' + totalTotal.toFixed(1) + 'h</td>' +
+            '<td></td><td></td>' +
+            '</tr>' +
+            '</tbody></table>' +
+            '<div class="footer">{{ org_nome }} &mdash; Documento gerado automaticamente em ' + new Date().toLocaleString('pt-PT') + '</div>' +
+            '</body></html>';
+    }
+
+    function openPrint(html) {
+        var win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        win.focus();
+        setTimeout(function() { win.print(); }, 500);
+    }
+</script>
+
+</body>
+</html>

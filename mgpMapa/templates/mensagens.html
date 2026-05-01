@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensagens</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+        .page-header a {
+            padding: 9px 20px;
+            background: white;
+            color: #2e7d32;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        .page-header a:hover { background: #f0f0f0; }
+
+        .content { max-width: 900px; margin: 36px auto; padding: 0 20px; }
+
+        .search-bar {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.92em;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 16px;
+        }
+
+        .msg-card {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 14px 18px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            border-left: 4px solid #25D366;
+        }
+
+        .msg-card.erro { border-left-color: #e53935; }
+        .msg-card.hidden { display: none; }
+
+        .msg-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .msg-dest { font-weight: bold; color: #333; font-size: 0.95em; }
+        .msg-time { font-size: 0.8em; color: #aaa; }
+        .msg-contacto { font-size: 0.82em; color: #888; margin-bottom: 6px; }
+        .msg-body { font-size: 0.9em; color: #555; background: #f8f8f8; padding: 8px 12px; border-radius: 6px; line-height: 1.5; }
+
+        .badge-enviado { background: #e8f5e9; color: #2e7d32; padding: 2px 9px; border-radius: 10px; font-size: 0.78em; font-weight: bold; }
+        .badge-erro { background: #ffebee; color: #c62828; padding: 2px 9px; border-radius: 10px; font-size: 0.78em; font-weight: bold; }
+
+        .user-badge { background: #e8f5e9; color: #2e7d32; padding: 2px 9px; border-radius: 10px; font-size: 0.78em; font-weight: bold; margin-left: 8px; }
+
+        .empty-msg { text-align: center; color: #aaa; padding: 40px 0; font-size: 0.95em; }
+
+        footer { text-align: center; padding: 10px; background: #2e7d32; color: rgba(255,255,255,0.8); font-size: 12px; position: fixed; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <div>
+            <div class="subtitle">Gestão de Serviços</div>
+            <h1>💬 Mensagens Enviadas</h1>
+        </div>
+        <a href="/perfil">← Perfil</a>
+    </div>
+
+    <div class="content">
+        <input class="search-bar" type="text" placeholder="🔍 Pesquisar por destinatário ou mensagem..." oninput="pesquisar(this.value)">
+
+        {% if mensagens %}
+            {% for m, u in mensagens %}
+            <div class="msg-card {{ m.estado }}" data-search="{{ m.destinatario }} {{ m.mensagem }} {{ m.contacto }}">
+                <div class="msg-top">
+                    <div>
+                        <span class="msg-dest">{{ m.destinatario }}</span>
+                        {% if is_admin %}<span class="user-badge">{{ u.nome }}</span>{% endif %}
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        {% if m.estado == 'enviado' %}
+                        <span class="badge-enviado">✅ Enviado</span>
+                        {% else %}
+                        <span class="badge-erro">❌ Erro</span>
+                        {% endif %}
+                        <span class="msg-time">{{ m.created_at }}</span>
+                    </div>
+                </div>
+                <div class="msg-contacto">📞 {{ m.contacto }}</div>
+                <div class="msg-body">{{ m.mensagem }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-msg">Ainda não foram enviadas mensagens.</div>
+        {% endif %}
+
+        <div class="empty-msg" id="noResults" style="display:none;">Nenhuma mensagem encontrada.</div>
+    </div>
+
+    <footer>&copy; {{ org_nome }}</footer>
+
+    <script>
+        function pesquisar(query) {
+            query = query.toLowerCase();
+            const cards = document.querySelectorAll('.msg-card');
+            let visiveis = 0;
+            cards.forEach(card => {
+                const match = card.getAttribute('data-search').toLowerCase().includes(query);
+                card.classList.toggle('hidden', !match);
+                if (match) visiveis++;
+            });
+            document.getElementById('noResults').style.display = visiveis === 0 && cards.length > 0 ? 'block' : 'none';
+        }
+    </script>
+
+</body>
+</html>
