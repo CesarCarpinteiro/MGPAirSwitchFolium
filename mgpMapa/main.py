@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, render_template_string, jsonify, session as flask_session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from models import Usuario, Registo, Servico, Fatura, Ferias, Mensagem, HorasTrabalhadas, Orcamento, Organizacao
+from models import Usuario, Registo, Servico, TipoServico, Fatura, Ferias, Mensagem, HorasTrabalhadas, Orcamento, Organizacao
 from folium.plugins import Geocoder, TagFilterButton, Fullscreen
 from db import db
 import hashlib
@@ -24,12 +24,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 db.init_app(app)
 
 
-def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo=None):
+def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo=None, criado_por=None):
     try:
         msg = MIMEMultipart('alternative')
         msg["Subject"] = f"Bem-vindo à plataforma {org_nome}"
         msg["From"] = formataddr((str(Header("GestãoPro", "utf-8")), "geral.servicos.info@gmail.com"))
         msg["To"] = to_email
+        criado_por_block = (
+            f'<div style="background:#e8f0fe;border:1px solid #b3c6f7;border-radius:8px;padding:10px 14px;margin-bottom:20px;">'
+            f'<p style="font-size:13px;color:#3c5a99;margin:0;">Conta criada pelo administrador <strong>{criado_por}</strong>.</p>'
+            f'</div>'
+        ) if criado_por else ""
         html = f"""
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
             <div style="background:#2e7d32;padding:28px 32px;text-align:center;">
@@ -49,6 +54,7 @@ def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo
                 <div style="background:#faeeda;border:1px solid #fac775;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
                     <p style="font-size:13px;color:#854f0b;margin:0;">Por segurança, altera a tua password no primeiro login.</p>
                 </div>
+                {criado_por_block}
                 <p style="font-size:14px;color:#555;line-height:1.6;margin:0;">Se tiveres alguma questão, responde a este email.<br>Bem-vindo à equipa!</p>
             </div>
             <div style="background:#f8f8f8;border-top:1px solid #eee;padding:16px 32px;text-align:center;">
@@ -114,9 +120,14 @@ def home():
 
     for r in registos:
         # Use most recent service for date calculation
+        def parse_date(d):
+            try:
+                return datetime.strptime(d, '%d/%m/%Y')
+            except:
+                return datetime.min
         servicos_ordenados = sorted(
             [s for s in r.servicos if s.data_servico],
-            key=lambda s: s.data_servico,
+            key=lambda s: parse_date(s.data_servico),
             reverse=True
         )
         ultimo = servicos_ordenados[0] if servicos_ordenados else None
@@ -391,6 +402,12 @@ def setup():
                             nome_completo=nome_completo, cargo=cargo, is_admin=True, org_id=org.id)
             db.session.add(admin)
             db.session.commit()
+            # Criar tipos de serviço padrão
+            tipos_default = ['Instalação AC', 'Limpeza / Manutenção AC']
+            for t in tipos_default:
+                db.session.add(TipoServico(nome=t, org_id=org.id))
+            db.session.commit()
+
             login_user(admin)
 
             flask_session['setup_code'] = code
@@ -417,60 +434,88 @@ def setup():
 @login_required
 def registrar():
     if not current_user.is_admin:
-        return redirect(url_for('perfil'))
+        return jsonify({'ok': False, 'error': 'Sem permissão'})
     if request.method == 'GET':
         return redirect(url_for('perfil'))
-    nome = request.form.get('nomeForm')
-    senha = request.form.get('senhaForm')
-    email = request.form.get('emailForm')
-    telefone = request.form.get('telefoneForm')
-    is_admin = request.form.get('is_admin') == 'on'
+    data = request.get_json()
+    nome = data.get('nomeForm', '').strip()
+    senha = data.get('senhaForm', '').strip()
+    email = data.get('emailForm', '').strip()
+    telefone = data.get('telefoneForm', '').strip()
+    is_admin_user = data.get('is_admin', False)
 
-    if nome and senha:
-        if not db.session.query(Usuario).filter_by(nome=nome).first():
-            novo_usuario = Usuario(nome=nome, senha=hash(senha), is_admin=is_admin,
-                                   email=email, telefone=telefone, org_id=current_user.org_id)
-            db.session.add(novo_usuario)
-            db.session.commit()
+    if not nome or not senha:
+        return jsonify({'ok': False, 'error': 'Nome e password são obrigatórios'})
 
-            if email:
-                try:
-                    org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
-                    send_welcome_email(
-                        to_email=email,
-                        nome=nome,
-                        org_nome=org.nome if org else 'A minha Organização',
-                        username=nome,
-                        password_temp=senha
-                    )
-                except Exception as e:
-                    print(f'Erro email registar: {e}')
+    if db.session.query(Usuario).filter_by(nome=nome).first():
+        return jsonify({'ok': False, 'error': 'Este nome de utilizador já existe'})
 
-    return redirect(url_for('perfil'))
+    novo_usuario = Usuario(nome=nome, senha=hash(senha), is_admin=is_admin_user,
+                           email=email, telefone=telefone, org_id=current_user.org_id)
+    db.session.add(novo_usuario)
+    db.session.commit()
+
+    if email:
+        try:
+            org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
+            send_welcome_email(
+                to_email=email,
+                nome=nome,
+                org_nome=org.nome if org else 'A minha Organização',
+                username=nome,
+                password_temp=senha
+            )
+        except Exception as e:
+            print(f'Erro email registar: {e}')
+
+    if email:
+        try:
+            org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
+            send_welcome_email(
+                to_email=email,
+                nome=nome,
+                org_nome=org.nome if org else 'A minha Organizacao',
+                username=nome,
+                password_temp=senha,
+                criado_por=current_user.nome_completo or current_user.nome
+            )
+        except Exception as e:
+            print(f'Erro email registar: {e}')
+
+    return jsonify({
+        'ok': True,
+        'id': novo_usuario.id,
+        'nome': novo_usuario.nome,
+        'email': email or '—',
+        'telefone': telefone or '—',
+        'is_admin': is_admin_user
+    })
 
 
 @app.route('/delete_user/<int:id>', methods=['POST'])
 @login_required
 def delete_user(id):
     if not current_user.is_admin:
-        return redirect(url_for('perfil'))
+        return jsonify({'ok': False})
     user = db.session.query(Usuario).filter_by(id=id, org_id=current_user.org_id).first()
     if user and user.id != current_user.id:
         db.session.delete(user)
         db.session.commit()
-    return redirect(url_for('perfil'))
+        return jsonify({'ok': True})
+    return jsonify({'ok': False})
 
 
 @app.route('/toggle_admin/<int:id>', methods=['POST'])
 @login_required
 def toggle_admin(id):
     if not current_user.is_admin:
-        return redirect(url_for('perfil'))
+        return jsonify({'ok': False})
     u = db.session.query(Usuario).filter_by(id=id, org_id=current_user.org_id).first()
     if u and u.id != current_user.id:
         u.is_admin = not u.is_admin
         db.session.commit()
-    return redirect(url_for('perfil'))
+        return jsonify({'ok': True, 'is_admin': u.is_admin})
+    return jsonify({'ok': False})
 
 
 @app.route('/perfil')
@@ -479,10 +524,52 @@ def perfil():
     is_admin = current_user.is_admin
     todos_usuarios = db.session.query(Usuario).filter_by(org_id=current_user.org_id).all() if is_admin else []
     registos = db.session.query(Registo).filter_by(org_id=current_user.org_id).all() if is_admin else []
-    registos_json = json.dumps([{'data_instalacao': r.data_instalacao, 'valor_pago': r.valor_pago} for r in registos])
+    # Build rich data for charts
+    servicos = db.session.query(Servico).filter_by(org_id=current_user.org_id).all() if is_admin else []
+    registos_json = json.dumps([{
+        'data_instalacao': r.data_instalacao,
+        'valor_pago': r.valor_pago,
+        'morada': r.morada or ''
+    } for r in registos])
+    servicos_json = json.dumps([{
+        'data_servico': s.data_servico,
+        'tipo_servico': s.tipo_servico or '',
+        'valor_pago': s.valor_pago or 0,
+        'marca': s.marca or '',
+        'num_maquinas': s.num_maquinas or 0
+    } for s in servicos])
     org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
+    tipos_servico = db.session.query(TipoServico).filter_by(org_id=current_user.org_id).all() if is_admin else []
+
+    # KPIs
+    total_clientes = len(registos)
+    total_servicos = len(servicos)
+    receita_total = sum(s.valor_pago or 0 for s in servicos)
+    media_maquinas = round(sum(s.num_maquinas or 0 for s in servicos) / total_servicos, 1) if total_servicos else 0
+
+    # Clientes urgentes (último serviço > 10 meses)
+    from datetime import datetime as dt
+    now = dt.now()
+    urgentes = 0
+    atencao = 0
+    em_dia = 0
+    for r in registos:
+        svcs = sorted([s for s in r.servicos if s.data_servico], key=lambda x: x.data_servico, reverse=True)
+        if svcs:
+            try:
+                d = dt.strptime(svcs[0].data_servico, '%d/%m/%Y')
+                months = (now.year - d.year) * 12 + (now.month - d.month)
+                if months > 10: urgentes += 1
+                elif months > 8: atencao += 1
+                else: em_dia += 1
+            except: pass
+
     return render_template('perfil.html', user=current_user, usuarios=todos_usuarios,
-                           registos=registos, registos_json=registos_json, is_admin=is_admin, org=org)
+                           registos=registos, registos_json=registos_json, servicos_json=servicos_json,
+                           is_admin=is_admin, org=org, tipos_servico=tipos_servico,
+                           total_clientes=total_clientes, total_servicos=total_servicos,
+                           receita_total=receita_total, media_maquinas=media_maquinas,
+                           urgentes=urgentes, atencao=atencao, em_dia=em_dia)
 
 
 def converter_data(d):
@@ -520,15 +607,24 @@ def nova_pagina():
             db.session.add(novo_registo)
             db.session.flush()
 
+            _ds2 = converter_data(data_instalacao)
+            _prox2 = None
+            if _ds2:
+                try:
+                    _d2 = datetime.strptime(_ds2, '%d/%m/%Y')
+                    _prox2 = _d2.replace(year=_d2.year + 1).strftime('%d/%m/%Y')
+                except: pass
+            _dur2 = request.form.get('duracao_horas')
             primeiro_servico = Servico(
                 registo_id=novo_registo.id,
                 org_id=current_user.org_id,
                 tipo_servico=tipo_servico,
-                data_servico=converter_data(data_instalacao),
-                proxima_manutencao=converter_data(proxima_manutencao),
+                data_servico=_ds2,
+                proxima_manutencao=_prox2,
                 num_maquinas=int(num_maquinas) if num_maquinas else None,
                 marca=marca,
-                valor_pago=float(valor_pago) if valor_pago else None
+                valor_pago=float(valor_pago) if valor_pago else None,
+                duracao_horas=float(_dur2) if _dur2 else None
             )
             db.session.add(primeiro_servico)
             db.session.commit()
@@ -539,8 +635,10 @@ def nova_pagina():
     total_registos = base_query.count()
     total_pages = (total_registos + per_page - 1) // per_page
     registos = base_query.order_by(Registo.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
+    tipos_servico = db.session.query(TipoServico).filter_by(org_id=current_user.org_id).all()
     return render_template('test.html', registos=registos, current_user=current_user, is_admin=is_admin,
-                           page=page, total_pages=total_pages, total_registos=total_registos)
+                           page=page, total_pages=total_pages, total_registos=total_registos,
+                           tipos_servico=tipos_servico)
 
 
 @app.route('/test/add_servico/<int:registo_id>', methods=['POST'])
@@ -549,16 +647,25 @@ def add_servico(registo_id):
     r = db.session.query(Registo).filter_by(id=registo_id, org_id=current_user.org_id).first()
     if r:
         is_admin = current_user.is_admin
+        _ds = converter_data(request.form.get('data_servico'))
+        _prox = None
+        if _ds:
+            try:
+                _d = datetime.strptime(_ds, '%d/%m/%Y')
+                _prox = _d.replace(year=_d.year + 1).strftime('%d/%m/%Y')
+            except: pass
+        _dur = request.form.get('duracao_horas')
         novo = Servico(
             registo_id=r.id,
             org_id=current_user.org_id,
             tipo_servico=request.form.get('tipo_servico'),
-            data_servico=converter_data(request.form.get('data_servico')),
-            proxima_manutencao=converter_data(request.form.get('proxima_manutencao')),
+            data_servico=_ds,
+            proxima_manutencao=_prox,
             num_maquinas=int(request.form.get('num_maquinas')) if request.form.get('num_maquinas') else None,
             marca=request.form.get('marca'),
             valor_pago=float(request.form.get('valor_pago')) if request.form.get('valor_pago') and is_admin else None,
-            notas=request.form.get('notas')
+            notas=request.form.get('notas'),
+            duracao_horas=float(_dur) if _dur else None
         )
         db.session.add(novo)
         db.session.commit()
@@ -696,10 +803,66 @@ def responder_ferias(id):
         return redirect(url_for('ferias'))
     f = db.session.query(Ferias).filter_by(id=id, org_id=current_user.org_id).first()
     if f:
-        f.estado = request.form.get('estado')
-        f.comentario_admin = request.form.get('comentario')
+        estado = request.form.get('estado')
+        comentario = request.form.get('comentario', '')
+        f.estado = estado
+        f.comentario_admin = comentario
         f.aprovado_por = current_user.nome
         db.session.commit()
+
+        user = db.session.query(Usuario).filter_by(id=f.user_id).first()
+        org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
+        if user and user.email:
+            try:
+                estado_label = 'aprovadas' if estado == 'aprovado' else 'recusadas'
+                cor = '#2e7d32' if estado == 'aprovado' else '#c62828'
+                bg = '#eaf3de' if estado == 'aprovado' else '#fef2f2'
+                brd = '#c0dd97' if estado == 'aprovado' else '#fecaca'
+                admin_nome = current_user.nome_completo or current_user.nome
+                org_nome_str = org.nome if org else 'A minha Organizacao'
+                acao = 'aprovou' if estado == 'aprovado' else 'recusou'
+                comentario_block = ''
+                if comentario:
+                    comentario_block = (
+                        '<div style="background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:16px;">'
+                        '<p style="font-size:12px;color:#888;margin:0 0 4px;">Comentario do administrador</p>'
+                        f'<p style="font-size:14px;color:#333;margin:0;">{comentario}</p>'
+                        '</div>'
+                    )
+                periodo = f'{f.data_inicio} a {f.data_fim} ({f.num_dias} dia(s))'
+                html_ferias = (
+                    '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">'
+                    f'<div style="background:{cor};padding:28px 32px;text-align:center;">'
+                    '<p style="color:white;font-size:20px;font-weight:bold;margin:0 0 4px;">Pedido de Ferias</p>'
+                    f'<p style="color:rgba(255,255,255,0.8);font-size:13px;margin:0;">{org_nome_str}</p>'
+                    '</div>'
+                    '<div style="background:white;padding:28px 32px;">'
+                    f'<p style="font-size:15px;color:#1a1a1a;margin:0 0 16px;">Ola <strong>{user.nome_completo or user.nome}</strong>,</p>'
+                    f'<p style="font-size:14px;color:#555;margin:0 0 20px;">O seu administrador <strong>{admin_nome}</strong> {acao} o seu pedido de ferias.</p>'
+                    f'<div style="background:{bg};border:1px solid {brd};border-radius:8px;padding:16px 20px;margin-bottom:20px;">'
+                    '<p style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Periodo</p>'
+                    f'<p style="font-size:16px;font-weight:bold;color:{cor};margin:0;">{periodo}</p>'
+                    '</div>'
+                    f'{comentario_block}'
+                    '<p style="font-size:13px;color:#888;margin:0;">Se tiver questoes, contacte o seu administrador.</p>'
+                    '</div>'
+                    '<div style="background:#f8f8f8;border-top:1px solid #eee;padding:16px 32px;text-align:center;">'
+                    '<p style="font-size:12px;color:#aaa;margin:0;">GestaoPro - Plataforma de Gestao</p>'
+                    '</div>'
+                    '</div>'
+                )
+                msg_ferias = MIMEMultipart('alternative')
+                msg_ferias["Subject"] = f"As suas ferias foram {estado_label}"
+                msg_ferias["From"] = "GestaoPro <geral.servicos.info@gmail.com>"
+                msg_ferias["To"] = user.email
+                msg_ferias.attach(MIMEText(html_ferias, 'html'))
+                with smtplib.SMTP("smtp.gmail.com", 587) as conn:
+                    conn.starttls()
+                    conn.login(user="geral.servicos.info@gmail.com", password="kwth gssy aqla sahz")
+                    conn.send_message(msg_ferias)
+            except Exception as e:
+                print(f'Erro email ferias: {e}')
+
     return redirect(url_for('ferias'))
 
 
@@ -834,6 +997,50 @@ def horas_delete(id):
     return redirect(url_for('horas', mes=mes, ano=ano))
 
 
+@app.route('/tipos_servico/add', methods=['POST'])
+@login_required
+def add_tipo_servico():
+    if not current_user.is_admin:
+        return jsonify({'ok': False})
+    nome = request.get_json().get('nome', '').strip()
+    if not nome:
+        return jsonify({'ok': False, 'error': 'Nome vazio'})
+    existing = db.session.query(TipoServico).filter_by(nome=nome, org_id=current_user.org_id).first()
+    if existing:
+        return jsonify({'ok': False, 'error': 'Já existe'})
+    novo = TipoServico(nome=nome, org_id=current_user.org_id)
+    db.session.add(novo)
+    db.session.commit()
+    return jsonify({'ok': True, 'id': novo.id, 'nome': novo.nome})
+
+
+@app.route('/tipos_servico/delete/<int:id>', methods=['POST'])
+@login_required
+def delete_tipo_servico(id):
+    if not current_user.is_admin:
+        return jsonify({'ok': False})
+    t = db.session.query(TipoServico).filter_by(id=id, org_id=current_user.org_id).first()
+    if t:
+        db.session.delete(t)
+        db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/tipos_servico/edit/<int:id>', methods=['POST'])
+@login_required
+def edit_tipo_servico(id):
+    if not current_user.is_admin:
+        return jsonify({'ok': False})
+    t = db.session.query(TipoServico).filter_by(id=id, org_id=current_user.org_id).first()
+    if not t:
+        return jsonify({'ok': False})
+    nome = request.get_json().get('nome', '').strip()
+    if nome:
+        t.nome = nome
+        db.session.commit()
+    return jsonify({'ok': True, 'nome': t.nome})
+
+
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
     data = request.get_json()
@@ -912,6 +1119,13 @@ def reset_password():
 def criar_admin():
     with app.app_context():
         db.create_all()
+
+        # Add duracao_horas column if missing
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(db.text('ALTER TABLE servicos ADD COLUMN duracao_horas FLOAT'))
+                conn.commit()
+        except: pass
 
         # Migra registos existentes que ainda não têm serviços
         try:

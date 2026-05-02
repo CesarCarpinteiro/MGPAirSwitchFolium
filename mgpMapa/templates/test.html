@@ -301,8 +301,9 @@
             <label>Tipo de Serviço</label>
             <select name="tipo_servico">
                 <option value="">Selecionar...</option>
-                <option value="Instalação AC">Instalação de Ar Condicionado</option>
-                <option value="Limpeza AC">Limpeza / Manutenção de Ar Condicionado</option>
+                {% for t in tipos_servico %}
+                <option value="{{ t.nome }}">{{ t.nome }}</option>
+                {% endfor %}
             </select>
             <div class="form-row">
                 <div class="field">
@@ -320,8 +321,8 @@
                     <input type="date" name="data_instalacao">
                 </div>
                 <div class="field">
-                    <label>Próxima Manutenção</label>
-                    <input type="date" name="proxima_manutencao">
+                    <label>Duração (horas)</label>
+                    <input type="number" name="duracao_horas" placeholder="Ex: 2.5" step="0.5" min="0">
                 </div>
             </div>
 
@@ -411,8 +412,9 @@
                         <label>Tipo de Serviço</label>
                         <select name="tipo_servico" required>
                             <option value="">Selecionar...</option>
-                            <option value="Instalação AC">Instalação de Ar Condicionado</option>
-                            <option value="Limpeza AC">Limpeza / Manutenção de Ar Condicionado</option>
+                            {% for t in tipos_servico %}
+                            <option value="{{ t.nome }}">{{ t.nome }}</option>
+                            {% endfor %}
                         </select>
                         <div class="form-row">
                             <div class="field">
@@ -420,8 +422,8 @@
                                 <input type="date" name="data_servico" required>
                             </div>
                             <div class="field">
-                                <label>Próxima Manutenção</label>
-                                <input type="date" name="proxima_manutencao">
+                                <label>Duração (horas)</label>
+                                <input type="number" name="duracao_horas" placeholder="Ex: 2.5" step="0.5" min="0">
                             </div>
                         </div>
                         <div class="form-row">
@@ -458,7 +460,8 @@
                         <div class="servico-detail">
                             {% if s.marca %}Marca: {{ s.marca }}{% endif %}
                             {% if s.num_maquinas %} &nbsp;·&nbsp; {{ s.num_maquinas }} máquina(s){% endif %}
-                            {% if s.proxima_manutencao %} &nbsp;·&nbsp; Próx.: {{ s.proxima_manutencao }}{% endif %}
+                            {% if s.duracao_horas %} &nbsp;·&nbsp; {{ s.duracao_horas }}h{% endif %}
+                            {% if s.proxima_manutencao %} &nbsp;·&nbsp; Próx. manutenção: {{ s.proxima_manutencao }}{% endif %}
                             {% if is_admin and s.valor_pago %} &nbsp;·&nbsp; {{ "%.2f"|format(s.valor_pago) }} €{% endif %}
                         </div>
                         {% if s.notas %}

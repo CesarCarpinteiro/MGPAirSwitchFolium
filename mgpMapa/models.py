@@ -30,7 +30,6 @@ class Registo(db.Model):
     longitude = db.Column(db.Float, nullable=True)
     valor_pago = db.Column(db.Float, nullable=True)
     org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
-    # Relationship to services
     servicos = db.relationship('Servico', backref='registo', lazy=True, cascade='all, delete-orphan')
 
 class Servico(db.Model):
@@ -38,14 +37,21 @@ class Servico(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     registo_id = db.Column(db.Integer, db.ForeignKey('registos.id'), nullable=False)
     org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
-    tipo_servico = db.Column(db.String(100), nullable=True)   # Instalação AC / Limpeza AC
-    data_servico = db.Column(db.String(20), nullable=True)    # data em que foi feito
+    tipo_servico = db.Column(db.String(100), nullable=True)
+    data_servico = db.Column(db.String(20), nullable=True)
     proxima_manutencao = db.Column(db.String(20), nullable=True)
     num_maquinas = db.Column(db.Integer, nullable=True)
     marca = db.Column(db.String(100), nullable=True)
     valor_pago = db.Column(db.Float, nullable=True)
     notas = db.Column(db.String(500), nullable=True)
+    duracao_horas = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.String(20), default=lambda: datetime.now().strftime('%d/%m/%Y'))
+
+class TipoServico(db.Model):
+    __tablename__ = 'tipos_servico'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
 
 class Fatura(db.Model):
     __tablename__ = 'faturas'

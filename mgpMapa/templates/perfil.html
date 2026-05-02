@@ -373,6 +373,53 @@
     <!-- Tab: Gráfico -->
     <div class="tab-panel" id="tab-grafico">
 
+        <!-- KPI Cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;">
+            <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border-left:4px solid #2e7d32;">
+                <div style="font-size:0.72em;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">Total Clientes</div>
+                <div style="font-size:1.9em;font-weight:700;color:#1a1a1a;">{{ total_clientes }}</div>
+            </div>
+            <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border-left:4px solid #1565c0;">
+                <div style="font-size:0.72em;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">Total Serviços</div>
+                <div style="font-size:1.9em;font-weight:700;color:#1a1a1a;">{{ total_servicos }}</div>
+            </div>
+            <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border-left:4px solid #c47c2b;">
+                <div style="font-size:0.72em;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">Receita Total</div>
+                <div style="font-size:1.9em;font-weight:700;color:#1a1a1a;">{{ "%.0f"|format(receita_total) }} €</div>
+            </div>
+            <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border-left:4px solid #00695c;">
+                <div style="font-size:0.72em;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">Média Máquinas/Serviço</div>
+                <div style="font-size:1.9em;font-weight:700;color:#1a1a1a;">{{ media_maquinas }}</div>
+            </div>
+        </div>
+
+        <!-- Estado da Frota -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+            <div class="card">
+                <div class="section-title">Estado da Frota de Clientes</div>
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;">
+                    <div style="flex:1;text-align:center;background:#e8f5e9;border-radius:10px;padding:14px;">
+                        <div style="font-size:1.8em;font-weight:700;color:#2e7d32;">{{ em_dia }}</div>
+                        <div style="font-size:0.78em;color:#2e7d32;margin-top:2px;">Em Dia</div>
+                    </div>
+                    <div style="flex:1;text-align:center;background:#fff3e0;border-radius:10px;padding:14px;">
+                        <div style="font-size:1.8em;font-weight:700;color:#c47c2b;">{{ atencao }}</div>
+                        <div style="font-size:0.78em;color:#c47c2b;margin-top:2px;">Atenção</div>
+                    </div>
+                    <div style="flex:1;text-align:center;background:#fef2f2;border-radius:10px;padding:14px;">
+                        <div style="font-size:1.8em;font-weight:700;color:#a33b3b;">{{ urgentes }}</div>
+                        <div style="font-size:0.78em;color:#a33b3b;margin-top:2px;">Urgente</div>
+                    </div>
+                </div>
+                <canvas id="frotaChart" height="160"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Tipo de Serviço</div>
+                <canvas id="tipoChart" height="200"></canvas>
+            </div>
+        </div>
+
         <!-- Clientes chart -->
         <div class="card">
             <div class="section-title">Número de Clientes</div>
@@ -382,26 +429,12 @@
                 <button class="filter-btn" onclick="filtrarGrafico('ano', this)">Por Ano</button>
             </div>
             <div id="metaInstCard" style="display:none; background:#f0f7f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
-                <div>
-                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div>
-                    <div style="font-size:1.05em; font-weight:700; color:#555;" id="metaInstBase">—</div>
-                </div>
+                <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div><div style="font-size:1.05em; font-weight:700; color:#555;" id="metaInstBase">—</div></div>
                 <div style="font-size:1.1em; color:#ddd;">→</div>
-                <div>
-                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Meta</div>
-                    <div style="font-size:1.05em; font-weight:700; color:#fd7e14;" id="metaInstMeta">—</div>
-                </div>
+                <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Meta</div><div style="font-size:1.05em; font-weight:700; color:#fd7e14;" id="metaInstMeta">—</div></div>
                 <div style="font-size:1.1em; color:#ddd;">→</div>
-                <div>
-                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mês Atual</div>
-                    <div style="font-size:1.05em; font-weight:700; color:#2e7d32;" id="metaInstAtual">—</div>
-                </div>
-                <div style="flex:1; min-width:160px;">
-                    <div style="background:#e0e0e0; border-radius:20px; height:8px; overflow:hidden; margin-bottom:5px;">
-                        <div id="metaInstBar" style="height:100%; background:linear-gradient(135deg,#2e7d32,#4CAF50); border-radius:20px; transition:width 0.6s; width:0%;"></div>
-                    </div>
-                    <div style="font-size:0.78em; color:#888;" id="metaInstPct">—</div>
-                </div>
+                <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mês Atual</div><div style="font-size:1.05em; font-weight:700; color:#2e7d32;" id="metaInstAtual">—</div></div>
+                <div style="flex:1; min-width:160px;"><div style="background:#e0e0e0; border-radius:20px; height:8px; overflow:hidden; margin-bottom:5px;"><div id="metaInstBar" style="height:100%; background:linear-gradient(135deg,#2e7d32,#4CAF50); border-radius:20px; transition:width 0.6s; width:0%;"></div></div><div style="font-size:0.78em; color:#888;" id="metaInstPct">—</div></div>
                 <div id="metaInstBadge" style="padding:5px 12px; border-radius:16px; font-size:0.78em; font-weight:600; white-space:nowrap;">—</div>
             </div>
             <canvas id="instalacaoChart" height="100"></canvas>
@@ -409,40 +442,38 @@
 
         <!-- Valor pago chart -->
         <div class="card">
-            <div class="section-title">Valor Pago por Clientes</div>
+            <div class="section-title">Receita por Período</div>
             <div class="filter-row">
                 <button class="filter-btn-valor active" onclick="filtrarValor('mes', this)">Por Mês</button>
                 <button class="filter-btn-valor" onclick="filtrarValor('ano', this)">Por Ano</button>
             </div>
             <div id="metaValCard" style="display:none; background:#e8f0fc; border:1px solid #bbdefb; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
-                <div>
-                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div>
-                    <div style="font-size:1.05em; font-weight:700; color:#555;" id="metaValBase">—</div>
-                </div>
+                <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div><div style="font-size:1.05em; font-weight:700; color:#555;" id="metaValBase">—</div></div>
                 <div style="font-size:1.1em; color:#ddd;">→</div>
-                <div>
-                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Meta</div>
-                    <div style="font-size:1.05em; font-weight:700; color:#fd7e14;" id="metaValMeta">—</div>
-                </div>
+                <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Meta</div><div style="font-size:1.05em; font-weight:700; color:#fd7e14;" id="metaValMeta">—</div></div>
                 <div style="font-size:1.1em; color:#ddd;">→</div>
-                <div>
-                    <div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mês Atual</div>
-                    <div style="font-size:1.05em; font-weight:700; color:#1565c0;" id="metaValAtual">—</div>
-                </div>
-                <div style="flex:1; min-width:160px;">
-                    <div style="background:#e0e0e0; border-radius:20px; height:8px; overflow:hidden; margin-bottom:5px;">
-                        <div id="metaValBar" style="height:100%; background:linear-gradient(135deg,#1565c0,#1976d2); border-radius:20px; transition:width 0.6s; width:0%;"></div>
-                    </div>
-                    <div style="font-size:0.78em; color:#888;" id="metaValPct">—</div>
-                </div>
+                <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mês Atual</div><div style="font-size:1.05em; font-weight:700; color:#1565c0;" id="metaValAtual">—</div></div>
+                <div style="flex:1; min-width:160px;"><div style="background:#e0e0e0; border-radius:20px; height:8px; overflow:hidden; margin-bottom:5px;"><div id="metaValBar" style="height:100%; background:linear-gradient(135deg,#1565c0,#1976d2); border-radius:20px; transition:width 0.6s; width:0%;"></div></div><div style="font-size:0.78em; color:#888;" id="metaValPct">—</div></div>
                 <div id="metaValBadge" style="padding:5px 12px; border-radius:16px; font-size:0.78em; font-weight:600; white-space:nowrap;">—</div>
             </div>
             <canvas id="valorChart" height="100"></canvas>
         </div>
 
+        <!-- Marca mais usada -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+            <div class="card">
+                <div class="section-title">Top Marcas</div>
+                <canvas id="marcaChart" height="200"></canvas>
+            </div>
+            <div class="card">
+                <div class="section-title">Serviços por Mês (Este Ano)</div>
+                <canvas id="servicosMesChart" height="200"></canvas>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Tab: Admin -->
+        <!-- Tab: Admin -->
     <div class="tab-panel" id="tab-admin">
         <div class="card">
             <div class="section-title">Utilizadores</div>
@@ -476,22 +507,19 @@
                         </td>
                         <td>
                             {% if u.id != user.id %}
-                            <form method="POST" action="/toggle_admin/{{ u.id }}" style="margin:0;">
-                                <label class="admin-toggle">
-                                    <input type="checkbox" {{ 'checked' if u.is_admin else '' }} onchange="this.form.submit()">
-                                    <span class="admin-slider"></span>
-                                </label>
-                            </form>
+                            <label class="admin-toggle" id="toggle-wrap-{{ u.id }}">
+                                <input type="checkbox" {{ 'checked' if u.is_admin else '' }}
+                                    onchange="toggleAdmin({{ u.id }}, this)">
+                                <span class="admin-slider"></span>
+                            </label>
                             {% else %}
                                 <span style="color:#ccc; font-size:0.8em;">—</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if u.id != user.id %}
-                            <form method="POST" action="/delete_user/{{ u.id }}" style="margin:0;">
-                                <button type="button" class="delete-user-btn"
-                                    onclick="if(confirm('Remover utilizador {{ u.nome }}?')) this.form.submit()">🗑</button>
-                            </form>
+                            <button class="delete-user-btn"
+                                onclick="deleteUser({{ u.id }}, '{{ u.nome }}', this)">🗑</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -508,33 +536,68 @@
             </div>
 
             <div class="add-user-form" id="addUserForm">
-                <form method="POST" action="/registrar">
-                    <div class="form-grid-2">
-                        <div>
-                            <label>Nome de utilizador *</label>
-                            <input type="text" name="nomeForm" placeholder="nome.utilizador" required>
-                        </div>
-                        <div>
-                            <label>Password *</label>
-                            <input type="password" name="senhaForm" placeholder="Password" required>
-                        </div>
-                        <div>
-                            <label>Email</label>
-                            <input type="email" name="emailForm" placeholder="email@empresa.com">
-                        </div>
-                        <div>
-                            <label>Telemóvel</label>
-                            <input type="tel" name="telefoneForm" placeholder="9XX XXX XXX">
-                        </div>
+                <div class="form-grid-2">
+                    <div>
+                        <label>Nome de utilizador *</label>
+                        <input type="text" id="newUserNome" placeholder="nome.utilizador">
                     </div>
-                    <div class="form-footer-row">
-                        <label style="display:flex; align-items:center; gap:6px; font-size:0.85em; color:#666; font-weight:500;">
-                            <input type="checkbox" name="is_admin"> Administrador
-                        </label>
-                        <button type="submit" class="btn-add">+ Criar utilizador</button>
+                    <div>
+                        <label>Password *</label>
+                        <input type="password" id="newUserSenha" placeholder="Password">
                     </div>
-                </form>
+                    <div>
+                        <label>Email</label>
+                        <input type="email" id="newUserEmail" placeholder="email@empresa.com">
+                    </div>
+                    <div>
+                        <label>Telemóvel</label>
+                        <input type="tel" id="newUserTelefone" placeholder="9XX XXX XXX">
+                    </div>
+                </div>
+                <div class="form-footer-row">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85em; color:#666; font-weight:500;">
+                        <input type="checkbox" id="newUserIsAdmin"> Administrador
+                    </label>
+                    <button onclick="criarUtilizador()" class="btn-add">+ Criar utilizador</button>
+                </div>
+                <p id="addUserMsg" style="font-size:0.82em;margin-top:8px;display:none;"></p>
             </div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+            <div class="section-title">Tipos de Serviço</div>
+            <p style="font-size:0.83em;color:#888;margin-bottom:16px;">Opções disponíveis no campo "Tipo de Serviço" ao criar ou editar registos.</p>
+
+            <table class="users-table" style="margin-bottom:16px;">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th style="width:160px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="tiposTableBody">
+                    {% for t in tipos_servico %}
+                    <tr id="tipo-row-{{ t.id }}">
+                        <td>
+                            <input type="text" id="tipo-input-{{ t.id }}" value="{{ t.nome }}"
+                                style="border:1px solid #e0e0e0;border-radius:6px;padding:5px 9px;font-size:0.88em;font-family:'DM Sans',sans-serif;width:100%;max-width:280px;">
+                        </td>
+                        <td style="text-align:right;display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px 12px;">
+                            <button onclick="editTipo({{ t.id }})"
+                                style="padding:5px 12px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:0.8em;cursor:pointer;font-family:'DM Sans',sans-serif;">Guardar</button>
+                            <button onclick="deleteTipo({{ t.id }}, '{{ t.nome }}')" class="delete-user-btn">🗑</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="novoTipoInput" placeholder="Ex: Instalação AC"
+                    style="flex:1;border:1px solid #e0e0e0;border-radius:6px;padding:8px 11px;font-size:0.9em;font-family:'DM Sans',sans-serif;"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();addTipo();}">
+                <button onclick="addTipo()" class="btn-add">+ Adicionar</button>
+            </div>
+            <p id="tipoMsg" style="font-size:0.8em;color:#e53935;margin-top:6px;display:none;"></p>
         </div>
     </div>
 
@@ -545,12 +608,14 @@
 <footer>&copy; {{ org_nome }}</footer>
 
 <script id="registos-data" type="application/json">{{ registos_json | safe }}</script>
+<script id="servicos-data" type="application/json">{{ servicos_json | safe }}</script>
 
 <script>
     var chartInitialized = false;
     var chart = null;
     var valorChart = null;
     var registosData = JSON.parse(document.getElementById('registos-data').textContent);
+    var servicosData = JSON.parse(document.getElementById('servicos-data').textContent);
 
     var now = new Date();
     var currentMonth = now.getMonth() + 1;
@@ -591,11 +656,20 @@
     function switchTab(name, btn) {
         document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
         document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.getElementById('tab-' + name).classList.add('active');
+        var panel = document.getElementById('tab-' + name);
+        if (panel) panel.classList.add('active');
         btn.classList.add('active');
         if (name === 'grafico' && !chartInitialized) {
-            filtrarGrafico('mes', document.querySelector('#tab-grafico .filter-btn.active'));
-            filtrarValor('mes', document.querySelector('.filter-btn-valor.active'));
+            try {
+                var fb = document.querySelector('#tab-grafico .filter-btn.active');
+                var fv = document.querySelector('.filter-btn-valor.active');
+                if (fb) filtrarGrafico('mes', fb);
+                if (fv) filtrarValor('mes', fv);
+                initFrotaChart();
+                initTipoChart();
+                initMarcaChart();
+                initServicosMesChart();
+            } catch(e) { console.error(e); }
             chartInitialized = true;
         }
     }
@@ -719,8 +793,263 @@
         });
     }
 
+    function initFrotaChart() {
+        var ctx = document.getElementById('frotaChart');
+        if (!ctx) return;
+        new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Em Dia', 'Atenção', 'Urgente'],
+                datasets: [{
+                    data: [{{ em_dia }}, {{ atencao }}, {{ urgentes }}],
+                    backgroundColor: ['#4CAF50', '#c47c2b', '#a33b3b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true, cutout: '70%',
+                plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 }, padding: 16 } } }
+            }
+        });
+    }
+
+    function initTipoChart() {
+        var ctx = document.getElementById('tipoChart');
+        if (!ctx) return;
+        var counts = {};
+        servicosData.forEach(function(s) {
+            var t = s.tipo_servico || 'Sem tipo';
+            counts[t] = (counts[t] || 0) + 1;
+        });
+        var labels = Object.keys(counts);
+        var vals = labels.map(function(l) { return counts[l]; });
+        var colors = ['#2e7d32','#1565c0','#c47c2b','#6a1b9a','#00695c','#a33b3b','#37474f'];
+        new Chart(ctx.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{ data: vals, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 }, padding: 12 } } }
+            }
+        });
+    }
+
+    function initMarcaChart() {
+        var ctx = document.getElementById('marcaChart');
+        if (!ctx) return;
+        var counts = {};
+        servicosData.forEach(function(s) {
+            if (!s.marca) return;
+            counts[s.marca] = (counts[s.marca] || 0) + 1;
+        });
+        var sorted = Object.entries(counts).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+        new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: sorted.map(function(e){return e[0];}),
+                datasets: [{
+                    label: 'Serviços',
+                    data: sorted.map(function(e){return e[1];}),
+                    backgroundColor: 'rgba(46,125,50,0.75)',
+                    borderColor: '#2e7d32', borderWidth: 1, borderRadius: 5
+                }]
+            },
+            options: {
+                indexAxis: 'y', responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'DM Sans' } }, grid: { color: '#f5f5f5' } }, y: { grid: { display: false }, ticks: { font: { family: 'DM Sans' } } } }
+            }
+        });
+    }
+
+    function initServicosMesChart() {
+        var ctx = document.getElementById('servicosMesChart');
+        if (!ctx) return;
+        var year = new Date().getFullYear();
+        var meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        var counts = new Array(12).fill(0);
+        servicosData.forEach(function(s) {
+            if (!s.data_servico) return;
+            var parts = s.data_servico.split('/');
+            if (parts.length === 3 && parseInt(parts[2]) === year) {
+                counts[parseInt(parts[1]) - 1]++;
+            }
+        });
+        new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [{
+                    label: 'Serviços ' + year,
+                    data: counts,
+                    backgroundColor: 'rgba(21,101,192,0.75)',
+                    borderColor: '#1565c0', borderWidth: 1, borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'DM Sans' } }, grid: { color: '#f5f5f5' } }, x: { grid: { display: false }, ticks: { font: { family: 'DM Sans' } } } }
+            }
+        });
+    }
+
     function toggleAddForm(toggle) {
         document.getElementById('addUserForm').classList.toggle('visible', toggle.checked);
+    }
+
+    function addTipo() {
+        var input = document.getElementById('novoTipoInput');
+        var nome = input.value.trim();
+        var msg = document.getElementById('tipoMsg');
+        if (!nome) return;
+        fetch('/tipos_servico/add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({nome: nome})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                var tbody = document.getElementById('tiposTableBody');
+                var tr = document.createElement('tr');
+                tr.id = 'tipo-row-' + data.id;
+                tr.innerHTML =
+                    '<td><input type="text" id="tipo-input-' + data.id + '" value="' + data.nome + '" style="border:1px solid #e0e0e0;border-radius:6px;padding:5px 9px;font-size:0.88em;font-family:DM Sans,sans-serif;width:100%;max-width:280px;"></td>' +
+                    '<td style="text-align:right;display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px 12px;">' +
+                    '<button onclick="editTipo(' + data.id + ')" style="padding:5px 12px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:0.8em;cursor:pointer;font-family:DM Sans,sans-serif;">Guardar</button>' +
+                    '<button onclick="deleteTipo(' + data.id + ', \'' + data.nome + '\')" class="delete-user-btn">🗑</button>' +
+                    '</td>';
+                tbody.appendChild(tr);
+                input.value = '';
+                msg.style.display = 'none';
+            } else {
+                msg.textContent = data.error || 'Erro ao adicionar.';
+                msg.style.display = 'block';
+            }
+        });
+    }
+
+    function editTipo(id) {
+        var nome = document.getElementById('tipo-input-' + id).value.trim();
+        if (!nome) return;
+        fetch('/tipos_servico/edit/' + id, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({nome: nome})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                var input = document.getElementById('tipo-input-' + id);
+                input.style.borderColor = '#4CAF50';
+                setTimeout(function() { input.style.borderColor = '#e0e0e0'; }, 1200);
+            }
+        });
+    }
+
+    function deleteTipo(id, nome) {
+        if (!confirm('Remover tipo "' + nome + '"?')) return;
+        fetch('/tipos_servico/delete/' + id, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                var row = document.getElementById('tipo-row-' + id);
+                if (row) row.remove();
+            }
+        });
+    }
+
+    function toggleAdmin(id, checkbox) {
+        fetch('/toggle_admin/' + id, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) {
+                // revert checkbox if failed
+                checkbox.checked = !checkbox.checked;
+            }
+        });
+    }
+
+    function deleteUser(id, nome, btn) {
+        if (!confirm('Remover utilizador ' + nome + '?')) return;
+        fetch('/delete_user/' + id, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                var row = btn.closest('tr');
+                if (row) row.remove();
+            }
+        });
+    }
+
+    function criarUtilizador() {
+        var nome = document.getElementById('newUserNome').value.trim();
+        var senha = document.getElementById('newUserSenha').value.trim();
+        var email = document.getElementById('newUserEmail').value.trim();
+        var telefone = document.getElementById('newUserTelefone').value.trim();
+        var isAdmin = document.getElementById('newUserIsAdmin').checked;
+        var msg = document.getElementById('addUserMsg');
+
+        if (!nome || !senha) {
+            msg.textContent = 'Nome e password são obrigatórios.';
+            msg.style.color = '#e53935';
+            msg.style.display = 'block';
+            return;
+        }
+
+        fetch('/registrar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({nomeForm: nome, senhaForm: senha, emailForm: email, telefoneForm: telefone, is_admin: isAdmin})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                // Add row to users table
+                var tbody = document.querySelector('.users-table tbody');
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td><strong>' + data.nome + '</strong></td>' +
+                    '<td>—</td>' +
+                    '<td>' + data.email + '</td>' +
+                    '<td>' + data.telefone + '</td>' +
+                    '<td>—</td>' +
+                    '<td><span class="' + (data.is_admin ? 'badge-admin' : 'badge-user') + '">' + (data.is_admin ? 'Administrador' : 'Utilizador') + '</span></td>' +
+                    '<td><span style="color:#ccc;font-size:0.8em;">—</span></td>' +
+                    '<td></td>';
+                tbody.appendChild(tr);
+                // Clear form
+                document.getElementById('newUserNome').value = '';
+                document.getElementById('newUserSenha').value = '';
+                document.getElementById('newUserEmail').value = '';
+                document.getElementById('newUserTelefone').value = '';
+                document.getElementById('newUserIsAdmin').checked = false;
+                msg.textContent = 'Utilizador criado com sucesso!';
+                msg.style.color = '#2e7d32';
+                msg.style.display = 'block';
+                setTimeout(function() { msg.style.display = 'none'; }, 3000);
+            } else {
+                msg.textContent = data.error || 'Erro ao criar utilizador.';
+                msg.style.color = '#e53935';
+                msg.style.display = 'block';
+            }
+        });
     }
 </script>
 
