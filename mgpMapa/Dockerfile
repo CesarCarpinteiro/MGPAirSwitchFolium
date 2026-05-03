@@ -1,17 +1,13 @@
-# Use the official Python image
-FROM python:3.8-slim-buster
+FROM python:3.11-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy the project files into the container
 COPY . /app
 
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port the Flask app runs on
+RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+
 EXPOSE 3000
 
-# Set the command to run the application
 CMD ["python", "main.py"]

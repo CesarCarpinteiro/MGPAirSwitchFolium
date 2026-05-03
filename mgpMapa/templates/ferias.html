@@ -13,11 +13,8 @@
 
         .page-header {
             background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 14px 24px; display: flex; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
         .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
@@ -30,25 +27,29 @@
 
         .content { max-width: 980px; margin: 30px auto; padding: 0 20px; }
 
-        /* Days counter */
+        /* Year counters */
+        .year-counters { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         .days-counter {
             background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            border-radius: 12px;
-            padding: 18px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            flex-wrap: wrap;
-            gap: 12px;
+            border-radius: 12px; padding: 16px 24px;
+            display: flex; align-items: center; gap: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex-wrap: wrap;
         }
-        .days-counter .label { color: rgba(255,255,255,0.85); font-size: 0.85em; margin-bottom: 4px; text-align: center; }
-        .days-counter .value { color: white; font-size: 1.8em; font-weight: bold; text-align: center; }
-        .days-counter .stat { text-align: center; }
-        .days-counter .divider { width: 1px; height: 40px; background: rgba(255,255,255,0.3); }
+        .days-counter .year-flag {
+            background: rgba(255,255,255,0.2); color: white;
+            padding: 4px 14px; border-radius: 20px; font-size: 0.9em;
+            font-weight: bold; letter-spacing: 0.5px; white-space: nowrap;
+        }
+        .days-counter .stats { display: flex; align-items: center; gap: 0; flex: 1; flex-wrap: wrap; }
+        .days-counter .stat { text-align: center; padding: 0 20px; }
+        .days-counter .label { color: rgba(255,255,255,0.85); font-size: 0.78em; margin-bottom: 3px; }
+        .days-counter .value { color: white; font-size: 1.7em; font-weight: bold; }
+        .days-counter .divider { width: 1px; height: 36px; background: rgba(255,255,255,0.3); flex-shrink: 0; }
+        .days-counter .progress-wrap { flex: 1; min-width: 120px; padding: 0 16px; }
+        .days-counter .progress-bar { background: rgba(255,255,255,0.2); border-radius: 20px; height: 8px; overflow: hidden; margin-bottom: 4px; }
+        .days-counter .progress-fill { height: 100%; background: white; border-radius: 20px; transition: width 0.5s; }
+        .days-counter .progress-label { color: rgba(255,255,255,0.8); font-size: 0.75em; }
 
-        /* Tabs */
         .tabs {
             display: flex; gap: 4px; margin-bottom: 20px;
             background: white; padding: 6px; border-radius: 10px;
@@ -60,14 +61,10 @@
             color: #777; cursor: pointer; transition: all 0.2s;
         }
         .tab-btn:hover { background: #f0f0f0; color: #333; }
-        .tab-btn.active {
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            color: white; box-shadow: 0 2px 6px rgba(46,125,50,0.3);
-        }
+        .tab-btn.active { background: linear-gradient(135deg, #2e7d32, #4CAF50); color: white; box-shadow: 0 2px 6px rgba(46,125,50,0.3); }
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
 
-        /* Top bar */
         .top-bar { display: flex; justify-content: flex-end; margin-bottom: 16px; }
         .toggle-form-btn {
             padding: 9px 20px; background: white; color: #2e7d32; border: none;
@@ -76,7 +73,6 @@
         }
         .toggle-form-btn:hover { background: #f0f0f0; }
 
-        /* Form */
         .form-container {
             background: white; border-radius: 10px; padding: 24px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px; display: none;
@@ -88,7 +84,17 @@
             border: 1px solid #ddd; border-radius: 6px; font-size: 0.92em; font-family: inherit;
         }
         .form-container textarea { resize: vertical; min-height: 60px; }
-        .calendar-wrapper { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+        .calendar-wrapper { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+        .dias-uteis-info {
+            background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 6px;
+            padding: 8px 14px; font-size: 0.85em; color: #2e7d32; font-weight: bold;
+            margin-bottom: 6px; display: none;
+        }
+        .dias-limit-warn {
+            background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;
+            padding: 8px 14px; font-size: 0.85em; color: #dc2626; font-weight: bold;
+            margin-bottom: 14px; display: none;
+        }
 
         .flatpickr-day.selected, .flatpickr-day.startRange,
         .flatpickr-day.endRange, .flatpickr-day.selected:hover {
@@ -100,19 +106,16 @@
         }
 
         .btn-submit {
-            width: 100%; padding: 11px;
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            width: 100%; padding: 11px; background: linear-gradient(135deg, #2e7d32, #4CAF50);
             color: white; border: none; border-radius: 6px;
             font-size: 0.95em; font-weight: bold; cursor: pointer;
         }
         .btn-submit:hover { opacity: 0.9; }
 
-        /* Badges */
         .badge-pendente { background: #fff3e0; color: #e65100; padding: 3px 10px; border-radius: 12px; font-size: 0.78em; font-weight: bold; }
         .badge-aprovado { background: #e8f5e9; color: #2e7d32; padding: 3px 10px; border-radius: 12px; font-size: 0.78em; font-weight: bold; }
         .badge-rejeitado { background: #ffebee; color: #c62828; padding: 3px 10px; border-radius: 12px; font-size: 0.78em; font-weight: bold; }
 
-        /* Cards */
         .ferias-card { background: white; border-radius: 10px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
         .ferias-card.pendente { border-left: 4px solid #fd7e14; }
         .ferias-card.aprovado { border-left: 4px solid #2e7d32; }
@@ -140,93 +143,37 @@
         .section-title { font-size: 0.85em; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px 0; }
         .empty-msg { text-align: center; color: #aaa; padding: 30px 0; font-size: 0.95em; }
 
-        /* ===== YEAR CALENDAR ===== */
-        .calendar-controls {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
-        }
+        /* Calendar */
+        .calendar-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
         .year-nav { display: flex; align-items: center; gap: 10px; }
-        .year-nav button {
-            background: white; border: 1px solid #ddd; border-radius: 6px;
-            padding: 6px 14px; cursor: pointer; font-size: 1.1em; color: #555;
-            transition: background 0.2s;
-        }
+        .year-nav button { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 1.1em; color: #555; transition: background 0.2s; }
         .year-nav button:hover { background: #f0f0f0; }
         .year-nav span { font-size: 1.2em; font-weight: bold; color: #333; min-width: 60px; text-align: center; }
 
-        .cal-legend {
-            display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
-            background: white; padding: 12px 16px; border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-        }
+        .cal-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; background: white; padding: 12px 16px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82em; color: #555; }
         .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
-        .user-filter {
-            background: white; padding: 10px 14px; border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 16px;
-            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-        }
+        .user-filter { background: white; padding: 10px 14px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .user-filter label { font-size: 0.85em; font-weight: bold; color: #555; }
-        .user-filter-btn {
-            padding: 5px 14px; border: 1px solid #ddd; background: white;
-            border-radius: 20px; font-size: 0.82em; cursor: pointer; color: #555;
-            transition: all 0.2s;
-        }
+        .user-filter-btn { padding: 5px 14px; border: 1px solid #ddd; background: white; border-radius: 20px; font-size: 0.82em; cursor: pointer; color: #555; transition: all 0.2s; }
         .user-filter-btn.active { background: #2e7d32; color: white; border-color: #2e7d32; }
 
-        .months-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .month-card {
-            background: white; border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden;
-        }
-
-        .month-title {
-            background: #f8faf8; padding: 10px 14px;
-            font-weight: bold; color: #2e7d32; font-size: 0.95em;
-            border-bottom: 1px solid #e8f0e8;
-        }
-
-        .month-grid {
-            padding: 10px;
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
-        }
-
-        .day-header {
-            text-align: center; font-size: 0.68em; color: #aaa;
-            font-weight: bold; padding: 4px 0;
-        }
-
-        .day-cell {
-            text-align: center; font-size: 0.78em;
-            padding: 4px 2px; border-radius: 4px; cursor: default;
-            min-height: 24px; display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-
+        .months-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .month-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; }
+        .month-title { background: #f8faf8; padding: 10px 14px; font-weight: bold; color: #2e7d32; font-size: 0.95em; border-bottom: 1px solid #e8f0e8; }
+        .month-grid { padding: 10px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .day-header { text-align: center; font-size: 0.68em; color: #aaa; font-weight: bold; padding: 4px 0; }
+        .day-cell { text-align: center; font-size: 0.78em; padding: 4px 2px; border-radius: 4px; cursor: default; min-height: 24px; display: flex; align-items: center; justify-content: center; position: relative; }
         .day-cell.empty { background: transparent; }
         .day-cell.weekend { color: #ccc; }
         .day-cell.today { font-weight: bold; color: #2e7d32; outline: 2px solid #2e7d32; border-radius: 50%; }
         .day-cell.feriado { background: #fff3e0; color: #e65100; font-weight: bold; }
         .day-cell.ferias-aprovado { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
         .day-cell.ferias-pendente { background: #fff8e1; color: #f57f17; }
-
         .day-cell[data-tooltip] { cursor: pointer; }
-        .day-cell[data-tooltip]:hover::after {
-            content: attr(data-tooltip);
-            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
-            background: #333; color: white; padding: 4px 8px; border-radius: 4px;
-            font-size: 0.75em; white-space: nowrap; z-index: 100; pointer-events: none;
-        }
+        .day-cell[data-tooltip]:hover::after { content: attr(data-tooltip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; white-space: nowrap; z-index: 100; pointer-events: none; }
 
-        /* Modal */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal { background: white; border-radius: 12px; padding: 30px; width: 360px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); text-align: center; }
@@ -241,14 +188,8 @@
 
         footer { text-align: center; padding: 10px; background: #2e7d32; color: rgba(255,255,255,0.8); font-size: 12px; position: fixed; bottom: 0; width: 100%; }
 
-        @media (max-width: 700px) {
-            .months-grid { grid-template-columns: 1fr; }
-            .admin-actions { flex-direction: column; }
-            .days-counter .divider { display: none; }
-        }
-        @media (max-width: 900px) and (min-width: 701px) {
-            .months-grid { grid-template-columns: repeat(2, 1fr); }
-        }
+        @media (max-width: 700px) { .months-grid { grid-template-columns: 1fr; } .admin-actions { flex-direction: column; } }
+        @media (max-width: 900px) and (min-width: 701px) { .months-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
 <body>
@@ -263,42 +204,65 @@
 
 <div class="content">
 
-    <!-- Days counter -->
-    {% set dias_aprovados = ferias | selectattr('0.estado', 'equalto', 'aprovado') | list %}
-    {% set total_usados = namespace(v=0) %}
-    {% for f, u in dias_aprovados %}
-        {% if not is_admin or u.id == current_user.id %}
-            {% set total_usados.v = total_usados.v + (f.num_dias or 0) %}
+    <!-- Build per-year stats in Jinja -->
+    {% set all_years = [] %}
+    {% for f, u in ferias %}
+        {% if f.data_inicio %}
+            {% set yr = f.data_inicio.split('/')[-1]|int %}
+            {% if yr not in all_years %}{% set _ = all_years.append(yr) %}{% endif %}
         {% endif %}
     {% endfor %}
-    {% set disponiveis = 22 - total_usados.v %}
+    {% if all_years|length == 0 %}{% set _ = all_years.append(now.year) %}{% endif %}
 
-    <div class="days-counter">
-        <div class="stat">
-            <div class="label">Adquiridos</div>
-            <div class="value">22</div>
+    <div class="year-counters">
+    {% for yr in all_years|sort %}
+        {% set usados = namespace(v=0) %}
+        {% for f, u in ferias %}
+            {% if f.estado == 'aprovado' %}
+                {% if f.data_inicio and f.data_inicio.split('/')[-1]|int == yr %}
+                    {% if not is_admin or u.id == current_user.id %}
+                        {% set usados.v = usados.v + (f.num_dias or 0) %}
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {% set disp = 22 - usados.v %}
+        {% set pct = ((usados.v / 22) * 100)|int %}
+        <div class="days-counter">
+            <div class="year-flag">{{ yr }}</div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="label">Adquiridos</div>
+                    <div class="value">22</div>
+                </div>
+                <div class="divider"></div>
+                <div class="stat">
+                    <div class="label">Utilizados</div>
+                    <div class="value">{{ usados.v }}</div>
+                </div>
+                <div class="divider"></div>
+                <div class="stat">
+                    <div class="label">Disponíveis</div>
+                    <div class="value">{{ disp if disp >= 0 else 0 }}</div>
+                </div>
+                <div class="progress-wrap">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width:{{ pct if pct <= 100 else 100 }}%;"></div>
+                    </div>
+                    <div class="progress-label">{{ pct }}% utilizado</div>
+                </div>
+            </div>
         </div>
-        <div class="divider"></div>
-        <div class="stat">
-            <div class="label">Utilizados</div>
-            <div class="value">{{ total_usados.v }}</div>
-        </div>
-        <div class="divider"></div>
-        <div class="stat">
-            <div class="label">Disponíveis</div>
-            <div class="value">{{ disponiveis if disponiveis >= 0 else 0 }}</div>
-        </div>
+    {% endfor %}
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('lista', this)">📋 Lista</button>
         <button class="tab-btn" onclick="switchTab('calendario', this)">📅 Calendário</button>
     </div>
 
-    <!-- ===== TAB: LISTA ===== -->
+    <!-- TAB: LISTA -->
     <div class="tab-panel active" id="tab-lista">
-
         <div class="top-bar">
             <button class="toggle-form-btn" onclick="toggleForm()">
                 <span id="formIcon">＋</span> Pedir Férias
@@ -310,8 +274,10 @@
             <form method="POST" action="/ferias">
                 <label>Seleciona o período</label>
                 <div class="calendar-wrapper">
-                    <input type="text" id="calendarInput" placeholder="Clica para selecionar as datas..." readonly style="border:none; border-radius:0; margin:0; background:#fafafa; cursor:pointer;">
+                    <input type="text" id="calendarInput" placeholder="Clica para selecionar as datas..." readonly style="border:none;border-radius:0;margin:0;background:#fafafa;cursor:pointer;">
                 </div>
+                <div class="dias-uteis-info" id="diasUteisInfo"></div>
+                <div class="dias-limit-warn" id="diasLimitWarn"></div>
                 <input type="hidden" name="data_inicio" id="dataInicio">
                 <input type="hidden" name="data_fim" id="dataFim">
                 <label>Nota (opcional)</label>
@@ -329,7 +295,7 @@
         <div class="ferias-card pendente">
             <div class="ferias-header">
                 <div class="ferias-info">
-                    <div class="ferias-dates">📅 {{ f.data_inicio }} → {{ f.data_fim }} <small style="color:#aaa;">({{ f.num_dias or 0 }} dias)</small></div>
+                    <div class="ferias-dates">📅 {{ f.data_inicio }} → {{ f.data_fim }} <small style="color:#aaa;">({{ f.num_dias or 0 }} dias úteis)</small></div>
                     <div class="ferias-sub">
                         Pedido em {{ f.created_at or '' }}
                         {% if is_admin %}&nbsp;·&nbsp;<span class="user-badge">{{ u.nome }}</span>{% endif %}
@@ -348,9 +314,7 @@
                     </form>
                 </div>
             </div>
-            {% if f.nota %}
-            <div class="ferias-detail"><strong>Nota:</strong> {{ f.nota }}</div>
-            {% endif %}
+            {% if f.nota %}<div class="ferias-detail"><strong>Nota:</strong> {{ f.nota }}</div>{% endif %}
             {% if is_admin %}
             <div class="admin-form">
                 <form method="POST" action="/ferias/responder/{{ f.id }}">
@@ -373,7 +337,7 @@
         <div class="ferias-card {{ f.estado }}">
             <div class="ferias-header">
                 <div class="ferias-info">
-                    <div class="ferias-dates">📅 {{ f.data_inicio }} → {{ f.data_fim }} <small style="color:#aaa;">({{ f.num_dias or 0 }} dias)</small></div>
+                    <div class="ferias-dates">📅 {{ f.data_inicio }} → {{ f.data_fim }} <small style="color:#aaa;">({{ f.num_dias or 0 }} dias úteis)</small></div>
                     <div class="ferias-sub">
                         Pedido em {{ f.created_at or '' }}
                         {% if is_admin %}&nbsp;·&nbsp;<span class="user-badge">{{ u.nome }}</span>{% endif %}
@@ -403,12 +367,10 @@
         {% if not ferias %}
         <div class="empty-msg">Ainda não há pedidos de férias.</div>
         {% endif %}
-
     </div>
 
-    <!-- ===== TAB: CALENDÁRIO ===== -->
+    <!-- TAB: CALENDÁRIO -->
     <div class="tab-panel" id="tab-calendario">
-
         <div class="calendar-controls">
             <div class="year-nav">
                 <button onclick="changeYear(-1)">‹</button>
@@ -416,7 +378,6 @@
                 <button onclick="changeYear(1)">›</button>
             </div>
         </div>
-
         {% if is_admin %}
         <div class="user-filter" id="userFilter">
             <label>Funcionário:</label>
@@ -426,21 +387,16 @@
             {% endfor %}
         </div>
         {% endif %}
-
         <div class="cal-legend" id="calLegend">
             <div class="legend-item"><div class="legend-dot" style="background:#c8e6c9;"></div> Férias aprovadas</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#fff8e1; border:1px solid #f57f17;"></div> Férias pendentes</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#fff8e1;border:1px solid #f57f17;"></div> Férias pendentes</div>
             <div class="legend-item"><div class="legend-dot" style="background:#fff3e0;"></div> Feriado nacional</div>
-            <div class="legend-item"><div class="legend-dot" style="outline:2px solid #2e7d32; background:white;"></div> Hoje</div>
+            <div class="legend-item"><div class="legend-dot" style="outline:2px solid #2e7d32;background:white;"></div> Hoje</div>
         </div>
-
         <div class="months-grid" id="monthsGrid"></div>
-
     </div>
-
 </div>
 
-<!-- Delete modal -->
 <div class="modal-overlay" id="deleteModal">
     <div class="modal">
         <div class="modal-icon">🗑️</div>
@@ -458,6 +414,84 @@
 <script id="ferias-data" type="application/json">{{ ferias_json | safe }}</script>
 
 <script>
+    // Per-year available days (passed from Jinja)
+    var availableByYear = {};
+    {% for yr in all_years|sort %}
+        {% set usados2 = namespace(v=0) %}
+        {% for f, u in ferias %}
+            {% if f.estado == 'aprovado' and f.data_inicio and f.data_inicio.split('/')[-1]|int == yr %}
+                {% if not is_admin or u.id == current_user.id %}
+                    {% set usados2.v = usados2.v + (f.num_dias or 0) %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        availableByYear[{{ yr }}] = {{ [22 - usados2.v, 0]|max }};
+    {% endfor %}
+
+    function getAvailableForYear(year) {
+        if (availableByYear[year] !== undefined) return availableByYear[year];
+        return 22; // new year = full 22 days
+    }
+
+    // ===== HOLIDAYS =====
+    function calcEaster(year) {
+        var a = year % 19, b = Math.floor(year/100), c = year % 100;
+        var d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25);
+        var g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15) % 30;
+        var i = Math.floor(c/4), k = c % 4, l = (32+2*e+2*i-h-k) % 7;
+        var m = Math.floor((a+11*h+22*l)/451);
+        var month = Math.floor((h+l-7*m+114)/31) - 1;
+        var day = ((h+l-7*m+114) % 31) + 1;
+        return { month: month, day: day };
+    }
+
+    function getFeriadosSet(year) {
+        var easter = calcEaster(year);
+        var easterDate = new Date(year, easter.month, easter.day);
+        var sexta = new Date(easterDate); sexta.setDate(sexta.getDate() - 2);
+        var corpus = new Date(easterDate); corpus.setDate(corpus.getDate() + 60);
+        var fixed = [[0,1],[3,25],[4,1],[5,10],[7,15],[9,5],[10,1],[11,1],[11,8],[11,25]];
+        var set = {};
+        fixed.forEach(function(p) { set[new Date(year, p[0], p[1]).toDateString()] = true; });
+        set[easterDate.toDateString()] = true;
+        set[sexta.toDateString()] = true;
+        set[corpus.toDateString()] = true;
+        return set;
+    }
+
+    function getFeriados(year) {
+        var easter = calcEaster(year);
+        var easterDate = new Date(year, easter.month, easter.day);
+        var sexta = new Date(easterDate); sexta.setDate(sexta.getDate() - 2);
+        var corpus = new Date(easterDate); corpus.setDate(corpus.getDate() + 60);
+        var feriados = {};
+        function add(d, name) {
+            var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            feriados[key] = name;
+        }
+        add(new Date(year,0,1),'Ano Novo'); add(new Date(year,3,25),'Dia da Liberdade');
+        add(new Date(year,4,1),'Dia do Trabalhador'); add(new Date(year,5,10),'Dia de Portugal');
+        add(new Date(year,7,15),'Assunção'); add(new Date(year,9,5),'República');
+        add(new Date(year,10,1),'Todos os Santos'); add(new Date(year,11,1),'Restauração');
+        add(new Date(year,11,8),'Imaculada Conceição'); add(new Date(year,11,25),'Natal');
+        add(sexta,'Sexta-feira Santa'); add(easterDate,'Páscoa'); add(corpus,'Corpo de Deus');
+        return feriados;
+    }
+
+    function contarDiasUteis(start, end) {
+        var feriados = getFeriadosSet(start.getFullYear());
+        if (end.getFullYear() !== start.getFullYear()) {
+            var f2 = getFeriadosSet(end.getFullYear());
+            Object.keys(f2).forEach(function(k) { feriados[k] = true; });
+        }
+        var count = 0, cur = new Date(start);
+        while (cur <= end) {
+            if (cur.getDay() !== 0 && cur.getDay() !== 6 && !feriados[cur.toDateString()]) count++;
+            cur.setDate(cur.getDate() + 1);
+        }
+        return count;
+    }
+
     // ===== TABS =====
     function switchTab(name, btn) {
         document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
@@ -469,24 +503,48 @@
 
     // ===== FLATPICKR =====
     var fp = flatpickr('#calendarInput', {
-        mode: 'range', locale: 'pt', dateFormat: 'd/m/Y', minDate: 'today',
+        mode: 'range', locale: 'pt', dateFormat: 'd/m/Y',
         inline: true, appendTo: document.querySelector('.calendar-wrapper'),
         onChange: function(selectedDates) {
+            var info = document.getElementById('diasUteisInfo');
+            var warn = document.getElementById('diasLimitWarn');
             if (selectedDates.length === 2) {
                 var fmt = function(d) {
                     return String(d.getDate()).padStart(2,'0') + '/' +
-                           String(d.getMonth()+1).padStart(2,'0') + '/' +
-                           d.getFullYear();
+                           String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
                 };
                 document.getElementById('dataInicio').value = fmt(selectedDates[0]);
                 document.getElementById('dataFim').value = fmt(selectedDates[1]);
+                var dias = contarDiasUteis(selectedDates[0], selectedDates[1]);
+                var year = selectedDates[0].getFullYear();
+                var disp = getAvailableForYear(year);
+                info.style.display = 'block';
+                info.textContent = dias + ' dia(s) útil(eis) selecionado(s) — ' + disp + ' disponíveis em ' + year;
+                if (dias > disp) {
+                    warn.style.display = 'block';
+                    warn.textContent = '⚠️ Excede os dias disponíveis em ' + year + '! Tens apenas ' + disp + ' dias disponíveis.';
+                } else {
+                    warn.style.display = 'none';
+                }
+            } else {
+                info.style.display = 'none';
+                warn.style.display = 'none';
             }
         }
     });
 
     function validarDatas() {
-        if (!document.getElementById('dataInicio').value) {
-            alert('Por favor seleciona um período no calendário.');
+        var inicio = document.getElementById('dataInicio').value;
+        var fim = document.getElementById('dataFim').value;
+        if (!inicio) { alert('Por favor seleciona um período no calendário.'); return false; }
+        var p1 = inicio.split('/'); var p2 = fim.split('/');
+        var d1 = new Date(parseInt(p1[2]), parseInt(p1[1])-1, parseInt(p1[0]));
+        var d2 = new Date(parseInt(p2[2]), parseInt(p2[1])-1, parseInt(p2[0]));
+        var dias = contarDiasUteis(d1, d2);
+        var year = d1.getFullYear();
+        var disp = getAvailableForYear(year);
+        if (dias > disp) {
+            alert('Não podes pedir ' + dias + ' dias úteis — tens apenas ' + disp + ' dias disponíveis em ' + year + '.');
             return false;
         }
         return true;
@@ -533,68 +591,17 @@
     });
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
 
-    // ===== YEAR CALENDAR =====
-    var currentYear = new Date().getFullYear();
+    // ===== YEAR CALENDAR — starts at 2026 Jan 1 =====
+    var currentYear = 2026;
     var activeUserFilter = 'all';
     var feriasData = JSON.parse(document.getElementById('ferias-data').textContent);
-    var calendarRendered = false;
-
     document.getElementById('calYear').textContent = currentYear;
 
-    var userColors = [
-        '#bbdefb','#c8e6c9','#ffe0b2','#f8bbd0',
-        '#e1bee7','#b2dfdb','#fff9c4','#d7ccc8'
-    ];
+    var userColors = ['#bbdefb','#c8e6c9','#ffe0b2','#f8bbd0','#e1bee7','#b2dfdb','#fff9c4','#d7ccc8'];
     var userColorMap = {};
-
     function getUserColor(nome) {
-        if (!userColorMap[nome]) {
-            var keys = Object.keys(userColorMap);
-            userColorMap[nome] = userColors[keys.length % userColors.length];
-        }
+        if (!userColorMap[nome]) userColorMap[nome] = userColors[Object.keys(userColorMap).length % userColors.length];
         return userColorMap[nome];
-    }
-
-    function getFeriados(year) {
-        var easter = calcEaster(year);
-        var easterDate = new Date(year, easter.month, easter.day);
-        var sexta = new Date(easterDate); sexta.setDate(sexta.getDate() - 2);
-        var corpusChristi = new Date(easterDate); corpusChristi.setDate(corpusChristi.getDate() + 60);
-
-        var feriados = {};
-        function add(d, name) {
-            var key = d.getFullYear() + '-' +
-                String(d.getMonth()+1).padStart(2,'0') + '-' +
-                String(d.getDate()).padStart(2,'0');
-            feriados[key] = name;
-        }
-
-        add(new Date(year, 0, 1),   'Ano Novo');
-        add(new Date(year, 3, 25),  'Dia da Liberdade');
-        add(new Date(year, 4, 1),   'Dia do Trabalhador');
-        add(new Date(year, 5, 10),  'Dia de Portugal');
-        add(new Date(year, 7, 15),  'Assunção de Nossa Senhora');
-        add(new Date(year, 9, 5),   'Implantação da República');
-        add(new Date(year, 10, 1),  'Dia de Todos os Santos');
-        add(new Date(year, 11, 1),  'Restauração da Independência');
-        add(new Date(year, 11, 8),  'Imaculada Conceição');
-        add(new Date(year, 11, 25), 'Natal');
-        add(sexta,        'Sexta-feira Santa');
-        add(easterDate,   'Páscoa');
-        add(corpusChristi,'Corpo de Deus');
-
-        return feriados;
-    }
-
-    function calcEaster(year) {
-        var a = year % 19, b = Math.floor(year/100), c = year % 100;
-        var d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25);
-        var g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15) % 30;
-        var i = Math.floor(c/4), k = c % 4, l = (32+2*e+2*i-h-k) % 7;
-        var m = Math.floor((a+11*h+22*l)/451);
-        var month = Math.floor((h+l-7*m+114)/31) - 1;
-        var day = ((h+l-7*m+114) % 31) + 1;
-        return { month: month, day: day };
     }
 
     function changeYear(delta) {
@@ -627,22 +634,18 @@
         var feriados = getFeriados(currentYear);
         var today = new Date();
         var todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
-
         var dayMap = {};
+        var isAdmin = {{ 'true' if is_admin else 'false' }};
 
         feriasData.forEach(function(f) {
             if (activeUserFilter !== 'all' && f.user_nome !== activeUserFilter) return;
             if (f.estado === 'rejeitado') return;
-
             var start = parseDate(f.data_inicio);
             var end = parseDate(f.data_fim);
             if (!start || !end) return;
-
-            var isAdmin = {{ 'true' if is_admin else 'false' }};
             var color = f.estado === 'aprovado'
                 ? (isAdmin && activeUserFilter === 'all' ? getUserColor(f.user_nome) : '#c8e6c9')
                 : '#fff8e1';
-
             var cur = new Date(start);
             while (cur <= end) {
                 if (cur.getFullYear() === currentYear) {
@@ -654,29 +657,24 @@
             }
         });
 
-        var monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                          'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        var monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
         var dayNames = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 
         for (var month = 0; month < 12; month++) {
             var card = document.createElement('div');
             card.className = 'month-card';
-
             var title = document.createElement('div');
             title.className = 'month-title';
             title.textContent = monthNames[month];
             card.appendChild(title);
-
             var mgrid = document.createElement('div');
             mgrid.className = 'month-grid';
-
             dayNames.forEach(function(dn) {
                 var h = document.createElement('div');
                 h.className = 'day-header';
                 h.textContent = dn;
                 mgrid.appendChild(h);
             });
-
             var firstDay = new Date(currentYear, month, 1).getDay();
             var offset = (firstDay === 0) ? 6 : firstDay - 1;
             for (var i = 0; i < offset; i++) {
@@ -684,54 +682,39 @@
                 empty.className = 'day-cell empty';
                 mgrid.appendChild(empty);
             }
-
             var daysInMonth = new Date(currentYear, month + 1, 0).getDate();
             for (var day = 1; day <= daysInMonth; day++) {
                 var cell = document.createElement('div');
                 cell.className = 'day-cell';
                 cell.textContent = day;
-
                 var k = dateKey(currentYear, month, day);
                 var dow = new Date(currentYear, month, day).getDay();
-                var isWeekend = dow === 0 || dow === 6;
                 var isFeriado = !!feriados[k];
                 var dayEntries = dayMap[k] || [];
                 var hasAprovado = dayEntries.some(function(e) { return e.estado === 'aprovado'; });
                 var hasPendente = dayEntries.some(function(e) { return e.estado === 'pendente'; });
-
-                if (isWeekend) cell.classList.add('weekend');
+                if (dow === 0 || dow === 6) cell.classList.add('weekend');
                 if (k === todayKey) cell.classList.add('today');
-
                 var tooltipParts = [];
-
                 if (hasAprovado) {
                     var entry = dayEntries.find(function(e) { return e.estado === 'aprovado'; });
                     cell.style.background = entry.color;
                     cell.classList.add('ferias-aprovado');
-                    var users = dayEntries.filter(function(e) { return e.estado === 'aprovado'; }).map(function(e) { return e.user; });
-                    tooltipParts.push('🏖️ ' + users.join(', '));
+                    tooltipParts.push('🏖️ ' + dayEntries.filter(function(e){return e.estado==='aprovado';}).map(function(e){return e.user;}).join(', '));
                 } else if (hasPendente) {
                     cell.classList.add('ferias-pendente');
-                    var pusers = dayEntries.map(function(e) { return e.user; });
-                    tooltipParts.push('⏳ ' + pusers.join(', '));
+                    tooltipParts.push('⏳ ' + dayEntries.map(function(e){return e.user;}).join(', '));
                 }
-
                 if (isFeriado) {
                     if (!hasAprovado && !hasPendente) cell.classList.add('feriado');
                     tooltipParts.push('🇵🇹 ' + feriados[k]);
                 }
-
-                if (tooltipParts.length > 0) {
-                    cell.setAttribute('data-tooltip', tooltipParts.join(' · '));
-                }
-
+                if (tooltipParts.length > 0) cell.setAttribute('data-tooltip', tooltipParts.join(' · '));
                 mgrid.appendChild(cell);
             }
-
             card.appendChild(mgrid);
             grid.appendChild(card);
         }
-
         updateLegend();
     }
 
@@ -741,18 +724,18 @@
         if (!isAdmin || activeUserFilter !== 'all') {
             legend.innerHTML =
                 '<div class="legend-item"><div class="legend-dot" style="background:#c8e6c9;"></div> Férias aprovadas</div>' +
-                '<div class="legend-item"><div class="legend-dot" style="background:#fff8e1; border:1px solid #f57f17;"></div> Férias pendentes</div>' +
+                '<div class="legend-item"><div class="legend-dot" style="background:#fff8e1;border:1px solid #f57f17;"></div> Férias pendentes</div>' +
                 '<div class="legend-item"><div class="legend-dot" style="background:#fff3e0;"></div> Feriado nacional</div>' +
-                '<div class="legend-item"><div class="legend-dot" style="outline:2px solid #2e7d32; background:white;"></div> Hoje</div>';
+                '<div class="legend-item"><div class="legend-dot" style="outline:2px solid #2e7d32;background:white;"></div> Hoje</div>';
             return;
         }
         var html = '';
         Object.keys(userColorMap).forEach(function(nome) {
             html += '<div class="legend-item"><div class="legend-dot" style="background:' + userColorMap[nome] + ';"></div> ' + nome + '</div>';
         });
-        html += '<div class="legend-item"><div class="legend-dot" style="background:#fff8e1; border:1px solid #f57f17;"></div> Pendente</div>';
+        html += '<div class="legend-item"><div class="legend-dot" style="background:#fff8e1;border:1px solid #f57f17;"></div> Pendente</div>';
         html += '<div class="legend-item"><div class="legend-dot" style="background:#fff3e0;"></div> Feriado</div>';
-        html += '<div class="legend-item"><div class="legend-dot" style="outline:2px solid #2e7d32; background:white;"></div> Hoje</div>';
+        html += '<div class="legend-item"><div class="legend-dot" style="outline:2px solid #2e7d32;background:white;"></div> Hoje</div>';
         legend.innerHTML = html;
     }
 </script>

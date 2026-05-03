@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, render_tem
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from models import Usuario, Registo, Servico, TipoServico, Fatura, Ferias, Mensagem, HorasTrabalhadas, Orcamento, Organizacao
 from folium.plugins import Geocoder, TagFilterButton, Fullscreen
+from dotenv import load_dotenv
 from db import db
 import hashlib
 import folium
@@ -16,19 +17,25 @@ from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import formataddr
 
+load_dotenv()
+
 app = Flask(__name__)
-app.secret_key = 'lancode'
+app.secret_key = os.getenv('SECRET_KEY', 'fallback-secret-key')
 lm = LoginManager(app)
 lm.login_view = 'login'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///database.db')
 db.init_app(app)
+
+GMAIL_USER = os.getenv('GMAIL_USER', '')
+GMAIL_PASS = os.getenv('GMAIL_PASS', '')
+MAPBOX_TOKEN = os.getenv('MAPBOX_TOKEN', '')
 
 
 def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo=None, criado_por=None):
     try:
         msg = MIMEMultipart('alternative')
         msg["Subject"] = f"Bem-vindo à plataforma {org_nome}"
-        msg["From"] = formataddr((str(Header("GestãoPro", "utf-8")), "geral.servicos.info@gmail.com"))
+        msg["From"] = formataddr((str(Header("GestãoPro", "utf-8")), GMAIL_USER))
         msg["To"] = to_email
         criado_por_block = (
             f'<div style="background:#e8f0fe;border:1px solid #b3c6f7;border-radius:8px;padding:10px 14px;margin-bottom:20px;">'
@@ -50,7 +57,7 @@ def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo
                     <p style="font-size:11px;color:#639922;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Password temporária</p>
                     <p style="font-size:20px;font-weight:bold;color:#2e7d32;margin:0;">{password_temp}</p>
                 </div>
-                {f'<div style="background:#e8f0fe;border:1px solid #b3c6f7;border-radius:8px;padding:20px 24px;margin-bottom:20px;"><p style="font-size:11px;color:#3c5a99;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Código de verificação</p><p style="font-size:32px;font-weight:bold;color:#1a3a8f;margin:0;letter-spacing:8px;">' + (codigo or '') + '</p></div>' if codigo else ''}
+                {f'<div style="background:#e8f0fe;border:1px solid #b3c6f7;border-radius:8px;padding:20px 24px;margin-bottom:20px;"><p style="font-size:11px;color:#3c5a99;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Código de verificação</p><p style="font-size:32px;font-weight:bold;color:#1a3a8f;margin:0;letter-spacing:8px;">' + (codigo or '') + '</p></div>' if codigo else ''}
                 <div style="background:#faeeda;border:1px solid #fac775;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
                     <p style="font-size:13px;color:#854f0b;margin:0;">Por segurança, altera a tua password no primeiro login.</p>
                 </div>
@@ -65,7 +72,7 @@ def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo
         msg.attach(MIMEText(html, 'html'))
         with smtplib.SMTP("smtp.gmail.com", 587) as connection:
             connection.starttls()
-            connection.login(user="geral.servicos.info@gmail.com", password="kwth gssy aqla sahz")
+            connection.login(user=GMAIL_USER, password=GMAIL_PASS)
             connection.send_message(msg)
         print(f"Email enviado para {to_email}")
     except Exception as e:
@@ -86,16 +93,25 @@ def inject_org():
     try:
         if current_user.is_authenticated and current_user.org_id:
             org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
-            return dict(org_nome=org.nome if org else 'A minha Organização', org=org)
-        return dict(org_nome='A minha Organização', org=None)
+            tipo = getattr(org, 'tipo_negocio', 'cliente') if org else 'cliente'
+            return dict(
+                org_nome=org.nome if org else 'A minha Organização',
+                org=org,
+                tem_mapa=tipo != 'espaco'
+            )
+        return dict(org_nome='A minha Organização', org=None, tem_mapa=True)
     except:
-        return dict(org_nome='A minha Organização', org=None)
+        return dict(org_nome='A minha Organização', org=None, tem_mapa=True)
 
 
 @app.route('/')
 @login_required
 def home():
-    MAPBOX_TOKEN = 'pk.eyJ1IjoiY2VzYXIxOTk4IiwiYSI6ImNtbzhqaHhvNDAyZW0ycnF6YWxhNndpZ2wifQ.IKEgSQLTLT1Q45MJ1ZlCfg'
+    org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
+    org_nome = org.nome if org else 'A minha Organização'
+
+    if org and getattr(org, 'tipo_negocio', 'cliente') == 'espaco':
+        return redirect(url_for('nova_pagina'))
 
     m = folium.Map(
         location=[41.545448, -8.426507],
@@ -119,12 +135,12 @@ def home():
     current_date = datetime.now().date()
 
     for r in registos:
-        # Use most recent service for date calculation
         def parse_date(d):
             try:
                 return datetime.strptime(d, '%d/%m/%Y')
             except:
                 return datetime.min
+
         servicos_ordenados = sorted(
             [s for s in r.servicos if s.data_servico],
             key=lambda s: parse_date(s.data_servico),
@@ -153,7 +169,6 @@ def home():
         else:
             color = '#a33b3b'; filter_value = 'Urgente'; status_label = 'Urgente'
 
-        # Professional popup — no emojis
         num_servicos = len(r.servicos)
         historico_html = ''
         for s in servicos_ordenados[:3]:
@@ -259,9 +274,6 @@ def home():
     }
     </script>"""
 
-    org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
-    org_nome = org.nome if org else 'A minha Organização'
-
     m.get_root().html.add_child(folium.Element(custom_js))
     m.get_root().render()
     header = m.get_root().header.render()
@@ -346,8 +358,10 @@ def home():
 def login():
     if request.method == 'GET':
         return render_template('login.html', error=False)
-    nome = request.form['nomeForm']
-    senha = request.form['senhaForm']
+    nome = request.form.get('nomeForm', '').strip()
+    senha = request.form.get('senhaForm', '').strip()
+    if not nome or not senha:
+        return render_template('login.html', error=True)
     user = db.session.query(Usuario).filter_by(nome=nome, senha=hash(senha)).first()
     if not user:
         return render_template('login.html', error=True)
@@ -382,6 +396,7 @@ def setup():
         org_nome = request.form.get('org_nome')
         pais = request.form.get('pais')
         org_telefone = request.form.get('org_telefone')
+        tipo_negocio = request.form.get('tipo_negocio', 'cliente')
 
         if nome and senha:
             if db.session.query(Usuario).filter_by(nome=nome).first():
@@ -395,21 +410,21 @@ def setup():
                 code = str(random.randint(100000, 999999))
 
             org = Organizacao(nome=org_nome, pais=pais, telefone=org_telefone,
-                              created_at=datetime.now().strftime('%d/%m/%Y'))
+                              created_at=datetime.now().strftime('%d/%m/%Y'),
+                              tipo_negocio=tipo_negocio)
             db.session.add(org)
             db.session.flush()
             admin = Usuario(nome=nome, senha=hash(senha), email=email, telefone=telefone,
                             nome_completo=nome_completo, cargo=cargo, is_admin=True, org_id=org.id)
             db.session.add(admin)
             db.session.commit()
-            # Criar tipos de serviço padrão
+
             tipos_default = ['Instalação AC', 'Limpeza / Manutenção AC']
             for t in tipos_default:
                 db.session.add(TipoServico(nome=t, org_id=org.id))
             db.session.commit()
 
             login_user(admin)
-
             flask_session['setup_code'] = code
 
             if email:
@@ -463,19 +478,6 @@ def registrar():
                 nome=nome,
                 org_nome=org.nome if org else 'A minha Organização',
                 username=nome,
-                password_temp=senha
-            )
-        except Exception as e:
-            print(f'Erro email registar: {e}')
-
-    if email:
-        try:
-            org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
-            send_welcome_email(
-                to_email=email,
-                nome=nome,
-                org_nome=org.nome if org else 'A minha Organizacao',
-                username=nome,
                 password_temp=senha,
                 criado_por=current_user.nome_completo or current_user.nome
             )
@@ -524,7 +526,6 @@ def perfil():
     is_admin = current_user.is_admin
     todos_usuarios = db.session.query(Usuario).filter_by(org_id=current_user.org_id).all() if is_admin else []
     registos = db.session.query(Registo).filter_by(org_id=current_user.org_id).all() if is_admin else []
-    # Build rich data for charts
     servicos = db.session.query(Servico).filter_by(org_id=current_user.org_id).all() if is_admin else []
     registos_json = json.dumps([{
         'data_instalacao': r.data_instalacao,
@@ -541,13 +542,11 @@ def perfil():
     org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
     tipos_servico = db.session.query(TipoServico).filter_by(org_id=current_user.org_id).all() if is_admin else []
 
-    # KPIs
     total_clientes = len(registos)
     total_servicos = len(servicos)
     receita_total = sum(s.valor_pago or 0 for s in servicos)
     media_maquinas = round(sum(s.num_maquinas or 0 for s in servicos) / total_servicos, 1) if total_servicos else 0
 
-    # Clientes urgentes (último serviço > 10 meses)
     from datetime import datetime as dt
     now = dt.now()
     urgentes = 0
@@ -562,7 +561,8 @@ def perfil():
                 if months > 10: urgentes += 1
                 elif months > 8: atencao += 1
                 else: em_dia += 1
-            except: pass
+            except:
+                pass
 
     return render_template('perfil.html', user=current_user, usuarios=todos_usuarios,
                            registos=registos, registos_json=registos_json, servicos_json=servicos_json,
@@ -592,7 +592,6 @@ def nova_pagina():
         tipo_servico = request.form.get('tipo_servico')
         marca = request.form.get('marca')
         data_instalacao = request.form.get('data_instalacao')
-        proxima_manutencao = request.form.get('proxima_manutencao')
         morada = request.form.get('morada')
         latitude = request.form.get('latitude')
         longitude = request.form.get('longitude')
@@ -613,7 +612,8 @@ def nova_pagina():
                 try:
                     _d2 = datetime.strptime(_ds2, '%d/%m/%Y')
                     _prox2 = _d2.replace(year=_d2.year + 1).strftime('%d/%m/%Y')
-                except: pass
+                except:
+                    pass
             _dur2 = request.form.get('duracao_horas')
             primeiro_servico = Servico(
                 registo_id=novo_registo.id,
@@ -653,7 +653,8 @@ def add_servico(registo_id):
             try:
                 _d = datetime.strptime(_ds, '%d/%m/%Y')
                 _prox = _d.replace(year=_d.year + 1).strftime('%d/%m/%Y')
-            except: pass
+            except:
+                pass
         _dur = request.form.get('duracao_horas')
         novo = Servico(
             registo_id=r.id,
@@ -702,7 +703,6 @@ def delete_registo(id):
 @login_required
 def delete_servico(id):
     s = db.session.query(Servico).filter_by(id=id, org_id=current_user.org_id).first()
-    registo_id = s.registo_id if s else None
     if s:
         db.session.delete(s)
         db.session.commit()
@@ -773,13 +773,32 @@ def ferias():
         nota = request.form.get('nota')
         if data_inicio and data_fim:
             try:
+                from datetime import date, timedelta
                 d1 = datetime.strptime(data_inicio, '%d/%m/%Y')
                 d2 = datetime.strptime(data_fim, '%d/%m/%Y')
-                num_dias = (d2 - d1).days + 1
+                year = d1.year
+                feriados_pt = []
+                for mes, dia in [(1,1),(4,25),(5,1),(6,10),(8,15),(10,5),(11,1),(12,1),(12,8),(12,25)]:
+                    try: feriados_pt.append(date(year, mes, dia))
+                    except: pass
+                a=year%19; b=year//100; c=year%100
+                d=b//4; e=b%4; f_=(b+8)//25
+                g=(b-f_+1)//3; h=(19*a+b-d-g+15)%30
+                i=c//4; k=c%4; l=(32+2*e+2*i-h-k)%7
+                m_=(a+11*h+22*l)//451
+                em=(h+l-7*m_+114)//31; ed=(h+l-7*m_+114)%31+1
+                easter=date(year, em, ed)
+                feriados_pt += [easter, easter-timedelta(days=2), easter+timedelta(days=60)]
+                num_dias = 0
+                cur = d1
+                while cur <= d2:
+                    if cur.weekday() < 5 and cur.date() not in feriados_pt:
+                        num_dias += 1
+                    cur += timedelta(days=1)
             except:
                 num_dias = 0
             nova = Ferias(org_id=current_user.org_id, user_id=current_user.id,
-                          data_inicio=data_inicio, data_fim=data_fim, nota=nota, num_dias=num_dias)
+                        data_inicio=data_inicio, data_fim=data_fim, nota=nota, num_dias=num_dias)
             db.session.add(nova)
             db.session.commit()
     is_admin = current_user.is_admin
@@ -793,7 +812,7 @@ def ferias():
     ferias_json = json.dumps([{'user_nome': u.nome, 'estado': f.estado, 'data_inicio': f.data_inicio,
                                'data_fim': f.data_fim, 'num_dias': f.num_dias or 0} for f, u in todos])
     return render_template('ferias.html', ferias=todos, ferias_json=ferias_json, is_admin=is_admin,
-                           usuarios=usuarios, current_user=current_user)
+                       usuarios=usuarios, current_user=current_user, now=datetime.now())
 
 
 @app.route('/ferias/responder/<int:id>', methods=['POST'])
@@ -819,13 +838,13 @@ def responder_ferias(id):
                 bg = '#eaf3de' if estado == 'aprovado' else '#fef2f2'
                 brd = '#c0dd97' if estado == 'aprovado' else '#fecaca'
                 admin_nome = current_user.nome_completo or current_user.nome
-                org_nome_str = org.nome if org else 'A minha Organizacao'
+                org_nome_str = org.nome if org else 'A minha Organização'
                 acao = 'aprovou' if estado == 'aprovado' else 'recusou'
                 comentario_block = ''
                 if comentario:
                     comentario_block = (
                         '<div style="background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:16px;">'
-                        '<p style="font-size:12px;color:#888;margin:0 0 4px;">Comentario do administrador</p>'
+                        '<p style="font-size:12px;color:#888;margin:0 0 4px;">Comentário do administrador</p>'
                         f'<p style="font-size:14px;color:#333;margin:0;">{comentario}</p>'
                         '</div>'
                     )
@@ -833,32 +852,32 @@ def responder_ferias(id):
                 html_ferias = (
                     '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">'
                     f'<div style="background:{cor};padding:28px 32px;text-align:center;">'
-                    '<p style="color:white;font-size:20px;font-weight:bold;margin:0 0 4px;">Pedido de Ferias</p>'
+                    '<p style="color:white;font-size:20px;font-weight:bold;margin:0 0 4px;">Pedido de Férias</p>'
                     f'<p style="color:rgba(255,255,255,0.8);font-size:13px;margin:0;">{org_nome_str}</p>'
                     '</div>'
                     '<div style="background:white;padding:28px 32px;">'
-                    f'<p style="font-size:15px;color:#1a1a1a;margin:0 0 16px;">Ola <strong>{user.nome_completo or user.nome}</strong>,</p>'
-                    f'<p style="font-size:14px;color:#555;margin:0 0 20px;">O seu administrador <strong>{admin_nome}</strong> {acao} o seu pedido de ferias.</p>'
+                    f'<p style="font-size:15px;color:#1a1a1a;margin:0 0 16px;">Olá <strong>{user.nome_completo or user.nome}</strong>,</p>'
+                    f'<p style="font-size:14px;color:#555;margin:0 0 20px;">O seu administrador <strong>{admin_nome}</strong> {acao} o seu pedido de férias.</p>'
                     f'<div style="background:{bg};border:1px solid {brd};border-radius:8px;padding:16px 20px;margin-bottom:20px;">'
-                    '<p style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Periodo</p>'
+                    '<p style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Período</p>'
                     f'<p style="font-size:16px;font-weight:bold;color:{cor};margin:0;">{periodo}</p>'
                     '</div>'
                     f'{comentario_block}'
-                    '<p style="font-size:13px;color:#888;margin:0;">Se tiver questoes, contacte o seu administrador.</p>'
+                    '<p style="font-size:13px;color:#888;margin:0;">Se tiver questões, contacte o seu administrador.</p>'
                     '</div>'
                     '<div style="background:#f8f8f8;border-top:1px solid #eee;padding:16px 32px;text-align:center;">'
-                    '<p style="font-size:12px;color:#aaa;margin:0;">GestaoPro - Plataforma de Gestao</p>'
+                    f'<p style="font-size:12px;color:#aaa;margin:0;">© {org_nome_str} — Plataforma de Gestão</p>'
                     '</div>'
                     '</div>'
                 )
                 msg_ferias = MIMEMultipart('alternative')
-                msg_ferias["Subject"] = f"As suas ferias foram {estado_label}"
-                msg_ferias["From"] = "GestaoPro <geral.servicos.info@gmail.com>"
+                msg_ferias["Subject"] = f"As suas férias foram {estado_label}"
+                msg_ferias["From"] = formataddr((str(Header("GestãoPro", "utf-8")), GMAIL_USER))
                 msg_ferias["To"] = user.email
                 msg_ferias.attach(MIMEText(html_ferias, 'html'))
                 with smtplib.SMTP("smtp.gmail.com", 587) as conn:
                     conn.starttls()
-                    conn.login(user="geral.servicos.info@gmail.com", password="kwth gssy aqla sahz")
+                    conn.login(user=GMAIL_USER, password=GMAIL_PASS)
                     conn.send_message(msg_ferias)
             except Exception as e:
                 print(f'Erro email ferias: {e}')
@@ -1062,7 +1081,7 @@ def forgot_password():
     try:
         msg = MIMEMultipart('alternative')
         msg["Subject"] = "Recuperação de password"
-        msg["From"] = formataddr((str(Header("GestãoPro", "utf-8")), "geral.servicos.info@gmail.com"))
+        msg["From"] = formataddr((str(Header("GestãoPro", "utf-8")), GMAIL_USER))
         msg["To"] = email
         html = f"""
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
@@ -1086,7 +1105,7 @@ def forgot_password():
         msg.attach(MIMEText(html, 'html'))
         with smtplib.SMTP("smtp.gmail.com", 587) as connection:
             connection.starttls()
-            connection.login(user="geral.servicos.info@gmail.com", password="kwth gssy aqla sahz")
+            connection.login(user=GMAIL_USER, password=GMAIL_PASS)
             connection.send_message(msg)
     except Exception as e:
         print(f'Erro email reset: {e}')
@@ -1120,14 +1139,20 @@ def criar_admin():
     with app.app_context():
         db.create_all()
 
-        # Add duracao_horas column if missing
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(db.text("ALTER TABLE organizacao ADD COLUMN tipo_negocio VARCHAR(20) DEFAULT 'cliente'"))
+                conn.commit()
+        except:
+            pass
+
         try:
             with db.engine.connect() as conn:
                 conn.execute(db.text('ALTER TABLE servicos ADD COLUMN duracao_horas FLOAT'))
                 conn.commit()
-        except: pass
+        except:
+            pass
 
-        # Migra registos existentes que ainda não têm serviços
         try:
             registos_sem_servico = db.session.query(Registo).filter(
                 ~Registo.servicos.any()
@@ -1153,4 +1178,4 @@ def criar_admin():
 
 if __name__ == "__main__":
     criar_admin()
-    app.run(host="0.0.0.0", port=3000, debug=True)
+    app.run(host="0.0.0.0", port=3000, debug=False)

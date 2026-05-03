@@ -9,3 +9,5 @@ services:
       - "3000:3000"
     volumes:
       - .:/app  # Optional, for local development to reflect changes in real-time
+    env_file:
+      - .env

@@ -198,6 +198,51 @@
                 </div>
             </div>
         </div>
+        <!-- Card: Tipo de Negócio -->
+        <div class="card" id="card-tipo">
+            <div class="card-header">
+                <div class="card-icon">🔧</div>
+                <div>
+                    <div class="card-title">Onde prestas o serviço?</div>
+                    <div class="card-desc">Isto define se o mapa de clientes está disponível</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="display:flex; flex-direction:column; gap:10px;">
+
+                    <label id="opt-cliente" onclick="selectTipo('cliente')"
+                        style="cursor:pointer; border:2px solid #2e7d32; border-radius:10px; padding:14px 18px; display:flex; align-items:center; gap:14px; background:#f0f7f0; transition:all 0.2s;">
+                        <span style="font-size:1.6em; flex-shrink:0;">🏠</span>
+                        <div>
+                            <div style="font-weight:600; font-size:0.92em; color:#2e7d32;">Na casa / local do cliente</div>
+                            <div style="font-size:0.78em; color:#777; margin-top:2px;">Vais ao cliente instalar, reparar ou fazer obras. O mapa estará disponível.</div>
+                        </div>
+                        <input type="radio" name="tipo_negocio" value="cliente" checked style="display:none;">
+                    </label>
+
+                    <label id="opt-espaco" onclick="selectTipo('espaco')"
+                        style="cursor:pointer; border:2px solid #e5e7eb; border-radius:10px; padding:14px 18px; display:flex; align-items:center; gap:14px; background:#fafafa; transition:all 0.2s;">
+                        <span style="font-size:1.6em; flex-shrink:0;">🏪</span>
+                        <div>
+                            <div style="font-weight:600; font-size:0.92em; color:#555;">No meu espaço (oficina, loja, estúdio)</div>
+                            <div style="font-size:0.78em; color:#777; margin-top:2px;">O cliente vem até ti. O mapa não é necessário.</div>
+                        </div>
+                        <input type="radio" name="tipo_negocio" value="espaco" style="display:none;">
+                    </label>
+
+                    <label id="opt-ambos" onclick="selectTipo('ambos')"
+                        style="cursor:pointer; border:2px solid #e5e7eb; border-radius:10px; padding:14px 18px; display:flex; align-items:center; gap:14px; background:#fafafa; transition:all 0.2s;">
+                        <span style="font-size:1.6em; flex-shrink:0;">🔄</span>
+                        <div>
+                            <div style="font-weight:600; font-size:0.92em; color:#555;">Ambos</div>
+                            <div style="font-size:0.78em; color:#777; margin-top:2px;">Às vezes vais ao cliente, outras o cliente vem ter contigo. O mapa estará disponível.</div>
+                        </div>
+                        <input type="radio" name="tipo_negocio" value="ambos" style="display:none;">
+                    </label>
+
+                </div>
+            </div>
+        </div>
 
         <div class="card">
             <div class="card-header">
@@ -334,6 +379,18 @@
         if (inp) inp.focus();
     });
     {% endif %}
+
+    function selectTipo(tipo) {
+        var opts = ['cliente', 'espaco', 'ambos'];
+        opts.forEach(function(t) {
+            var el = document.getElementById('opt-' + t);
+            var isSelected = t === tipo;
+            el.style.border = isSelected ? '2px solid #2e7d32' : '2px solid #e5e7eb';
+            el.style.background = isSelected ? '#f0f7f0' : '#fafafa';
+            el.querySelector('div > div:first-child').style.color = isSelected ? '#2e7d32' : '#555';
+            el.querySelector('input').checked = isSelected;
+        });
+    }
 
     function checkStrength(val) {
         var wrap = document.getElementById('strengthWrap');

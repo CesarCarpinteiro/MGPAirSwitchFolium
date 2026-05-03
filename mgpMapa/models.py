@@ -124,4 +124,5 @@ class Organizacao(db.Model):
     nome = db.Column(db.String(200))
     pais = db.Column(db.String(10))
     telefone = db.Column(db.String(30))
-    created_at = db.Column(db.String(20), default=lambda: datetime.now().strftime('%d/%m/%Y'))
+    created_at = db.Column(db.String(20))
+    tipo_negocio = db.Column(db.String(20), default='cliente')  # 'espaco', 'cliente', 'ambos'

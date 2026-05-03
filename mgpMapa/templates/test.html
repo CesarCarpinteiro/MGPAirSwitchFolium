@@ -270,7 +270,9 @@
             <h1>Instalação de Ar Condicionados</h1>
         </div>
         <div class="header-actions">
+            {% if tem_mapa %}
             <a href="/">← Mapa</a>
+            {% endif %}
             <a href="/perfil" class="user-pill">👤 {{ current_user.nome }}</a>
         </div>
     </div>
