@@ -206,6 +206,10 @@
             .predictor-controls { grid-template-columns: 1fr; }
             .predictor-results { grid-template-columns: 1fr; }
             .summary-row { grid-template-columns: 1fr 1fr; }
+            .content { padding: 0 10px; }
+            .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .orcamentos-table th, .orcamentos-table td { white-space: nowrap; font-size: 0.82em; padding: 8px 10px; }
+            .page-header h1 { font-size: 1.1em; }
         }
     </style>
 </head>
@@ -302,6 +306,7 @@
     <div class="card">
         <div class="section-title">📄 Lista de Orçamentos</div>
         {% if orcamentos %}
+        <div class="table-scroll">
         <table class="orcamentos-table">
             <thead>
                 <tr>
@@ -362,6 +367,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
         {% else %}
         <div class="empty-state">
             <div class="icon">📋</div>
@@ -435,7 +441,25 @@
 
     // Init
     calcPredictor();
+
+    function showToast(msg, type) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:Arial,sans-serif;white-space:nowrap;opacity:1;transition:opacity 0.4s;';
+        t.style.background = type === 'error' ? '#e53935' : '#2e7d32';
+        t.style.color = 'white';
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+    }
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    showToast("{{ message }}", "{{ category }}");
+    {% endfor %}
+    {% endwith %}
 </script>
+
+<div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 
 </body>
 </html>

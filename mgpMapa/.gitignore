@@ -5,3 +5,8 @@ __pycache__/
 *.pyo
 static/uploads/
 .DS_Store
+lib/
+bin/
+include/
+pyvenv.cfg
+*.egg-info/

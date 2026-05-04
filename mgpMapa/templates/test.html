@@ -371,11 +371,15 @@
 
         {% for r in registos %}
         {% set ultimo = r.servicos | sort(attribute='data_servico', reverse=True) | first if r.servicos else none %}
-        <div class="registo-card" data-search="{{ r.nome }} {{ r.contacto }} {{ r.morada }}">
+        {% set s_info = status_map.get(r.id, ('', '#888', '#f5f5f5')) %}
+        <div class="registo-card" data-search="{{ r.nome }} {{ r.contacto }} {{ r.morada }}" style="border-left-color: {{ s_info[1] }};">
             <div class="registo-header">
                 <div>
                     <div class="client-name">
                         {{ r.nome }}
+                        {% if s_info[0] %}
+                        <span style="background:{{ s_info[2] }};color:{{ s_info[1] }};padding:2px 9px;border-radius:10px;font-size:0.75em;font-weight:700;">{{ s_info[0] }}</span>
+                        {% endif %}
                         {% if ultimo and ultimo.tipo_servico %}
                         <span class="tipo-badge">{{ ultimo.tipo_servico }}</span>
                         {% endif %}
@@ -534,6 +538,12 @@
         <span class="disabled">»</span>
         {% endif %}
     </div>
+    {% else %}
+    <div style="width:60%;margin:60px auto;text-align:center;color:#bbb;">
+        <div style="font-size:3em;margin-bottom:16px;">📋</div>
+        <div style="font-size:1em;font-weight:600;color:#888;margin-bottom:8px;">Ainda não há clientes</div>
+        <div style="font-size:0.85em;color:#bbb;">Clica em <strong>Novo Cliente</strong> para adicionar o primeiro registo.</div>
+    </div>
     {% endif %}
 
     <div class="modal-overlay" id="deleteModal">
@@ -548,6 +558,26 @@
     </div>
 
     <footer>&copy; {{ org_nome }}</footer>
+
+    <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
+
+    <script>
+        function showToast(msg, type) {
+            const c = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:DM Sans,sans-serif;white-space:nowrap;opacity:1;transition:opacity 0.4s;';
+            t.style.background = type === 'error' ? '#e53935' : '#2e7d32';
+            t.style.color = 'white';
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+        }
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        showToast("{{ message }}", "{{ category }}");
+        {% endfor %}
+        {% endwith %}
+    </script>
 
     <script>
         const GEOAPIFY_KEY = 'd38a65e0fee84a80a00f32720e6a53ff';

@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, render_template_string, jsonify, session as flask_session
+from flask import Flask, render_template, request, redirect, url_for, render_template_string, jsonify, session as flask_session, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from models import Usuario, Registo, Servico, TipoServico, Fatura, Ferias, Mensagem, HorasTrabalhadas, Orcamento, Organizacao
 from folium.plugins import Geocoder, TagFilterButton, Fullscreen
+from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
 from db import db
 import hashlib
@@ -10,6 +11,7 @@ from datetime import datetime
 import json
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 import smtplib
 import requests
 from email.mime.multipart import MIMEMultipart
@@ -80,6 +82,10 @@ def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo
 
 
 def hash(txt):
+    return generate_password_hash(txt)
+
+
+def _legacy_sha256(txt):
     return hashlib.sha256(txt.encode('utf-8')).hexdigest()
 
 
@@ -129,7 +135,7 @@ def home():
         Registo.org_id == current_user.org_id,
         Registo.latitude.isnot(None),
         Registo.longitude.isnot(None)
-    ).all()
+    ).options(joinedload(Registo.servicos)).all()
 
     sidebar_items = []
     current_date = datetime.now().date()
@@ -362,11 +368,18 @@ def login():
     senha = request.form.get('senhaForm', '').strip()
     if not nome or not senha:
         return render_template('login.html', error=True)
-    user = db.session.query(Usuario).filter_by(nome=nome, senha=hash(senha)).first()
+    user = db.session.query(Usuario).filter_by(nome=nome).first()
     if not user:
         return render_template('login.html', error=True)
-    login_user(user)
-    return redirect(url_for('home'))
+    if check_password_hash(user.senha, senha):
+        login_user(user)
+        return redirect(url_for('home'))
+    if user.senha == _legacy_sha256(senha):
+        user.senha = generate_password_hash(senha)
+        db.session.commit()
+        login_user(user)
+        return redirect(url_for('home'))
+    return render_template('login.html', error=True)
 
 
 @app.route('/logout')
@@ -628,17 +641,38 @@ def nova_pagina():
             )
             db.session.add(primeiro_servico)
             db.session.commit()
+            flash('Cliente adicionado com sucesso.', 'success')
 
     page = request.args.get('page', 1, type=int)
     per_page = 25
     base_query = db.session.query(Registo).filter_by(org_id=current_user.org_id)
     total_registos = base_query.count()
     total_pages = (total_registos + per_page - 1) // per_page
-    registos = base_query.order_by(Registo.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
+    registos = base_query.order_by(Registo.id.desc()).offset((page - 1) * per_page).limit(per_page).options(joinedload(Registo.servicos)).all()
     tipos_servico = db.session.query(TipoServico).filter_by(org_id=current_user.org_id).all()
+
+    current_date = datetime.now().date()
+    status_map = {}
+    for r in registos:
+        svcs = sorted([s for s in r.servicos if s.data_servico], key=lambda s: s.data_servico, reverse=True)
+        data_ref = svcs[0].data_servico if svcs else r.data_instalacao
+        months = 0
+        if data_ref:
+            try:
+                ref = datetime.strptime(data_ref, '%d/%m/%Y').date()
+                months = (current_date.year - ref.year) * 12 + (current_date.month - ref.month)
+            except Exception:
+                pass
+        if months <= 8:
+            status_map[r.id] = ('Em dia', '#2e7d32', '#e8f5e9')
+        elif months <= 10:
+            status_map[r.id] = ('Atenção', '#c47c2b', '#fff8e1')
+        else:
+            status_map[r.id] = ('Urgente', '#a33b3b', '#ffebee')
+
     return render_template('test.html', registos=registos, current_user=current_user, is_admin=is_admin,
                            page=page, total_pages=total_pages, total_registos=total_registos,
-                           tipos_servico=tipos_servico)
+                           tipos_servico=tipos_servico, status_map=status_map)
 
 
 @app.route('/test/add_servico/<int:registo_id>', methods=['POST'])
@@ -670,6 +704,7 @@ def add_servico(registo_id):
         )
         db.session.add(novo)
         db.session.commit()
+        flash('Serviço registado com sucesso.', 'success')
     return redirect(url_for('nova_pagina', page=request.args.get('page', 1)))
 
 
@@ -686,6 +721,7 @@ def edit_registo(id):
         r.latitude = float(lat) if lat else r.latitude
         r.longitude = float(lon) if lon else r.longitude
         db.session.commit()
+        flash('Cliente atualizado.', 'success')
     return redirect(url_for('nova_pagina', page=request.args.get('page', 1)))
 
 
@@ -696,6 +732,7 @@ def delete_registo(id):
     if registo:
         db.session.delete(registo)
         db.session.commit()
+        flash('Cliente removido.', 'success')
     return redirect(url_for('nova_pagina'))
 
 
@@ -706,6 +743,7 @@ def delete_servico(id):
     if s:
         db.session.delete(s)
         db.session.commit()
+        flash('Serviço removido.', 'success')
     return redirect(url_for('nova_pagina'))
 
 
@@ -738,6 +776,7 @@ def faturas():
                           local=local, valor=float(valor), data=data, nota=nota, ficheiro=ficheiro_path)
             db.session.add(nova)
             db.session.commit()
+            flash('Fatura guardada.', 'success')
     if current_user.is_admin:
         todas = db.session.query(Fatura, Usuario).join(Usuario, Fatura.user_id == Usuario.id).filter(
             Fatura.org_id == current_user.org_id).order_by(Fatura.id.desc()).all()
@@ -761,6 +800,7 @@ def delete_fatura(id):
                 pass
         db.session.delete(fatura)
         db.session.commit()
+        flash('Fatura removida.', 'success')
     return redirect(url_for('faturas'))
 
 
@@ -801,6 +841,7 @@ def ferias():
                         data_inicio=data_inicio, data_fim=data_fim, nota=nota, num_dias=num_dias)
             db.session.add(nova)
             db.session.commit()
+            flash('Pedido de férias enviado.', 'success')
     is_admin = current_user.is_admin
     usuarios = db.session.query(Usuario).filter_by(org_id=current_user.org_id).all() if is_admin else []
     if is_admin:
@@ -828,6 +869,7 @@ def responder_ferias(id):
         f.comentario_admin = comentario
         f.aprovado_por = current_user.nome
         db.session.commit()
+        flash('Resposta enviada.' , 'success')
 
         user = db.session.query(Usuario).filter_by(id=f.user_id).first()
         org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
@@ -892,6 +934,7 @@ def delete_ferias(id):
     if f and (f.user_id == current_user.id or current_user.is_admin):
         db.session.delete(f)
         db.session.commit()
+        flash('Pedido removido.', 'success')
     return redirect(url_for('ferias'))
 
 
@@ -910,6 +953,7 @@ def orcamentos():
                              estado='Pendente', created_at=datetime.now().strftime('%d/%m/%Y'))
             db.session.add(novo)
             db.session.commit()
+            flash('Orçamento criado.', 'success')
     if is_admin:
         todos = db.session.query(Orcamento, Usuario).join(Usuario, Orcamento.user_id == Usuario.id).filter(
             Orcamento.org_id == current_user.org_id).order_by(Orcamento.id.desc()).all()
@@ -926,6 +970,7 @@ def delete_orcamento(id):
     if o and (o.user_id == current_user.id or current_user.is_admin):
         db.session.delete(o)
         db.session.commit()
+        flash('Orçamento removido.', 'success')
     return redirect(url_for('orcamentos'))
 
 
@@ -987,6 +1032,7 @@ def horas_add():
                             total=manha + tarde + extra, observacoes=observacoes, local=local)
     db.session.add(novo)
     db.session.commit()
+    flash('Horas registadas.', 'success')
     return redirect(url_for('horas', mes=mes, ano=ano))
 
 
@@ -1002,6 +1048,7 @@ def horas_edit(id):
         registo.observacoes = request.form.get('observacoes', '')
         registo.local = request.form.get('local', '')
         db.session.commit()
+        flash('Horas atualizadas.', 'success')
     return redirect(url_for('horas', mes=registo.mes, ano=registo.ano))
 
 
@@ -1013,6 +1060,7 @@ def horas_delete(id):
     if registo and (registo.user_id == current_user.id or current_user.is_admin):
         db.session.delete(registo)
         db.session.commit()
+        flash('Registo removido.', 'success')
     return redirect(url_for('horas', mes=mes, ano=ano))
 
 
@@ -1127,12 +1175,25 @@ def reset_password():
     if not user:
         return jsonify({'ok': False, 'error': 'Utilizador não encontrado.'})
 
-    user.senha = hash(new_password)
+    user.senha = generate_password_hash(new_password)
     db.session.commit()
     flask_session.pop('reset_code', None)
     flask_session.pop('reset_user_id', None)
 
     return jsonify({'ok': True})
+
+
+@app.route('/org/tipo_negocio', methods=['POST'])
+@login_required
+def update_tipo_negocio():
+    if not current_user.is_admin:
+        return jsonify({'ok': False})
+    org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
+    if org:
+        org.tipo_negocio = request.get_json().get('tipo_negocio', org.tipo_negocio)
+        db.session.commit()
+        return jsonify({'ok': True})
+    return jsonify({'ok': False})
 
 
 def criar_admin():

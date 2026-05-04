@@ -340,6 +340,19 @@
                     <strong>{{ org.created_at or '—' }}</strong>
                 </div>
             </div>
+            <div style="margin-top:18px;padding-top:14px;border-top:1px solid #eef4ee;">
+                <div style="font-size:0.72em;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tipo de Negócio</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tipoNegocioGroup">
+                    {% for val, label in [('cliente','Clientes (com mapa)'), ('espaco','Espaço (sem mapa)'), ('ambos','Ambos')] %}
+                    <button onclick="setTipoNegocio('{{ val }}')"
+                        id="tn-{{ val }}"
+                        style="padding:7px 16px;border-radius:20px;font-size:0.84em;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;border:2px solid {% if org.tipo_negocio == val %}#2e7d32{% else %}#ddd{% endif %};background:{% if org.tipo_negocio == val %}#2e7d32{% else %}white{% endif %};color:{% if org.tipo_negocio == val %}white{% else %}#555{% endif %};">
+                        {{ label }}
+                    </button>
+                    {% endfor %}
+                </div>
+                <div id="tipoNegocioMsg" style="font-size:0.8em;margin-top:8px;display:none;"></div>
+            </div>
         </div>
         {% endif %}
 
@@ -969,6 +982,36 @@
         });
     }
 
+    function setTipoNegocio(val) {
+        fetch('/org/tipo_negocio', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({tipo_negocio: val})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var msg = document.getElementById('tipoNegocioMsg');
+            if (data.ok) {
+                ['cliente','espaco','ambos'].forEach(function(v) {
+                    var btn = document.getElementById('tn-' + v);
+                    if (!btn) return;
+                    var active = v === val;
+                    btn.style.background = active ? '#2e7d32' : 'white';
+                    btn.style.color = active ? 'white' : '#555';
+                    btn.style.borderColor = active ? '#2e7d32' : '#ddd';
+                });
+                msg.textContent = 'Guardado.';
+                msg.style.color = '#2e7d32';
+                msg.style.display = 'block';
+                setTimeout(function() { msg.style.display = 'none'; }, 2500);
+            } else {
+                msg.textContent = 'Erro ao guardar.';
+                msg.style.color = '#e53935';
+                msg.style.display = 'block';
+            }
+        });
+    }
+
     function toggleAdmin(id, checkbox) {
         fetch('/toggle_admin/' + id, {
             method: 'POST',
@@ -1053,7 +1096,24 @@
             }
         });
     }
+    function showToast(msg, type) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:DM Sans,sans-serif;white-space:nowrap;opacity:1;transition:opacity 0.4s;';
+        t.style.background = type === 'error' ? '#e53935' : '#2e7d32';
+        t.style.color = 'white';
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+    }
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    showToast("{{ message }}", "{{ category }}");
+    {% endfor %}
+    {% endwith %}
 </script>
 
+<div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
+
 </body>
-</html>43
+</html>
