@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Horas de Trabalho</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+        body { font-family: 'DM Sans', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
 
         .page-header {
             background: linear-gradient(135deg, #2e7d32, #4CAF50);
@@ -24,6 +25,9 @@
             font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
         }
         .page-header a:hover { background: #f0f0f0; }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+        .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
 
         .content { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
 
@@ -173,10 +177,14 @@
 
 <div class="page-header">
     <div>
-        <div class="subtitle">Gestão de Serviços</div>
-        <h1>⏱ Horas de Trabalho</h1>
+        <div class="subtitle">{{ org_nome }}</div>
+        <h1>Horas de Trabalho</h1>
     </div>
-    <a href="/perfil">← Voltar ao Perfil</a>
+    <div class="header-actions">
+        {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
+        <a href="/registos">Registos</a>
+        <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
+    </div>
 </div>
 
 <div class="content">

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview — Navegação</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; }
+
+        /* ── Toggle buttons ── */
+        .demo-switcher {
+            display: flex;
+            gap: 10px;
+            padding: 16px 24px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        .demo-switcher button {
+            padding: 8px 18px;
+            border: 2px solid #2e7d32;
+            border-radius: 6px;
+            background: white;
+            color: #2e7d32;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .demo-switcher button.active { background: #2e7d32; color: white; }
+        .demo-switcher span { display: flex; align-items: center; font-size: 0.85em; color: #888; margin-left: 8px; }
+
+        /* ── PAGE HEADER (opção A — nav no header) ── */
+        .page-header {
+            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; letter-spacing: 0.3px; margin-top: 3px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a {
+            padding: 9px 18px;
+            background: white;
+            color: #2e7d32;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.88em;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            transition: background 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-actions a:hover { background: #f0f0f0; }
+        .header-actions a.user-pill {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: none;
+        }
+        .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
+        .header-actions a.nav-active {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: none;
+        }
+
+        /* ── PAGE CONTENT (fake) ── */
+        .page-content {
+            padding: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .fake-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+            border-left: 4px solid #2e7d32;
+        }
+        .fake-card h3 { font-size: 1em; font-weight: 600; margin-bottom: 6px; color: #222; }
+        .fake-card p { font-size: 0.85em; color: #888; }
+
+        /* ── BOTTOM NAV (opção B) ── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            z-index: 1000;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0 8px;
+            text-decoration: none;
+            color: #aaa;
+            font-size: 0.72em;
+            font-family: 'DM Sans', sans-serif;
+            transition: color 0.15s;
+            gap: 3px;
+        }
+        .nav-item.active { color: #2e7d32; }
+        .nav-item:hover { color: #2e7d32; }
+        .nav-icon { font-size: 1.45em; line-height: 1; }
+        .bottom-nav-spacer { height: 72px; }
+
+        /* ── LABELS ── */
+        .option-label {
+            text-align: center;
+            padding: 12px;
+            font-size: 0.8em;
+            color: #666;
+            background: rgba(0,0,0,0.03);
+            border-bottom: 1px solid #eee;
+        }
+
+        /* show/hide */
+        #opA .bottom-nav, #opA .bottom-nav-spacer { display: none; }
+        #opB .header-actions .nav-links { display: none; }
+
+        @media (max-width: 600px) {
+            .page-header h1 { font-size: 1.05em; }
+            .header-actions a:not(.user-pill):not(.nav-active) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="demo-switcher">
+    <button class="active" onclick="show('A', this)">Opção A — Nav no Header</button>
+    <button onclick="show('B', this)">Opção B — Bottom Bar</button>
+    <span>👈 clica para comparar</span>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     OPÇÃO A — Links no header (recomendada)
+════════════════════════════════════════════ -->
+<div id="opA">
+    <div class="option-label">📌 Estás em: <strong>Faturas</strong> — links no header para navegar</div>
+    <div class="page-header">
+        <div>
+            <div class="subtitle">Gestão de Serviços</div>
+            <h1>MGP Climatização — Faturas</h1>
+        </div>
+        <div class="header-actions nav-links">
+            <a href="#">🗺️ Mapa</a>
+            <a href="#">📋 Registos</a>
+            <a href="#" class="user-pill">👤 César</a>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <div class="fake-card">
+            <h3>Fatura #001 — João Silva</h3>
+            <p>Climatização · 12 Abr 2025 · €120,00</p>
+        </div>
+        <div class="fake-card">
+            <h3>Fatura #002 — Maria Santos</h3>
+            <p>Manutenção · 3 Mai 2025 · €85,00</p>
+        </div>
+        <div class="fake-card">
+            <h3>Fatura #003 — Carlos Ferreira</h3>
+            <p>Instalação · 28 Abr 2025 · €340,00</p>
+        </div>
+        <div class="fake-card">
+            <h3>Fatura #004 — Ana Costa</h3>
+            <p>Revisão · 15 Mai 2025 · €60,00</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     OPÇÃO B — Bottom nav bar
+════════════════════════════════════════════ -->
+<div id="opB" style="display:none">
+    <div class="option-label">📌 Estás em: <strong>Faturas</strong> — barra de navegação em baixo</div>
+    <div class="page-header">
+        <div>
+            <div class="subtitle">Gestão de Serviços</div>
+            <h1>MGP Climatização — Faturas</h1>
+        </div>
+        <div class="header-actions">
+            <a href="#" class="user-pill">👤 César</a>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <div class="fake-card">
+            <h3>Fatura #001 — João Silva</h3>
+            <p>Climatização · 12 Abr 2025 · €120,00</p>
+        </div>
+        <div class="fake-card">
+            <h3>Fatura #002 — Maria Santos</h3>
+            <p>Manutenção · 3 Mai 2025 · €85,00</p>
+        </div>
+        <div class="fake-card">
+            <h3>Fatura #003 — Carlos Ferreira</h3>
+            <p>Instalação · 28 Abr 2025 · €340,00</p>
+        </div>
+        <div class="fake-card">
+            <h3>Fatura #004 — Ana Costa</h3>
+            <p>Revisão · 15 Mai 2025 · €60,00</p>
+        </div>
+    </div>
+    <div class="bottom-nav-spacer"></div>
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <span class="nav-icon">🗺️</span>
+            <span>Mapa</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span>Registos</span>
+        </a>
+        <a href="#" class="nav-item active">
+            <span class="nav-icon">👤</span>
+            <span>Perfil</span>
+        </a>
+    </nav>
+</div>
+
+<script>
+    function show(opt, btn) {
+        document.getElementById('opA').style.display = opt === 'A' ? 'block' : 'none';
+        document.getElementById('opB').style.display = opt === 'B' ? 'block' : 'none';
+        document.querySelectorAll('.demo-switcher button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+</script>
+</body>
+</html>

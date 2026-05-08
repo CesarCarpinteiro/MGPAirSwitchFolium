@@ -25,6 +25,9 @@
             font-family: 'DM Sans', sans-serif;
         }
         .page-header a:hover { background: #f0f0f0; }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+        .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
 
         .content { max-width: 960px; margin: 30px auto; padding: 0 20px; }
 
@@ -250,9 +253,10 @@
         <div class="subtitle">{{ org_nome }}</div>
         <h1>Perfil</h1>
     </div>
-    {% if tem_mapa %}
-    <a href="/">← Voltar ao Mapa</a>
-    {% endif %}
+    <div class="header-actions">
+        {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
+        <a href="/registos">Registos</a>
+    </div>
 </div>
 
 <div class="content">

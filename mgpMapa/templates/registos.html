@@ -11,7 +11,7 @@
 
         .page-header {
             background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            padding: 18px 24px;
+            padding: 14px 24px;
             display: flex; align-items: center; justify-content: space-between;
             flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
@@ -173,6 +173,21 @@
             padding: 2px 8px; font-size: 0.75em; cursor: pointer; font-family: 'DM Sans', sans-serif;
         }
         .btn-servico-del:hover { background: #fef2f2; }
+        .btn-servico-edit {
+            background: none; border: 1px solid #a5c8fa; color: #1565c0; border-radius: 4px;
+            padding: 2px 8px; font-size: 0.75em; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-servico-edit:hover { background: #e8f4ff; }
+        .edit-servico-form {
+            display: none; background: #f5fdf5; border-top: 1px dashed #c8e6c9;
+            padding: 12px; margin-top: 6px;
+        }
+        .edit-servico-form label { font-size: 0.8em; font-weight: 500; color: #555; display: block; margin-bottom: 3px; }
+        .edit-servico-form input, .edit-servico-form select {
+            width: 100%; padding: 7px 9px; margin-bottom: 8px; border: 1px solid #ddd;
+            border-radius: 5px; font-size: 0.85em; font-family: 'DM Sans', sans-serif; color: #333;
+        }
+        .edit-servico-form input:focus, .edit-servico-form select:focus { outline: none; border-color: #4CAF50; }
 
         /* Add servico form inside card */
         .add-servico-form {
@@ -266,14 +281,12 @@
 
     <div class="page-header">
         <div>
-            <div class="subtitle">Gestão de Serviços</div>
-            <h1>Instalação de Ar Condicionados</h1>
+            <div class="subtitle">{{ org_nome }}</div>
+            <h1>Registos</h1>
         </div>
         <div class="header-actions">
-            {% if tem_mapa %}
-            <a href="/">← Mapa</a>
-            {% endif %}
-            <a href="/perfil" class="user-pill">👤 {{ current_user.nome }}</a>
+            {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
+            <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
         </div>
     </div>
 
@@ -292,7 +305,7 @@
     <!-- Form novo cliente -->
     <div class="form-container" id="formContainer">
         <h2>Novo Cliente + Primeiro Serviço</h2>
-        <form method="POST" action="/test">
+        <form method="POST" action="/registos">
             <div class="form-section">Cliente</div>
             <label>Nome do Cliente</label>
             <input type="text" name="nome" placeholder="Nome completo" required>
@@ -399,7 +412,7 @@
                     <div class="card-num">{{ loop.index + (page - 1) * 25 }}</div>
                     <button class="icon-btn toggle-btn" onclick="toggleDetail(this)" title="Histórico">&#9660;</button>
                     <button class="icon-btn edit" onclick="toggleEdit(this)" title="Editar cliente">&#9998;</button>
-                    <form method="POST" action="/test/delete/{{ r.id }}" style="margin:0;" id="deleteForm-{{ r.id }}">
+                    <form method="POST" action="/registos/delete/{{ r.id }}" style="margin:0;" id="deleteForm-{{ r.id }}">
                         <button type="button" class="icon-btn danger" onclick="openModal('deleteForm-{{ r.id }}')">&#128465;</button>
                     </form>
                 </div>
@@ -414,7 +427,7 @@
 
                 <!-- Form adicionar serviço -->
                 <div class="add-servico-form">
-                    <form method="POST" action="/test/add_servico/{{ r.id }}">
+                    <form method="POST" action="/registos/add_servico/{{ r.id }}">
                         <label>Tipo de Serviço</label>
                         <select name="tipo_servico" required>
                             <option value="">Selecionar...</option>
@@ -474,8 +487,39 @@
                         <div class="servico-detail" style="color:#888;margin-top:3px;font-style:italic;">{{ s.notas }}</div>
                         {% endif %}
                         <div class="servico-actions">
+                            <button type="button" class="btn-servico-edit" onclick="toggleEditServico({{ s.id }})">Editar</button>
                             <form method="POST" action="/servico/delete/{{ s.id }}" style="margin:0;">
                                 <button type="submit" class="btn-servico-del" onclick="return confirm('Remover este serviço?')">Remover</button>
+                            </form>
+                        </div>
+                        <div class="edit-servico-form" id="editServico-{{ s.id }}">
+                            <form method="POST" action="/servico/edit/{{ s.id }}">
+                                <label>Tipo de Serviço</label>
+                                <select name="tipo_servico">
+                                    {% for t in tipos_servico %}
+                                    <option value="{{ t.nome }}" {% if s.tipo_servico == t.nome %}selected{% endif %}>{{ t.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div style="display:flex;gap:8px;">
+                                    <div style="flex:1;"><label>Data</label><input type="text" name="data_servico" value="{{ s.data_servico or '' }}" placeholder="dd/mm/aaaa"></div>
+                                    <div style="flex:1;"><label>Próx. Manutenção</label><input type="text" name="proxima_manutencao" value="{{ s.proxima_manutencao or '' }}" placeholder="dd/mm/aaaa"></div>
+                                </div>
+                                <div style="display:flex;gap:8px;">
+                                    <div style="flex:1;"><label>Marca</label><input type="text" name="marca" value="{{ s.marca or '' }}"></div>
+                                    <div style="flex:1;"><label>Nº Máquinas</label><input type="number" name="num_maquinas" value="{{ s.num_maquinas or '' }}"></div>
+                                </div>
+                                <label>Notas</label>
+                                <input type="text" name="notas" value="{{ s.notas or '' }}">
+                                {% if is_admin %}
+                                <div style="display:flex;gap:8px;">
+                                    <div style="flex:1;"><label>Horas</label><input type="number" step="0.5" name="duracao_horas" value="{{ s.duracao_horas or '' }}"></div>
+                                    <div style="flex:1;"><label>Valor (€)</label><input type="number" step="0.01" name="valor_pago" value="{{ s.valor_pago or '' }}"></div>
+                                </div>
+                                {% endif %}
+                                <div style="display:flex;gap:8px;margin-top:4px;">
+                                    <button type="submit" class="btn-save" style="flex:1;">Guardar</button>
+                                    <button type="button" class="btn-cancel-s" style="flex:1;" onclick="toggleEditServico({{ s.id }})">Cancelar</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -487,7 +531,7 @@
 
             <!-- Edit cliente -->
             <div class="edit-form" id="editForm-{{ r.id }}">
-                <form method="POST" action="/test/edit/{{ r.id }}">
+                <form method="POST" action="/registos/edit/{{ r.id }}">
                     <div class="edit-section">Cliente</div>
                     <label>Nome</label>
                     <input type="text" name="nome" value="{{ r.nome }}" required>
@@ -616,6 +660,11 @@
             const card = btn.closest('.registo-card');
             const editForm = card.querySelector('.edit-form');
             editForm.style.display = editForm.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function toggleEditServico(id) {
+            const form = document.getElementById('editServico-' + id);
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
         }
 
         function toggleAddServico(btn) {

@@ -292,19 +292,19 @@ def home():
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>{{ org_nome }} - Mapa de Serviços Executados</title>
+                <title>{{ org_nome }} - Mapa de Serviços</title>
                 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
                 {{ header|safe }}
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
                     html, body { height: 100%; font-family: 'DM Sans', sans-serif !important; background-color: #f0f2f5; display: flex; flex-direction: column; overflow: hidden; }
-                    .page-header { background: linear-gradient(135deg, #2e7d32, #4CAF50) !important; padding: 18px 24px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; flex-shrink: 0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important; font-family: 'DM Sans', sans-serif !important; }
+                    .page-header { background: linear-gradient(135deg, #2e7d32, #4CAF50) !important; padding: 14px 24px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; flex-shrink: 0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important; font-family: 'DM Sans', sans-serif !important; }
                     .page-header .subtitle { all: unset; display: block; font-size: 0.8em; color: rgba(255,255,255,0.75); font-family: 'DM Sans', sans-serif; }
                     .page-header h1 { all: unset; display: block; font-size: 1.4em; color: white; font-weight: 700; letter-spacing: 0.3px; margin-top: 3px; font-family: 'DM Sans', sans-serif; }
                     .header-actions { display: flex !important; align-items: center !important; gap: 10px !important; margin-left: auto !important; }
-                    .header-actions a { all: unset; padding: 9px 20px; background: white; color: #2e7d32; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: 600; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: background 0.2s; cursor: pointer; font-family: 'DM Sans', sans-serif; display: inline-block; }
-                    .header-actions a:hover { background: #f0f0f0; color: #2e7d32; text-decoration: none; }
-                    .header-actions a.user-pill { all: unset; padding: 9px 16px; background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; font-size: 0.85em; font-weight: 500; white-space: nowrap; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 8px; box-shadow: none; text-decoration: none; }
+                    .header-actions a { padding: 9px 20px !important; background: white !important; color: #2e7d32 !important; text-decoration: none !important; border-radius: 6px !important; font-size: 0.9em !important; font-weight: 600 !important; white-space: nowrap !important; box-shadow: 0 1px 4px rgba(0,0,0,0.15) !important; font-family: 'DM Sans', sans-serif !important; display: inline-block !important; transition: background 0.2s; }
+                    .header-actions a:hover { background: #f0f0f0 !important; color: #2e7d32 !important; text-decoration: none !important; }
+                    .header-actions a.user-pill { padding: 9px 16px !important; background: rgba(255,255,255,0.15) !important; color: white !important; border: 1px solid rgba(255,255,255,0.3) !important; border-radius: 6px !important; font-size: 0.9em !important; font-weight: 600 !important; white-space: nowrap !important; font-family: 'DM Sans', sans-serif !important; display: inline-block !important; box-shadow: none !important; text-decoration: none !important; }
                     .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); color: white; text-decoration: none; }
                     .main-content { display: flex; flex: 1; min-height: 0; gap: 10px; padding: 10px; overflow: hidden; }
                     .sidebar { width: 260px; flex-shrink: 0; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
@@ -324,12 +324,12 @@ def home():
             <body>
                 <div class="page-header">
                     <div>
-                        <div class="subtitle">Gestão de Serviços</div>
-                        <h1>{{ org_nome }} — Mapa de Serviços Executados</h1>
+                        <div class="subtitle">{{ org_nome }}</div>
+                        <h1>Mapa de Serviços</h1>
                     </div>
-                    <div class="header-actions">
-                        <a href="/test">+ Registo</a>
-                        <a href="/perfil" class="user-pill">👤 {{ current_user.nome }}</a>
+                    <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+                        <a href="/registos" style="padding:9px 20px;background:white;color:#2e7d32;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,0.15);white-space:nowrap;display:inline-block;line-height:1.2;">Registos</a>
+                        <a href="/perfil" style="padding:9px 16px;background:rgba(255,255,255,0.15);color:white;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border:1px solid rgba(255,255,255,0.3);white-space:nowrap;display:inline-block;line-height:1.2;">{{ current_user.nome }}</a>
                     </div>
                 </div>
                 <div class="main-content">
@@ -594,7 +594,7 @@ def converter_data(d):
     return None
 
 
-@app.route('/test', methods=['GET', 'POST'])
+@app.route('/registos', methods=['GET', 'POST'])
 @login_required
 def nova_pagina():
     is_admin = current_user.is_admin
@@ -670,12 +670,12 @@ def nova_pagina():
         else:
             status_map[r.id] = ('Urgente', '#a33b3b', '#ffebee')
 
-    return render_template('test.html', registos=registos, current_user=current_user, is_admin=is_admin,
+    return render_template('registos.html', registos=registos, current_user=current_user, is_admin=is_admin,
                            page=page, total_pages=total_pages, total_registos=total_registos,
                            tipos_servico=tipos_servico, status_map=status_map)
 
 
-@app.route('/test/add_servico/<int:registo_id>', methods=['POST'])
+@app.route('/registos/add_servico/<int:registo_id>', methods=['POST'])
 @login_required
 def add_servico(registo_id):
     r = db.session.query(Registo).filter_by(id=registo_id, org_id=current_user.org_id).first()
@@ -708,7 +708,7 @@ def add_servico(registo_id):
     return redirect(url_for('nova_pagina', page=request.args.get('page', 1)))
 
 
-@app.route('/test/edit/<int:id>', methods=['POST'])
+@app.route('/registos/edit/<int:id>', methods=['POST'])
 @login_required
 def edit_registo(id):
     r = db.session.query(Registo).filter_by(id=id, org_id=current_user.org_id).first()
@@ -725,7 +725,7 @@ def edit_registo(id):
     return redirect(url_for('nova_pagina', page=request.args.get('page', 1)))
 
 
-@app.route('/test/delete/<int:id>', methods=['POST'])
+@app.route('/registos/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_registo(id):
     registo = db.session.query(Registo).filter_by(id=id, org_id=current_user.org_id).first()
@@ -745,6 +745,27 @@ def delete_servico(id):
         db.session.commit()
         flash('Serviço removido.', 'success')
     return redirect(url_for('nova_pagina'))
+
+
+@app.route('/servico/edit/<int:id>', methods=['POST'])
+@login_required
+def edit_servico(id):
+    s = db.session.query(Servico).filter_by(id=id, org_id=current_user.org_id).first()
+    if s:
+        s.tipo_servico = request.form.get('tipo_servico') or s.tipo_servico
+        s.data_servico = request.form.get('data_servico') or s.data_servico
+        s.proxima_manutencao = request.form.get('proxima_manutencao') or s.proxima_manutencao
+        s.marca = request.form.get('marca') or s.marca
+        num = request.form.get('num_maquinas')
+        s.num_maquinas = int(num) if num else s.num_maquinas
+        dur = request.form.get('duracao_horas')
+        s.duracao_horas = float(dur) if dur else s.duracao_horas
+        s.notas = request.form.get('notas', s.notas)
+        val = request.form.get('valor_pago')
+        s.valor_pago = float(val) if val else s.valor_pago
+        db.session.commit()
+        flash('Serviço atualizado.', 'success')
+    return redirect(url_for('nova_pagina', page=request.args.get('page', 1)))
 
 
 UPLOAD_FOLDER = 'static/uploads'
@@ -1239,4 +1260,4 @@ def criar_admin():
 
 if __name__ == "__main__":
     criar_admin()
-    app.run(host="0.0.0.0", port=3000, debug=False)
+    app.run(host="0.0.0.0", port=3000, debug=True)
