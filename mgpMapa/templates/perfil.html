@@ -443,8 +443,7 @@
         <div class="card">
             <div class="section-title">Número de Clientes</div>
             <div class="filter-row">
-                <button class="filter-btn active" onclick="filtrarGrafico('dia', this)">Por Dia</button>
-                <button class="filter-btn" onclick="filtrarGrafico('mes', this)">Por Mês</button>
+                <button class="filter-btn active" onclick="filtrarGrafico('mes', this)">Por Mês</button>
                 <button class="filter-btn" onclick="filtrarGrafico('ano', this)">Por Ano</button>
             </div>
             <div id="metaInstCard" style="display:none; background:#f0f7f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
@@ -733,7 +732,7 @@
     }
 
     function buildForecast(histLabels,histValues,currentKey,tipo,isInt){
-        if(tipo==='dia'||histLabels.length<2)return null;
+        if(histLabels.length<2)return null;
         var trainLabels=histLabels.filter(function(l){return l!==currentKey;});
         var trainValues=trainLabels.map(function(l){return histValues[histLabels.indexOf(l)];});
         var hw=holtWinters(trainValues,7);
@@ -750,14 +749,14 @@
         registosData.forEach(function(r){
             if(!r.data_instalacao)return;
             var parts=r.data_instalacao.split('/');if(parts.length!==3)return;
-            var key=tipo==='dia'?r.data_instalacao:tipo==='mes'?parts[1]+'/'+parts[2]:parts[2];
+            var key=tipo==='mes'?parts[1]+'/'+parts[2]:parts[2];
             counts[key]=(counts[key]||0)+1;
         });
         var ck=tipo==='mes'?currentMonthKey:currentYearKey;
         var hl=sortKeys(Object.keys(counts)),hv=hl.map(function(l){return counts[l];});
-        var fc=tipo!=='dia'?buildForecast(hl,hv,ck,tipo,true):null;
+        var fc=buildForecast(hl,hv,ck,tipo,true);
         var metaObj=null;
-        if(tipo!=='dia'){
+        if(true){
             metaObj=calcularMetaInst(counts,tipo);
             if(fc&&metaObj){metaObj.meta=fc.currentForecast;metaObj.pct=metaObj.meta>0?Math.round((metaObj.current/metaObj.meta)*100):100;metaObj.diff=metaObj.current-metaObj.meta;metaObj.achieved=metaObj.current>=metaObj.meta;}
         }
@@ -775,7 +774,7 @@
         if(chart)chart.destroy();
         chart=new Chart(document.getElementById('instalacaoChart').getContext('2d'),{
             type:'bar',data:{labels:al,datasets:ds},
-            options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'DM Sans'},boxWidth:16,padding:14}},tooltip:{callbacks:{label:function(c){if(c.parsed.y===null)return null;if(c.dataset.label==='Previsão Holt-Winters')return' Previsão: '+c.parsed.y+' clientes';if(c.dataset.label==='Mês em curso')return' Em curso: '+c.parsed.y+' clientes';if(c.dataset.label&&c.dataset.label.startsWith('Meta'))return' Meta: '+c.parsed.y+' clientes';return' '+c.parsed.y+' cliente(s)';}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{family:'DM Sans'}},grid:{color:'#f5f5f5'}},x:{grid:{display:false},ticks:{font:{family:'DM Sans'}}}}}
+            options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'DM Sans'},boxWidth:16,padding:14}},tooltip:{callbacks:{label:function(c){if(c.parsed.y===null)return null;if(c.dataset.label==='Previsão Holt-Winters')return' Previsão: '+c.parsed.y+' clientes';if(c.dataset.label==='Mês em curso')return' Em curso: '+c.parsed.y+' clientes';if(c.dataset.label&&c.dataset.label.startsWith('Meta'))return' Meta: '+c.parsed.y+' clientes';return' '+c.parsed.y+' cliente(s)';}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,maxTicksLimit:6,font:{family:'DM Sans'}},grid:{color:'#f5f5f5'}},x:{grid:{display:false},ticks:{font:{family:'DM Sans'}}}}}
         });
     }
 
@@ -808,7 +807,7 @@
         if(valorChart)valorChart.destroy();
         valorChart=new Chart(document.getElementById('valorChart').getContext('2d'),{
             type:'bar',data:{labels:al,datasets:ds},
-            options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'DM Sans'},boxWidth:16,padding:14}},tooltip:{callbacks:{label:function(c){if(c.parsed.y===null)return null;if(c.dataset.label==='Previsão Holt-Winters')return' Previsão: '+c.parsed.y.toFixed(2)+' €';if(c.dataset.label==='Mês em curso')return' Em curso: '+c.parsed.y.toFixed(2)+' €';if(c.dataset.label&&c.dataset.label.startsWith('Meta'))return' Meta: '+c.parsed.y.toFixed(2)+' €';return' '+c.parsed.y.toFixed(2)+' €';}}}},scales:{y:{beginAtZero:true,grid:{color:'#f5f5f5'},ticks:{callback:function(v){return v.toFixed(0)+' €';},font:{family:'DM Sans'}}},x:{grid:{display:false},ticks:{font:{family:'DM Sans'}}}}}
+            options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'DM Sans'},boxWidth:16,padding:14}},tooltip:{callbacks:{label:function(c){if(c.parsed.y===null)return null;if(c.dataset.label==='Previsão Holt-Winters')return' Previsão: '+c.parsed.y.toFixed(2)+' €';if(c.dataset.label==='Mês em curso')return' Em curso: '+c.parsed.y.toFixed(2)+' €';if(c.dataset.label&&c.dataset.label.startsWith('Meta'))return' Meta: '+c.parsed.y.toFixed(2)+' €';return' '+c.parsed.y.toFixed(2)+' €';}}}},scales:{y:{beginAtZero:true,grid:{color:'#f5f5f5'},ticks:{maxTicksLimit:6,callback:function(v){return Number.isInteger(v)?v.toFixed(0)+' €':null;},font:{family:'DM Sans'}}},x:{grid:{display:false},ticks:{font:{family:'DM Sans'}}}}}
         });
     }
 

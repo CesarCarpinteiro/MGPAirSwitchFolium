@@ -24,6 +24,10 @@
             font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: background 0.2s;
         }
         .page-header a:hover { background: #f0f0f0; }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+        .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; letter-spacing: 0.3px; margin: 0; margin-top: 3px; font-family: 'DM Sans', sans-serif; }
 
         .content { max-width: 980px; margin: 30px auto; padding: 0 20px; }
 
@@ -196,10 +200,14 @@
 
 <div class="page-header">
     <div>
-        <div class="subtitle">Gestão de Serviços</div>
-        <h1>🏖️ Férias</h1>
+        <div class="subtitle">{{ org_nome }}</div>
+        <h1>Férias</h1>
     </div>
-    <a href="/perfil">← Perfil</a>
+    <div class="header-actions">
+        {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
+        <a href="/registos">Registos</a>
+        <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
+    </div>
 </div>
 
 <div class="content">

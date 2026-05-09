@@ -298,13 +298,13 @@
         </div>
         {% endif %}
         <button class="btn-new" onclick="toggleForm()">
-            <span id="formBtnIcon">+</span> Novo Cliente
+            <span id="formBtnIcon">+</span> Novo Registo
         </button>
     </div>
 
     <!-- Form novo cliente -->
     <div class="form-container" id="formContainer">
-        <h2>Novo Cliente + Primeiro Serviço</h2>
+        <h2>Novo Registo</h2>
         <form method="POST" action="/registos">
             <div class="form-section">Cliente</div>
             <label>Nome do Cliente</label>
@@ -537,6 +537,8 @@
                     <input type="text" name="nome" value="{{ r.nome }}" required>
                     <label>Contacto</label>
                     <input type="text" name="contacto" value="{{ r.contacto or '' }}">
+                    <label>Data de Instalação</label>
+                    <input type="text" name="data_instalacao" value="{{ r.data_instalacao or '' }}" placeholder="dd/mm/aaaa">
                     <div class="edit-section">Localização</div>
                     <label>Morada</label>
                     <input type="text" name="morada" value="{{ r.morada or '' }}">
@@ -586,7 +588,7 @@
     <div style="width:60%;margin:60px auto;text-align:center;color:#bbb;">
         <div style="font-size:3em;margin-bottom:16px;">📋</div>
         <div style="font-size:1em;font-weight:600;color:#888;margin-bottom:8px;">Ainda não há clientes</div>
-        <div style="font-size:0.85em;color:#bbb;">Clica em <strong>Novo Cliente</strong> para adicionar o primeiro registo.</div>
+        <div style="font-size:0.85em;color:#bbb;">Clica em <strong>Novo Registo</strong> para adicionar o primeiro registo.</div>
     </div>
     {% endif %}
 

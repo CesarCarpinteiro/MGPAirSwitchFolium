@@ -610,15 +610,6 @@ def nova_pagina():
         longitude = request.form.get('longitude')
         valor_pago = request.form.get('valor_pago') if is_admin else None
         if nome:
-            novo_registo = Registo(
-                org_id=current_user.org_id, nome=nome, contacto=contacto,
-                morada=morada,
-                latitude=float(latitude) if latitude else None,
-                longitude=float(longitude) if longitude else None,
-            )
-            db.session.add(novo_registo)
-            db.session.flush()
-
             _ds2 = converter_data(data_instalacao)
             _prox2 = None
             if _ds2:
@@ -627,6 +618,16 @@ def nova_pagina():
                     _prox2 = _d2.replace(year=_d2.year + 1).strftime('%d/%m/%Y')
                 except:
                     pass
+            novo_registo = Registo(
+                org_id=current_user.org_id, nome=nome, contacto=contacto,
+                morada=morada,
+                latitude=float(latitude) if latitude else None,
+                longitude=float(longitude) if longitude else None,
+                data_instalacao=_ds2 or datetime.now().strftime('%d/%m/%Y'),
+            )
+            db.session.add(novo_registo)
+            db.session.flush()
+
             _dur2 = request.form.get('duracao_horas')
             primeiro_servico = Servico(
                 registo_id=novo_registo.id,
@@ -720,6 +721,11 @@ def edit_registo(id):
         lon = request.form.get('longitude')
         r.latitude = float(lat) if lat else r.latitude
         r.longitude = float(lon) if lon else r.longitude
+        di = request.form.get('data_instalacao')
+        if di:
+            converted = converter_data(di)
+            if converted:
+                r.data_instalacao = converted
         db.session.commit()
         flash('Cliente atualizado.', 'success')
     return redirect(url_for('nova_pagina', page=request.args.get('page', 1)))
