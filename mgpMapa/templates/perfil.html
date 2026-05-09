@@ -38,9 +38,10 @@
             margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
         }
         .avatar {
-            width: 72px; height: 72px; background: rgba(255,255,255,0.25);
+            width: 64px; height: 64px; background: rgba(255,255,255,0.25);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 2em; border: 3px solid rgba(255,255,255,0.5); flex-shrink: 0;
+            font-size: 1.5em; font-weight: 700; color: white; letter-spacing: 0.5px;
+            border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0;
         }
         .profile-banner h2 { color: white; font-size: 1.3em; margin-bottom: 4px; font-weight: 700; }
         .profile-banner p { color: rgba(255,255,255,0.8); font-size: 0.85em; }
@@ -69,6 +70,15 @@
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
 
+        .user-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .user-stat-card { background: white; border-radius: 12px; padding: 18px 16px; box-shadow: 0 1px 8px rgba(0,0,0,0.07); text-align: center; }
+        .user-stat-card .stat-icon { font-size: 1.6em; margin-bottom: 8px; }
+        .user-stat-card .stat-value { font-size: 1.6em; font-weight: 700; color: #1a1a1a; line-height: 1; margin-bottom: 4px; }
+        .user-stat-card .stat-label { font-size: 0.78em; color: #888; font-weight: 500; }
+        .user-stat-card .stat-sub { font-size: 0.75em; color: #aaa; margin-top: 3px; }
+        .stat-badge { display: inline-block; background: #fff3e0; color: #e65100; font-size: 0.72em; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-top: 4px; }
+        @media (max-width: 560px) { .user-stats { grid-template-columns: 1fr; } }
+
         .card {
             background: white; border-radius: 12px;
             box-shadow: 0 1px 8px rgba(0,0,0,0.07);
@@ -89,38 +99,28 @@
         .profile-row strong { color: #1a1a1a; font-weight: 600; }
 
         .actions-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px;
         }
         .action-btn {
-            display: flex; align-items: center; gap: 10px;
-            padding: 14px 16px; border-radius: 10px; text-decoration: none;
-            font-size: 0.88em; font-weight: 600; color: white;
-            transition: opacity 0.2s, transform 0.1s;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; border-radius: 8px; text-decoration: none;
+            font-size: 0.88em; font-weight: 600; color: #2e7d32;
+            background: #f4faf4; border: 1px solid #d8eed8;
+            transition: background 0.15s, border-color 0.15s;
         }
-        .action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .action-btn .icon {
-            font-size: 1.3em; width: 34px; height: 34px;
-            background: rgba(255,255,255,0.2); border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .action-btn.green { background: linear-gradient(135deg, #2e7d32, #4CAF50); }
-        .action-btn.blue { background: linear-gradient(135deg, #1565c0, #1976d2); }
-        .action-btn.teal { background: linear-gradient(135deg, #00695c, #00897b); }
+        .action-btn:hover { background: #e8f5e9; border-color: #b2dfb2; }
+        .action-btn::after { content: '→'; font-size: 0.95em; color: #a5c8a5; }
 
         .btn-logout {
-            display: flex; align-items: center; gap: 10px; width: 100%;
-            padding: 13px 16px; margin-top: 10px; background: #fef2f2;
-            color: #dc2626; border: 1px solid #fecaca; border-radius: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; padding: 12px 16px; margin-top: 8px; background: #fef2f2;
+            color: #dc2626; border: 1px solid #fecaca; border-radius: 8px;
             font-size: 0.88em; font-weight: 600; cursor: pointer; text-align: left;
-            text-decoration: none; transition: background 0.2s;
+            text-decoration: none; transition: background 0.15s;
             font-family: 'DM Sans', sans-serif;
         }
         .btn-logout:hover { background: #fee2e2; }
-        .btn-logout .icon {
-            font-size: 1.3em; width: 34px; height: 34px;
-            background: rgba(220,38,38,0.1); border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .btn-logout::after { content: '→'; font-size: 0.95em; color: #f9a8a8; }
 
         /* Charts */
         .filter-row { display: flex; gap: 6px; margin-bottom: 18px; }
@@ -262,22 +262,45 @@
 <div class="content">
 
     <div class="profile-banner">
-        <div class="avatar">👤</div>
+        <div class="avatar">{{ (user.nome_completo or user.nome)[:2]|upper }}</div>
         <div>
             <h2>{{ user.nome_completo or user.nome }}</h2>
             <p>{{ user.cargo or ('Administrador' if user.is_admin else 'Utilizador') }}</p>
             {% if user.email %}
-            <p style="margin-top:4px; font-size:0.8em; opacity:0.7;">✉️ {{ user.email }}</p>
+            <p style="margin-top:4px; font-size:0.8em; opacity:0.7;">{{ user.email }}</p>
             {% endif %}
         </div>
-        <div class="org-tag">🏢 {{ org_nome }}</div>
+        <div class="org-tag">{{ org_nome }}</div>
     </div>
 
+    {% if not user.is_admin %}
+    <div class="user-stats">
+        <div class="user-stat-card">
+            <div class="stat-value">{{ user_horas_mes }}h</div>
+            <div class="stat-label">Horas este mês</div>
+        </div>
+        <div class="user-stat-card">
+            <div class="stat-value">{{ user_ferias_aprovadas }}</div>
+            <div class="stat-label">Férias aprovadas</div>
+            {% if user_ferias_pendentes > 0 %}
+            <div class="stat-badge">{{ user_ferias_pendentes }} pendente{{ 's' if user_ferias_pendentes > 1 else '' }}</div>
+            {% endif %}
+        </div>
+        <div class="user-stat-card">
+            <div class="stat-value">{{ user_faturas_mes }}</div>
+            <div class="stat-label">Faturas este mês</div>
+            {% if user_valor_faturas_mes > 0 %}
+            <div class="stat-sub">{{ "%.2f"|format(user_valor_faturas_mes) }} €</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('perfil', this)">👤 Perfil</button>
+        <button class="tab-btn active" onclick="switchTab('perfil', this)">Perfil</button>
         {% if user.is_admin %}
-        <button class="tab-btn" onclick="switchTab('grafico', this)">📊 Gráfico</button>
-        <button class="tab-btn" onclick="switchTab('admin', this)">🛠️ Admin</button>
+        <button class="tab-btn" onclick="switchTab('grafico', this)">Gráfico</button>
+        <button class="tab-btn" onclick="switchTab('admin', this)">Admin</button>
         {% endif %}
     </div>
 
@@ -363,27 +386,12 @@
         <div class="card">
             <div class="section-title">Acesso Rápido</div>
             <div class="actions-grid">
-                <a href="/orcamentos" class="action-btn blue">
-                    <div class="icon">📋</div>
-                    <span>Orçamentos</span>
-                </a>
-                <a href="/horas" class="action-btn green">
-                    <div class="icon">⏱</div>
-                    <span>Horas de Trabalho</span>
-                </a>
-                <a href="/ferias" class="action-btn teal">
-                    <div class="icon">🏖️</div>
-                    <span>Férias</span>
-                </a>
-                <a href="/faturas" class="action-btn green">
-                    <div class="icon">🧾</div>
-                    <span>As Minhas Faturas</span>
-                </a>
+                <a href="/orcamentos" class="action-btn">Orçamentos</a>
+                <a href="/horas" class="action-btn">Horas de Trabalho</a>
+                <a href="/ferias" class="action-btn">Férias</a>
+                <a href="/faturas" class="action-btn">As Minhas Faturas</a>
             </div>
-            <a class="btn-logout" href="/logout">
-                <div class="icon">🚪</div>
-                <span>Terminar Sessão</span>
-            </a>
+            <a class="btn-logout" href="/logout">Terminar Sessão</a>
         </div>
     </div>
 

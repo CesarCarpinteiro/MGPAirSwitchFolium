@@ -577,12 +577,36 @@ def perfil():
             except:
                 pass
 
+    # Stats para utilizadores não-admin
+    user_horas_mes = 0
+    user_ferias_aprovadas = 0
+    user_ferias_pendentes = 0
+    user_faturas_mes = 0
+    user_valor_faturas_mes = 0.0
+    if not is_admin:
+        horas_mes = db.session.query(HorasTrabalhadas).filter_by(
+            user_id=current_user.id, mes=now.month, ano=now.year
+        ).all()
+        user_horas_mes = round(sum(h.total for h in horas_mes), 1)
+
+        ferias_user = db.session.query(Ferias).filter_by(user_id=current_user.id, org_id=current_user.org_id).all()
+        user_ferias_aprovadas = sum(f.num_dias or 0 for f in ferias_user if f.estado == 'aprovado' and (f.data_inicio or '').endswith(str(now.year)))
+        user_ferias_pendentes = sum(1 for f in ferias_user if f.estado == 'pendente')
+
+        faturas_user = db.session.query(Fatura).filter_by(user_id=current_user.id, org_id=current_user.org_id).all()
+        faturas_mes_list = [f for f in faturas_user if f.data and len(f.data.split('/')) == 3 and f.data.split('/')[1] == str(now.month).zfill(2) and f.data.split('/')[2] == str(now.year)]
+        user_faturas_mes = len(faturas_mes_list)
+        user_valor_faturas_mes = round(sum(f.valor or 0 for f in faturas_mes_list), 2)
+
     return render_template('perfil.html', user=current_user, usuarios=todos_usuarios,
                            registos=registos, registos_json=registos_json, servicos_json=servicos_json,
                            is_admin=is_admin, org=org, tipos_servico=tipos_servico,
                            total_clientes=total_clientes, total_servicos=total_servicos,
                            receita_total=receita_total, media_maquinas=media_maquinas,
-                           urgentes=urgentes, atencao=atencao, em_dia=em_dia)
+                           urgentes=urgentes, atencao=atencao, em_dia=em_dia,
+                           user_horas_mes=user_horas_mes, user_ferias_aprovadas=user_ferias_aprovadas,
+                           user_ferias_pendentes=user_ferias_pendentes, user_faturas_mes=user_faturas_mes,
+                           user_valor_faturas_mes=user_valor_faturas_mes)
 
 
 def converter_data(d):
@@ -759,8 +783,8 @@ def edit_servico(id):
     s = db.session.query(Servico).filter_by(id=id, org_id=current_user.org_id).first()
     if s:
         s.tipo_servico = request.form.get('tipo_servico') or s.tipo_servico
-        s.data_servico = request.form.get('data_servico') or s.data_servico
-        s.proxima_manutencao = request.form.get('proxima_manutencao') or s.proxima_manutencao
+        s.data_servico = converter_data(request.form.get('data_servico')) or s.data_servico
+        s.proxima_manutencao = converter_data(request.form.get('proxima_manutencao')) or s.proxima_manutencao
         s.marca = request.form.get('marca') or s.marca
         num = request.form.get('num_maquinas')
         s.num_maquinas = int(num) if num else s.num_maquinas

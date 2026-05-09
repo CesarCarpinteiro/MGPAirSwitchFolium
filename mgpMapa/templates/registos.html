@@ -501,8 +501,8 @@
                                     {% endfor %}
                                 </select>
                                 <div style="display:flex;gap:8px;">
-                                    <div style="flex:1;"><label>Data</label><input type="text" name="data_servico" value="{{ s.data_servico or '' }}" placeholder="dd/mm/aaaa"></div>
-                                    <div style="flex:1;"><label>Próx. Manutenção</label><input type="text" name="proxima_manutencao" value="{{ s.proxima_manutencao or '' }}" placeholder="dd/mm/aaaa"></div>
+                                    <div style="flex:1;"><label>Data do Serviço</label><input type="date" name="data_servico" value="{% if s.data_servico %}{{ s.data_servico.split('/')[2] }}-{{ s.data_servico.split('/')[1] }}-{{ s.data_servico.split('/')[0] }}{% endif %}"></div>
+                                    <div style="flex:1;"><label>Próx. Manutenção</label><input type="date" name="proxima_manutencao" value="{% if s.proxima_manutencao %}{{ s.proxima_manutencao.split('/')[2] }}-{{ s.proxima_manutencao.split('/')[1] }}-{{ s.proxima_manutencao.split('/')[0] }}{% endif %}"></div>
                                 </div>
                                 <div style="display:flex;gap:8px;">
                                     <div style="flex:1;"><label>Marca</label><input type="text" name="marca" value="{{ s.marca or '' }}"></div>
@@ -537,8 +537,6 @@
                     <input type="text" name="nome" value="{{ r.nome }}" required>
                     <label>Contacto</label>
                     <input type="text" name="contacto" value="{{ r.contacto or '' }}">
-                    <label>Data de Instalação</label>
-                    <input type="text" name="data_instalacao" value="{{ r.data_instalacao or '' }}" placeholder="dd/mm/aaaa">
                     <div class="edit-section">Localização</div>
                     <label>Morada</label>
                     <input type="text" name="morada" value="{{ r.morada or '' }}">

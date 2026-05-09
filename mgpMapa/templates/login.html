@@ -69,6 +69,8 @@
         .form-group input { width: 100%; padding: 13px 14px 13px 42px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.95rem; font-family: 'DM Sans', sans-serif; color: var(--text-dark); background: #fafafa; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; outline: none; }
         .form-group input:focus { border-color: var(--green-main); background: white; box-shadow: 0 0 0 3px rgba(76,175,80,0.12); }
         .form-group input::placeholder { color: #9ca3af; }
+        .pwd-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 2px; color: #9ca3af; line-height: 1; }
+        .pwd-toggle:hover { color: #6b7280; }
 
         .forgot-btn { background: none; border: none; color: var(--green-mid); font-size: 0.82rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0; float: right; margin-top: -14px; margin-bottom: 20px; }
         .forgot-btn:hover { text-decoration: underline; }
@@ -161,7 +163,8 @@
                 <label for="senhaForm">Password</label>
                 <div class="input-wrap">
                     <span class="input-icon">🔒</span>
-                    <input type="password" name="senhaForm" id="senhaForm" placeholder="••••••••" required autocomplete="current-password">
+                    <input type="password" name="senhaForm" id="senhaForm" placeholder="••••••••" required autocomplete="current-password" style="padding-right:40px;">
+                    <button type="button" class="pwd-toggle" onclick="togglePwd(this,'senhaForm')" tabindex="-1"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 </div>
             </div>
 
@@ -215,14 +218,16 @@
                 <label>Nova password</label>
                 <div class="input-wrap">
                     <span class="input-icon">🔒</span>
-                    <input type="password" id="newPassword" placeholder="••••••••">
+                    <input type="password" id="newPassword" placeholder="••••••••" style="padding-right:40px;">
+                    <button type="button" class="pwd-toggle" onclick="togglePwd(this,'newPassword')" tabindex="-1"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 </div>
             </div>
             <div class="popup-group">
                 <label>Confirmar nova password</label>
                 <div class="input-wrap">
                     <span class="input-icon">🔒</span>
-                    <input type="password" id="confirmPassword" placeholder="••••••••">
+                    <input type="password" id="confirmPassword" placeholder="••••••••" style="padding-right:40px;">
+                    <button type="button" class="pwd-toggle" onclick="togglePwd(this,'confirmPassword')" tabindex="-1"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 </div>
             </div>
             <button class="popup-btn" onclick="submitReset()">Guardar nova password →</button>
@@ -231,6 +236,15 @@
     </div>
 
 <script>
+    var EYE = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    var EYE_OFF = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>';
+    function togglePwd(btn, id) {
+        var inp = document.getElementById(id);
+        var show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        btn.innerHTML = show ? EYE_OFF : EYE;
+    }
+
     function handleSubmit(e) {
         var btn = document.querySelector('.submit-btn');
         btn.innerHTML = '<span class="btn-inner">A entrar...</span>';

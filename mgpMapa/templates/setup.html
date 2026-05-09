@@ -60,6 +60,8 @@
         .form-group input.error { border-color: #ef4444; }
         .field-error { font-size: 0.78rem; color: #ef4444; display: none; }
         .field-error.visible { display: block; }
+        .pwd-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 2px; color: #9ca3af; line-height: 1; }
+        .pwd-toggle:hover { color: #6b7280; }
 
         .password-strength { margin-top: 6px; display: none; }
         .strength-bar { height: 3px; border-radius: 99px; background: #e5e7eb; overflow: hidden; margin-bottom: 4px; }
@@ -307,7 +309,8 @@
                         <label>Password <span class="required">*</span></label>
                         <div class="input-wrap">
                             <span class="input-icon">🔒</span>
-                            <input type="password" name="senhaForm" id="senhaInput" placeholder="••••••••" required autocomplete="new-password" oninput="checkStrength(this.value)">
+                            <input type="password" name="senhaForm" id="senhaInput" placeholder="••••••••" required autocomplete="new-password" oninput="checkStrength(this.value)" style="padding-right:40px;">
+                            <button type="button" class="pwd-toggle" onclick="togglePwd(this,'senhaInput')" tabindex="-1"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                         </div>
                         <div class="password-strength" id="strengthWrap">
                             <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
@@ -319,7 +322,8 @@
                         <label>Confirmar Password <span class="required">*</span></label>
                         <div class="input-wrap">
                             <span class="input-icon">🔒</span>
-                            <input type="password" name="senhaConfirm" id="senhaConfirm" placeholder="••••••••" required autocomplete="new-password">
+                            <input type="password" name="senhaConfirm" id="senhaConfirm" placeholder="••••••••" required autocomplete="new-password" style="padding-right:40px;">
+                            <button type="button" class="pwd-toggle" onclick="togglePwd(this,'senhaConfirm')" tabindex="-1"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                         </div>
                         <span class="field-error" id="err-senhaConfirm">As passwords não coincidem.</span>
                     </div>
@@ -368,6 +372,15 @@
 </div>
 
 <script>
+    var EYE = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    var EYE_OFF = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>';
+    function togglePwd(btn, id) {
+        var inp = document.getElementById(id);
+        var show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        btn.innerHTML = show ? EYE_OFF : EYE;
+    }
+
     {% if error %}
     document.getElementById('serverError').style.display = 'block';
     {% endif %}
