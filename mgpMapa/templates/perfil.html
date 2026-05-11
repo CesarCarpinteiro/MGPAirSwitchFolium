@@ -145,6 +145,15 @@
             background: #2e7d32; color: white; border-color: #2e7d32;
         }
 
+        .filter-tipo-btn {
+            padding: 5px 12px; border: 1px solid #e0e0e0; background: white;
+            border-radius: 14px; font-size: 0.78em; font-weight: 500;
+            cursor: pointer; color: #666; transition: all 0.15s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .filter-tipo-btn:hover { border-color: #4CAF50; color: #2e7d32; }
+        .filter-tipo-btn.active { background: #e8f5e9; color: #2e7d32; border-color: #81c784; font-weight: 600; }
+
         /* Users table */
         .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .users-table { width: 100%; border-collapse: collapse; font-size: 0.86em; min-width: 540px; }
@@ -455,13 +464,14 @@
             </div>
         </div>
 
-        <!-- Clientes chart -->
+        <!-- Serviços chart -->
         <div class="card">
-            <div class="section-title">Número de Clientes</div>
+            <div class="section-title">Número de Serviços</div>
             <div class="filter-row">
-                <button class="filter-btn active" onclick="filtrarGrafico('mes', this)">Por Mês</button>
-                <button class="filter-btn" onclick="filtrarGrafico('ano', this)">Por Ano</button>
+                <button class="filter-btn active" data-tipo="mes" onclick="filtrarGrafico('mes', this)">Por Mês</button>
+                <button class="filter-btn" data-tipo="ano" onclick="filtrarGrafico('ano', this)">Por Ano</button>
             </div>
+            <div id="tipo-filter-inst" class="filter-row" style="display:none; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
             <div id="metaInstCard" style="display:none; background:#f0f7f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
                 <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div><div style="font-size:1.05em; font-weight:700; color:#555;" id="metaInstBase">—</div></div>
                 <div style="font-size:1.1em; color:#ddd;">→</div>
@@ -478,9 +488,10 @@
         <div class="card">
             <div class="section-title">Receita por Período</div>
             <div class="filter-row">
-                <button class="filter-btn-valor active" onclick="filtrarValor('mes', this)">Por Mês</button>
-                <button class="filter-btn-valor" onclick="filtrarValor('ano', this)">Por Ano</button>
+                <button class="filter-btn-valor active" data-tipo="mes" onclick="filtrarValor('mes', this)">Por Mês</button>
+                <button class="filter-btn-valor" data-tipo="ano" onclick="filtrarValor('ano', this)">Por Ano</button>
             </div>
+            <div id="tipo-filter-val" class="filter-row" style="display:none; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
             <div id="metaValCard" style="display:none; background:#e8f0fc; border:1px solid #bbdefb; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
                 <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div><div style="font-size:1.05em; font-weight:700; color:#555;" id="metaValBase">—</div></div>
                 <div style="font-size:1.1em; color:#ddd;">→</div>
@@ -661,6 +672,8 @@
     var chartInitialized = false;
     var chart = null;
     var valorChart = null;
+    var _tipoFilterInst = '';
+    var _tipoFilterVal = '';
     var registosData = JSON.parse(document.getElementById('registos-data').textContent);
     var servicosData = JSON.parse(document.getElementById('servicos-data').textContent);
 
@@ -700,6 +713,41 @@
         });
     }
 
+    function renderTipoFilters() {
+        var tipos = [];
+        servicosData.forEach(function(s) {
+            if (s.tipo_servico && tipos.indexOf(s.tipo_servico) === -1) tipos.push(s.tipo_servico);
+        });
+        if (tipos.length < 2) return;
+        function build(containerId, mode) {
+            var c = document.getElementById(containerId);
+            if (!c) return;
+            c.style.display = 'flex';
+            var allTypes = ['Todos'].concat(tipos);
+            allTypes.forEach(function(t) {
+                var btn = document.createElement('button');
+                btn.className = 'filter-tipo-btn' + (t === 'Todos' ? ' active' : '');
+                btn.textContent = t;
+                btn.setAttribute('data-tipo', t === 'Todos' ? '' : t);
+                btn.onclick = function() {
+                    c.querySelectorAll('.filter-tipo-btn').forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    var tp = btn.getAttribute('data-tipo');
+                    if (mode === 'inst') {
+                        var pb = document.querySelector('#tab-grafico .filter-btn.active');
+                        filtrarGrafico(pb ? pb.getAttribute('data-tipo') : 'mes', pb, tp);
+                    } else {
+                        var pb2 = document.querySelector('.filter-btn-valor.active');
+                        filtrarValor(pb2 ? pb2.getAttribute('data-tipo') : 'mes', pb2, tp);
+                    }
+                };
+                c.appendChild(btn);
+            });
+        }
+        build('tipo-filter-inst', 'inst');
+        build('tipo-filter-val', 'val');
+    }
+
     function switchTab(name, btn) {
         document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
         document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -708,6 +756,7 @@
         btn.classList.add('active');
         if (name === 'grafico' && !chartInitialized) {
             try {
+                renderTipoFilters();
                 var fb = document.querySelector('#tab-grafico .filter-btn.active');
                 var fv = document.querySelector('.filter-btn-valor.active');
                 if (fb) filtrarGrafico('mes', fb);
@@ -739,7 +788,7 @@
 
     function renderMetaCard(prefix, metaObj, isCurrency) {
         if (!metaObj) { document.getElementById(prefix+'Card').style.display='none'; return; }
-        var fmt=function(v){return isCurrency?v.toFixed(2)+' €':Math.round(v)+' clientes';};
+        var fmt=function(v){return isCurrency?v.toFixed(2)+' €':Math.round(v)+' serviços';};
         document.getElementById(prefix+'Card').style.display='flex';
         document.getElementById(prefix+'Base').textContent=fmt(metaObj.base)+' ('+metaObj.baseLabel+')';
         document.getElementById(prefix+'Meta').textContent=fmt(metaObj.meta);
@@ -749,7 +798,7 @@
         if(metaObj.achieved){
             var over=isCurrency?metaObj.diffPct:metaObj.diff;
             pctEl.textContent=metaObj.pct+'% da meta atingida';pctEl.style.color='#2e7d32';
-            badge.textContent=isCurrency?'Meta superada! +'+over+'%':'Meta superada! +'+over+' clientes';
+            badge.textContent=isCurrency?'Meta superada! +'+over+'%':'Meta superada! +'+over+' serviços';
             badge.style.background='#e8f5e9';badge.style.color='#2e7d32';
         }else{
             pctEl.textContent=metaObj.pct+'% — faltam '+fmt(metaObj.meta-metaObj.current);pctEl.style.color='#e65100';
@@ -771,13 +820,15 @@
         return{currentForecast:cf,nextKeys:nk,nextForecasts:nf};
     }
 
-    function filtrarGrafico(tipo, btn) {
+    function filtrarGrafico(tipo, btn, tipoFilter) {
+        if (tipoFilter !== undefined) _tipoFilterInst = tipoFilter;
         document.querySelectorAll('#tab-grafico .filter-btn').forEach(function(b){b.classList.remove('active');});
-        btn.classList.add('active');
+        if (btn) btn.classList.add('active');
         var counts={};
-        registosData.forEach(function(r){
-            if(!r.data_instalacao)return;
-            var parts=r.data_instalacao.split('/');if(parts.length!==3)return;
+        servicosData.forEach(function(s){
+            if(_tipoFilterInst && s.tipo_servico !== _tipoFilterInst) return;
+            if(!s.data_servico)return;
+            var parts=s.data_servico.split('/');if(parts.length!==3)return;
             var key=tipo==='mes'?parts[1]+'/'+parts[2]:parts[2];
             counts[key]=(counts[key]||0)+1;
         });
@@ -795,7 +846,7 @@
         var curBar=al.map(function(l){return l===ck?(counts[ck]||0):null;});
         var fLine=fc?al.map(function(l){if(l===ck)return fc.currentForecast;var i=fc.nextKeys.indexOf(l);return i>=0?fc.nextForecasts[i]:null;}):null;
         var ds=[
-            {label:'Clientes',data:barData,backgroundColor:'rgba(46,125,50,0.75)',borderColor:'#2e7d32',borderWidth:1,borderRadius:5,order:2},
+            {label:'Serviços',data:barData,backgroundColor:'rgba(46,125,50,0.75)',borderColor:'#2e7d32',borderWidth:1,borderRadius:5,order:2},
             {label:'Mês em curso',data:curBar,backgroundColor:'rgba(253,126,20,0.3)',borderColor:'#fd7e14',borderWidth:1,borderRadius:5,order:2}
         ];
         if(fLine)ds.push({label:'Previsão Holt-Winters',data:fLine,type:'line',borderColor:'#fd7e14',backgroundColor:'rgba(253,126,20,0.06)',borderWidth:2,borderDash:[5,4],pointRadius:3,pointBackgroundColor:'#fd7e14',fill:true,tension:0.3,order:0});
@@ -803,19 +854,21 @@
         if(chart)chart.destroy();
         chart=new Chart(document.getElementById('instalacaoChart').getContext('2d'),{
             type:'bar',data:{labels:al,datasets:ds},
-            options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'DM Sans'},boxWidth:16,padding:14}},tooltip:{callbacks:{label:function(c){if(c.parsed.y===null)return null;if(c.dataset.label==='Previsão Holt-Winters')return' Previsão: '+c.parsed.y+' clientes';if(c.dataset.label==='Mês em curso')return' Em curso: '+c.parsed.y+' clientes';if(c.dataset.label&&c.dataset.label.startsWith('Meta'))return' Meta: '+c.parsed.y+' clientes';return' '+c.parsed.y+' cliente(s)';}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,maxTicksLimit:6,font:{family:'DM Sans'}},grid:{color:'#f5f5f5'}},x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:10},maxTicksLimit:8,maxRotation:45,minRotation:0}}}}
+            options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'DM Sans'},boxWidth:16,padding:14}},tooltip:{callbacks:{label:function(c){if(c.parsed.y===null)return null;if(c.dataset.label==='Previsão Holt-Winters')return' Previsão: '+c.parsed.y+' serviços';if(c.dataset.label==='Mês em curso')return' Em curso: '+c.parsed.y+' serviços';if(c.dataset.label&&c.dataset.label.startsWith('Meta'))return' Meta: '+c.parsed.y+' serviços';return' '+c.parsed.y+' serviço(s)';}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,maxTicksLimit:6,font:{family:'DM Sans'}},grid:{color:'#f5f5f5'}},x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:10},maxTicksLimit:8,maxRotation:45,minRotation:0}}}}
         });
     }
 
-    function filtrarValor(tipo, btn) {
+    function filtrarValor(tipo, btn, tipoFilter) {
+        if (tipoFilter !== undefined) _tipoFilterVal = tipoFilter;
         document.querySelectorAll('.filter-btn-valor').forEach(function(b){b.classList.remove('active');});
-        btn.classList.add('active');
+        if (btn) btn.classList.add('active');
         var totais={};
-        registosData.forEach(function(r){
-            if(!r.data_instalacao||!r.valor_pago)return;
-            var parts=r.data_instalacao.split('/');if(parts.length!==3)return;
+        servicosData.forEach(function(s){
+            if(_tipoFilterVal && s.tipo_servico !== _tipoFilterVal) return;
+            if(!s.data_servico||!s.valor_pago)return;
+            var parts=s.data_servico.split('/');if(parts.length!==3)return;
             var key=tipo==='mes'?parts[1]+'/'+parts[2]:parts[2];
-            totais[key]=(totais[key]||0)+r.valor_pago;
+            totais[key]=(totais[key]||0)+s.valor_pago;
         });
         var ck=tipo==='mes'?currentMonthKey:currentYearKey;
         var hl=sortKeys(Object.keys(totais)),hv=hl.map(function(l){return parseFloat(totais[l].toFixed(2));});
