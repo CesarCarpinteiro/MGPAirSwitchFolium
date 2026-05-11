@@ -186,6 +186,7 @@
         .edit-servico-form input, .edit-servico-form select {
             width: 100%; padding: 7px 9px; margin-bottom: 8px; border: 1px solid #ddd;
             border-radius: 5px; font-size: 0.85em; font-family: 'DM Sans', sans-serif; color: #333;
+            background: white; -webkit-appearance: none; appearance: none;
         }
         .edit-servico-form input:focus, .edit-servico-form select:focus { outline: none; border-color: #4CAF50; }
 
@@ -274,6 +275,10 @@
             .form-container, .registos-container, .toolbar, .pagination, .page-info { width: 92%; }
             .form-row, .edit-row { flex-direction: column; gap: 0; }
             .modal { width: 90%; }
+            .page-header { padding: 10px 12px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions { gap: 6px; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
         }
     </style>
 </head>
@@ -496,13 +501,17 @@
                             <form method="POST" action="/servico/edit/{{ s.id }}">
                                 <label>Tipo de Serviço</label>
                                 <select name="tipo_servico">
+                                    <option value="">— Selecionar —</option>
+                                    {% if s.tipo_servico and s.tipo_servico not in tipos_servico|map(attribute='nome')|list %}
+                                    <option value="{{ s.tipo_servico }}" selected>{{ s.tipo_servico }}</option>
+                                    {% endif %}
                                     {% for t in tipos_servico %}
                                     <option value="{{ t.nome }}" {% if s.tipo_servico == t.nome %}selected{% endif %}>{{ t.nome }}</option>
                                     {% endfor %}
                                 </select>
                                 <div style="display:flex;gap:8px;">
-                                    <div style="flex:1;"><label>Data do Serviço</label><input type="date" name="data_servico" value="{% if s.data_servico %}{{ s.data_servico.split('/')[2] }}-{{ s.data_servico.split('/')[1] }}-{{ s.data_servico.split('/')[0] }}{% endif %}"></div>
-                                    <div style="flex:1;"><label>Próx. Manutenção</label><input type="date" name="proxima_manutencao" value="{% if s.proxima_manutencao %}{{ s.proxima_manutencao.split('/')[2] }}-{{ s.proxima_manutencao.split('/')[1] }}-{{ s.proxima_manutencao.split('/')[0] }}{% endif %}"></div>
+                                    <div style="flex:1;min-width:0;overflow:hidden;"><label>Data do Serviço</label><input type="date" name="data_servico" value="{% if s.data_servico %}{{ s.data_servico.split('/')[2] }}-{{ s.data_servico.split('/')[1] }}-{{ s.data_servico.split('/')[0] }}{% endif %}"></div>
+                                    <div style="flex:1;min-width:0;overflow:hidden;"><label>Próx. Manutenção</label><input type="date" name="proxima_manutencao" value="{% if s.proxima_manutencao %}{{ s.proxima_manutencao.split('/')[2] }}-{{ s.proxima_manutencao.split('/')[1] }}-{{ s.proxima_manutencao.split('/')[0] }}{% endif %}"></div>
                                 </div>
                                 <div style="display:flex;gap:8px;">
                                     <div style="flex:1;"><label>Marca</label><input type="text" name="marca" value="{{ s.marca or '' }}"></div>

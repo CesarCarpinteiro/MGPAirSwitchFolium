@@ -170,6 +170,10 @@
             .hours-table th, .hours-table td { padding: 7px 8px; white-space: nowrap; }
             .month-nav { flex-wrap: wrap; gap: 6px; }
             .page-header h1 { font-size: 1.1em; }
+            .header-actions { gap: 6px; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+            .export-btns { flex-direction: column; gap: 6px; }
+            .section-title { flex-wrap: wrap; gap: 8px; }
         }
     </style>
 </head>
@@ -204,9 +208,9 @@
     <div class="card">
         <div class="section-title">
             <span>📋 Registar Horas</span>
-            <div style="display:flex; gap:8px;">
-                <button onclick="exportPDF()" class="btn-green" style="font-size:0.85em; padding:7px 14px;">🖨️ Exportar PDF</button>
-                <button onclick="exportPDFMes()" class="btn-green" style="font-size:0.85em; padding:7px 14px; background: linear-gradient(135deg, #1565c0, #1976d2);">📅 Exportar Mês Completo</button>
+            <div class="export-btns" style="display:flex; gap:8px;">
+                <button onclick="exportPDF()" class="btn-green" style="font-size:0.85em; padding:7px 14px;">Exportar PDF</button>
+                <button onclick="exportPDFMes()" class="btn-green" style="font-size:0.85em; padding:7px 14px; background: linear-gradient(135deg, #1565c0, #1976d2);">Exportar Mês Completo</button>
             </div>
         </div>
 

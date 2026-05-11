@@ -25,7 +25,7 @@
         }
         .page-header a:hover { background: #f0f0f0; }
         .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
         .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
         .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; letter-spacing: 0.3px; margin: 0; margin-top: 3px; font-family: 'DM Sans', sans-serif; }
 
@@ -192,7 +192,14 @@
 
         footer { text-align: center; padding: 10px; background: #2e7d32; color: rgba(255,255,255,0.8); font-size: 12px; position: fixed; bottom: 0; width: 100%; }
 
-        @media (max-width: 700px) { .months-grid { grid-template-columns: 1fr; } .admin-actions { flex-direction: column; } }
+        @media (max-width: 700px) {
+            .months-grid { grid-template-columns: 1fr; }
+            .admin-actions { flex-direction: column; }
+            .page-header { padding: 10px 12px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions { gap: 6px; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+        }
         @media (max-width: 900px) and (min-width: 701px) { .months-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>

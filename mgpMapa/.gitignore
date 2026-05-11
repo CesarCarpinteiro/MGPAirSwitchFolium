@@ -10,3 +10,5 @@ bin/
 include/
 pyvenv.cfg
 *.egg-info/
+instance/database.db
+instance/

@@ -470,6 +470,7 @@ def registrar():
     senha = data.get('senhaForm', '').strip()
     email = data.get('emailForm', '').strip()
     telefone = data.get('telefoneForm', '').strip()
+    cargo = data.get('cargo', '').strip()
     is_admin_user = data.get('is_admin', False)
 
     if not nome or not senha:
@@ -479,7 +480,7 @@ def registrar():
         return jsonify({'ok': False, 'error': 'Este nome de utilizador já existe'})
 
     novo_usuario = Usuario(nome=nome, senha=hash(senha), is_admin=is_admin_user,
-                           email=email, telefone=telefone, org_id=current_user.org_id)
+                           email=email, telefone=telefone, cargo=cargo, org_id=current_user.org_id)
     db.session.add(novo_usuario)
     db.session.commit()
 
@@ -503,6 +504,7 @@ def registrar():
         'nome': novo_usuario.nome,
         'email': email or '—',
         'telefone': telefone or '—',
+        'cargo': cargo or '—',
         'is_admin': is_admin_user
     })
 
@@ -540,8 +542,19 @@ def perfil():
     todos_usuarios = db.session.query(Usuario).filter_by(org_id=current_user.org_id).all() if is_admin else []
     registos = db.session.query(Registo).filter_by(org_id=current_user.org_id).all() if is_admin else []
     servicos = db.session.query(Servico).filter_by(org_id=current_user.org_id).all() if is_admin else []
+    def _data_ref(r):
+        if r.data_instalacao:
+            return r.data_instalacao
+        datas = [s.data_servico for s in r.servicos if s.data_servico]
+        if datas:
+            try:
+                return min(datas, key=lambda d: datetime.strptime(d, '%d/%m/%Y'))
+            except:
+                pass
+        return datetime.now().strftime('%d/%m/%Y')
+
     registos_json = json.dumps([{
-        'data_instalacao': r.data_instalacao,
+        'data_instalacao': _data_ref(r),
         'valor_pago': r.valor_pago,
         'morada': r.morada or ''
     } for r in registos])
