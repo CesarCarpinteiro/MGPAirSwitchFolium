@@ -10,7 +10,7 @@
         body { font-family: 'DM Sans', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
 
         .page-header {
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
             padding: 14px 24px;
             display: flex;
             align-items: center;
@@ -20,14 +20,31 @@
         .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
         .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
         .page-header a {
-            padding: 9px 20px; background: white; color: #2e7d32;
+            padding: 9px 20px; background: white; color: #2d3a6e;
             text-decoration: none; border-radius: 6px; font-size: 0.9em;
             font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
         }
         .page-header a:hover { background: #f0f0f0; }
         .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
         .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
+        /* ── Notification Bell ── */
+        .notif-wrap { position: relative; }
+        .notif-btn { cursor: pointer; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 8px 12px; color: white; font-size: 1.1em; user-select: none; display: flex; align-items: center; transition: background 0.2s; }
+        .notif-btn:hover { background: rgba(255,255,255,0.25); }
+        .notif-badge { position: absolute; top: -6px; right: -6px; background: #e53935; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65em; font-weight: bold; display: none; align-items: center; justify-content: center; }
+        .notif-dropdown { position: absolute; top: 46px; right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); width: 320px; z-index: 9000; display: none; overflow: hidden; }
+        .notif-dd-header { padding: 11px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .notif-dd-header span { font-size: 0.85em; font-weight: bold; color: #333; }
+        .notif-dd-header button { background: none; border: none; font-size: 0.75em; color: #2d3a6e; cursor: pointer; font-weight: bold; padding: 0; }
+        .notif-item { padding: 11px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: #f9f9f9; }
+        .notif-item-title { font-size: 0.84em; font-weight: bold; color: #1a1a1a; margin-bottom: 2px; }
+        .notif-item-body { font-size: 0.78em; color: #555; line-height: 1.35; }
+        .notif-item-time { font-size: 0.7em; color: #bbb; margin-top: 3px; }
+        .notif-empty { padding: 28px 16px; text-align: center; color: #bbb; font-size: 0.85em; }
+
 
         .content { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
 
@@ -38,7 +55,7 @@
         }
 
         .section-title {
-            font-size: 1em; font-weight: bold; color: #2e7d32;
+            font-size: 1em; font-weight: bold; color: #2d3a6e;
             margin-bottom: 16px; padding-bottom: 8px;
             border-bottom: 2px solid #e8f0e8;
             display: flex; justify-content: space-between; align-items: center;
@@ -54,7 +71,7 @@
         }
         .month-nav a:hover { background: #ddd; }
         .month-nav .current-month {
-            font-weight: bold; font-size: 1.1em; color: #2e7d32;
+            font-weight: bold; font-size: 1.1em; color: #2d3a6e;
             min-width: 140px; text-align: center;
         }
 
@@ -75,11 +92,11 @@
             font-size: 0.9em; outline: none;
         }
 
-        .add-form input:focus, .add-form select:focus { border-color: #4CAF50; }
+        .add-form input:focus, .add-form select:focus { border-color: #4a5fa8; }
 
         .btn-green {
             padding: 9px 18px;
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
             color: white; border: none; border-radius: 6px;
             font-size: 0.9em; font-weight: bold; cursor: pointer;
             white-space: nowrap; height: 36px;
@@ -89,7 +106,7 @@
         .hours-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
 
         .hours-table th {
-            background: #f8faf8; color: #2e7d32; padding: 10px 12px;
+            background: #f8faf8; color: #2d3a6e; padding: 10px 12px;
             text-align: left; font-size: 0.82em; text-transform: uppercase;
             letter-spacing: 0.4px; white-space: nowrap;
         }
@@ -108,26 +125,36 @@
             border-radius: 5px; font-size: 0.88em; background: #fafafa;
         }
 
-        .hours-table input:focus { border-color: #4CAF50; outline: none; background: white; }
+        .hours-table input:focus { border-color: #4a5fa8; outline: none; background: white; }
 
-        .total-cell { font-weight: bold; color: #2e7d32; }
+        .total-cell { font-weight: bold; color: #2d3a6e; }
 
         .btn-save {
-            padding: 5px 12px; background: #2e7d32; color: white;
+            padding: 5px 12px; background: #2d3a6e; color: white;
             border: none; border-radius: 5px; font-size: 0.82em;
             cursor: pointer; margin-right: 4px;
         }
-        .btn-save:hover { background: #1b5e20; }
+        .btn-save:hover { background: #1e2a52; }
 
         .btn-delete {
-            background: none; border: none; color: #e53935;
-            cursor: pointer; font-size: 1em; padding: 0;
-            transition: transform 0.2s;
+            background: none; border: none; color: #aaa;
+            cursor: pointer; font-size: 0.95em; padding: 4px;
+            transition: color 0.15s, transform 0.15s;
         }
-        .btn-delete:hover { transform: scale(1.2); }
+        .btn-delete:hover { color: #e53935; transform: scale(1.15); }
+        .confirm-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.38); z-index:1000; align-items:center; justify-content:center; padding:16px; }
+        .confirm-backdrop.open { display:flex; }
+        .confirm-box { background:white; border-radius:12px; width:100%; max-width:340px; box-shadow:0 8px 32px rgba(0,0,0,0.16); font-family:'DM Sans',sans-serif; padding:24px 22px; text-align:center; }
+        .confirm-title { font-size:1em; font-weight:700; color:#1a1a1a; margin-bottom:8px; }
+        .confirm-sub { color:#888; font-size:0.87em; margin-bottom:22px; line-height:1.5; }
+        .confirm-btns { display:flex; gap:10px; justify-content:center; }
+        .confirm-cancel { padding:9px 22px; border:1px solid #ddd; background:white; border-radius:7px; font-size:0.88em; cursor:pointer; color:#555; font-family:'DM Sans',sans-serif; }
+        .confirm-cancel:hover { background:#f5f5f5; }
+        .confirm-ok { padding:9px 22px; background:#e53935; color:white; border:none; border-radius:7px; font-size:0.88em; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; }
+        .confirm-ok:hover { background:#c62828; }
 
         .day-badge {
-            background: #e8f5e9; color: #2e7d32; font-weight: bold;
+            background: #e8eaf6; color: #2d3a6e; font-weight: bold;
             padding: 3px 10px; border-radius: 10px; font-size: 0.85em;
         }
 
@@ -138,7 +165,7 @@
 
         .summary-row td {
             background: #f8faf8; font-weight: bold;
-            color: #2e7d32; border-top: 2px solid #c8e6c9;
+            color: #2d3a6e; border-top: 2px solid #c8e6c9;
         }
 
         .empty-state {
@@ -157,7 +184,7 @@
         }
 
         footer {
-            text-align: center; padding: 10px; background: #2e7d32;
+            text-align: center; padding: 10px; background: #2d3a6e;
             color: rgba(255,255,255,0.8); font-size: 12px;
             position: fixed; bottom: 0; width: 100%;
         }
@@ -177,17 +204,40 @@
             .section-title { flex-wrap: wrap; gap: 8px; }
         }
     </style>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2d3a6e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GestãoPro">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 </head>
 <body>
 
 <div class="page-header">
-    <div>
+    <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+        <div>
         <div class="subtitle">{{ org_nome }}</div>
         <h1>Horas de Trabalho</h1>
+        </div>
     </div>
     <div class="header-actions">
         {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
         <a href="/registos">Registos</a>
+        <div class="notif-wrap" id="notifWrap">
+            <div class="notif-btn" id="notifBtn" onclick="toggleNotifDropdown(event)">
+                🔔<span class="notif-badge" id="notifBadge"></span>
+            </div>
+            <div class="notif-dropdown" id="notifDropdown">
+                <div class="notif-dd-header">
+                    <span>Notificações</span>
+                    <button onclick="marcarTodasLidas(event)">Limpar todas</button>
+                </div>
+                <div id="notifList"><div class="notif-empty">Sem notificações novas</div></div>
+            </div>
+        </div>
+
         <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
     </div>
 </div>
@@ -241,7 +291,7 @@
                 </div>
                 <div>
                     <label>Total</label>
-                    <input type="number" id="totalDisplay" readonly value="0" style="background:#f0f0f0; color:#2e7d32; font-weight:bold;">
+                    <input type="number" id="totalDisplay" readonly value="0" style="background:#f0f0f0; color:#2d3a6e; font-weight:bold;">
                 </div>
                 <div>
                     <label>Local</label>
@@ -311,9 +361,9 @@
                         <td><button type="submit" class="btn-save">💾 Guardar</button></td>
                     </form>
                     <td>
-                        <form method="POST" action="/horas/delete/{{ r.id }}" style="display:inline;">
+                        <form method="POST" action="/horas/delete/{{ r.id }}" id="del-form-{{ r.id }}" style="display:inline;">
                             <button type="button" class="btn-delete"
-                                onclick="if(confirm('Remover dia {{ r.dia }}?')) this.form.submit()">🗑</button>
+                                onclick="showHorasConfirm({{ r.dia }}, 'del-form-{{ r.id }}')">&#128465;</button>
                         </form>
                     </td>
                 </tr>
@@ -342,7 +392,7 @@
     </div>
 </div>
 
-<footer>&copy; {{ org_nome }}</footer>
+<footer>&copy; GestãoPro</footer>
 
 <script>
     // Auto-calculate total in add form
@@ -382,7 +432,7 @@
         var rows = [...document.querySelectorAll('#hoursTable tbody tr[data-user]')]
             .filter(function(r) { return r.style.display !== 'none'; });
 
-        if (rows.length === 0) { alert('Sem registos para exportar.'); return; }
+        if (rows.length === 0) { showHorasInfo('Sem registos para exportar.'); return; }
 
         var userFilter = document.getElementById('userFilter');
         var filterVal = userFilter ? userFilter.value : 'all';
@@ -431,7 +481,7 @@
             mesNome: mesNome, ano: ano, tableRows: tableRows,
             totalManha: totalManha, totalTarde: totalTarde,
             totalExtra: totalExtra, totalTotal: totalTotal,
-            accentColor: '#2e7d32',
+            accentColor: '#2d3a6e',
             userColHeader: userColHeader,
             userColSummary: userColSummary
         });
@@ -460,7 +510,7 @@
             users[user].push(row);
         });
 
-        if (Object.keys(users).length === 0) { alert('Sem registos para exportar.'); return; }
+        if (Object.keys(users).length === 0) { showHorasInfo('Sem registos para exportar.'); return; }
 
         var sections = '';
 
@@ -576,7 +626,7 @@
             'th { background:' + accentColor + '; color:white; padding:9px 12px; text-align:left; font-size:0.82em; text-transform:uppercase; letter-spacing:0.4px; }' +
             'td { padding:8px 12px; border-bottom:1px solid #e0e0e0; color:#333; }' +
             'tr:nth-child(even) td { background:#f9f9f9; }' +
-            '.summary-row td { background:#e8f5e9; font-weight:bold; color:' + accentColor + '; border-top:2px solid ' + accentColor + '; }' +
+            '.summary-row td { background:#e8eaf6; font-weight:bold; color:' + accentColor + '; border-top:2px solid ' + accentColor + '; }' +
             '.footer { margin-top:30px; font-size:0.78em; color:#aaa; text-align:center; border-top:1px solid #eee; padding-top:12px; }' +
             '@media print { body { padding:20px; } @page { margin:1.5cm; } }' +
             '</style></head><body>' +
@@ -622,7 +672,7 @@
         const c = document.getElementById('toast-container');
         const t = document.createElement('div');
         t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:Arial,sans-serif;white-space:nowrap;opacity:1;transition:opacity 0.4s;';
-        t.style.background = type === 'error' ? '#e53935' : '#2e7d32';
+        t.style.background = type === 'error' ? '#e53935' : '#2d3a6e';
         t.style.color = 'white';
         t.textContent = msg;
         c.appendChild(t);
@@ -637,5 +687,162 @@
 
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 
+<div id="horasConfirmModal" class="confirm-backdrop">
+    <div class="confirm-box">
+        <div class="confirm-title" id="horasConfirmTitle"></div>
+        <div class="confirm-sub" id="horasConfirmSub"></div>
+        <div class="confirm-btns">
+            <button class="confirm-cancel" onclick="closeHorasConfirm()">Cancelar</button>
+            <button class="confirm-ok" id="horasConfirmOk">Remover</button>
+        </div>
+    </div>
+</div>
+
+<div id="horasInfoModal" class="confirm-backdrop">
+    <div class="confirm-box">
+        <div class="confirm-title" id="horasInfoTitle"></div>
+        <div class="confirm-sub" id="horasInfoSub"></div>
+        <div class="confirm-btns">
+            <button class="confirm-ok" onclick="closeHorasInfo()">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var _horasConfirmForm = null;
+    function showHorasConfirm(dia, formId) {
+        _horasConfirmForm = document.getElementById(formId);
+        document.getElementById('horasConfirmTitle').textContent = 'Remover registo de horas';
+        document.getElementById('horasConfirmSub').innerHTML = 'Tens a certeza que queres remover o registo do dia <strong>' + dia + '</strong>?<br>Esta ação não pode ser desfeita.';
+        document.getElementById('horasConfirmModal').classList.add('open');
+    }
+    function closeHorasConfirm() {
+        document.getElementById('horasConfirmModal').classList.remove('open');
+        _horasConfirmForm = null;
+    }
+    document.getElementById('horasConfirmOk').addEventListener('click', function() {
+        var form = _horasConfirmForm;
+        closeHorasConfirm();
+        if (form) form.submit();
+    });
+    document.getElementById('horasConfirmModal').addEventListener('click', function(e) {
+        if (e.target === this) closeHorasConfirm();
+    });
+
+    function showHorasInfo(msg) {
+        document.getElementById('horasInfoTitle').textContent = 'Exportar PDF';
+        document.getElementById('horasInfoSub').textContent = msg;
+        document.getElementById('horasInfoModal').classList.add('open');
+    }
+    function closeHorasInfo() {
+        document.getElementById('horasInfoModal').classList.remove('open');
+    }
+    document.getElementById('horasInfoModal').addEventListener('click', function(e) {
+        if (e.target === this) closeHorasInfo();
+    });
+</script>
+
+
+<script>
+(function() {
+    var _open = false, _data = [], _autoClose = null;
+
+    function toggleNotifDropdown(e) {
+        e.stopPropagation();
+        _open = !_open;
+        var dd = document.getElementById('notifDropdown');
+        dd.style.display = _open ? 'block' : 'none';
+        if (_open) {
+            clearTimeout(_autoClose);
+            _autoClose = setTimeout(closeDropdown, 3000);
+            renderList();
+        }
+    }
+    window.toggleNotifDropdown = toggleNotifDropdown;
+
+    function closeDropdown() {
+        _open = false;
+        var dd = document.getElementById('notifDropdown');
+        if (dd) dd.style.display = 'none';
+    }
+
+    function renderList() {
+        var el = document.getElementById('notifList');
+        if (!el) return;
+        if (!_data.length) { el.innerHTML = '<div class="notif-empty">Sem notificações novas</div>'; return; }
+        el.innerHTML = _data.map(function(n) {
+            return '<div class="notif-item" onclick="openNotif(' + n.id + ',\'' + (n.url||'/').replace(/'/g,"\'") + '\')">'
+                + '<div class="notif-item-title">' + n.titulo + '</div>'
+                + '<div class="notif-item-body">' + n.corpo + '</div>'
+                + '<div class="notif-item-time">' + n.criada_em + '</div>'
+                + '</div>';
+        }).join('');
+    }
+
+    function openNotif(id, url) {
+        fetch('/api/notificacoes/lida/' + id, {method:'POST'});
+        _data = _data.filter(function(n){ return n.id !== id; });
+        updateBadge(_data.length);
+        closeDropdown();
+        location.href = url;
+    }
+    window.openNotif = openNotif;
+
+    function marcarTodasLidas(e) {
+        e.stopPropagation();
+        fetch('/api/notificacoes/lidas-todas', {method:'POST'});
+        _data = []; renderList(); updateBadge(0); closeDropdown();
+    }
+    window.marcarTodasLidas = marcarTodasLidas;
+
+    function updateBadge(count) {
+        var b = document.getElementById('notifBadge');
+        if (!b) return;
+        if (count > 0) { b.textContent = count > 9 ? '9+' : count; b.style.display = 'flex'; }
+        else { b.style.display = 'none'; }
+    }
+
+    function poll() {
+        fetch('/api/notificacoes').then(function(r){return r.json();}).then(function(d){
+            _data = d; updateBadge(d.length);
+            if (_open) renderList();
+        }).catch(function(){});
+    }
+
+    // Close when clicking outside
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (_open && wrap && !wrap.contains(e.target)) closeDropdown();
+    });
+
+    // Also listen for BroadcastChannel push to refresh immediately
+    if ('BroadcastChannel' in window) {
+        var _bc2 = new BroadcastChannel('mgp-push');
+        _bc2.onmessage = function() { poll(); };
+    }
+
+    poll();
+    setInterval(poll, 15000);
+})();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js');
+  if('BroadcastChannel' in window){
+    var _bc=new BroadcastChannel('mgp-push');
+    _bc.onmessage=function(e){
+      var d=e.data||{};
+      var t=document.createElement('div');
+      t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e2a52;color:#fff;padding:14px 20px;border-radius:10px;z-index:99999;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:Arial,sans-serif;font-size:14px;line-height:1.4;cursor:pointer;';
+      t.innerHTML='<strong>'+(d.title||'Notificação')+'</strong><br>'+(d.body||'');
+      t.onclick=function(){if(d.url)location.href=d.url;t.remove();};
+      document.body.appendChild(t);
+      setTimeout(function(){if(t.parentNode)t.remove();},7000);
+    };
+  }
+}
+</script>
+<div id="cookieBanner" style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:3px solid #4a5fa8;padding:12px 20px;z-index:99990;box-shadow:0 -2px 16px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><p style="margin:0;font-size:0.82em;color:#555;flex:1;min-width:180px;">Este site utiliza cookies essenciais para autenticação e funcionamento da sessão. Ao continuar a utilizar o site, aceita o seu uso.</p><div style="display:flex;gap:8px;flex-shrink:0;"><a href="/politica-cookies" style="font-size:0.78em;color:#2d3a6e;text-decoration:underline;align-self:center;">Saber mais</a><button onclick="aceitarCookies()" style="background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;padding:8px 18px;border-radius:7px;font-size:0.82em;font-weight:bold;cursor:pointer;">Aceitar</button></div></div><script>(function(){if(localStorage.getItem("cookiesAceites")){document.getElementById("cookieBanner").style.display="none";}})();function aceitarCookies(){localStorage.setItem("cookiesAceites","1");document.getElementById("cookieBanner").style.display="none";}</script>
 </body>
 </html>

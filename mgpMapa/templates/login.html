@@ -9,11 +9,11 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --green-dark: #1b5e20;
-            --green-mid: #2e7d32;
-            --green-main: #4CAF50;
-            --green-light: #a5d6a7;
-            --green-faint: #e8f5e9;
+            --navy-dark: #1e2a52;
+            --navy-mid: #2d3a6e;
+            --navy-main: #4a5fa8;
+            --navy-light: #9fa8da;
+            --navy-faint: #e8eaf6;
             --white: #ffffff;
             --text-dark: #1a1a1a;
             --text-muted: #6b7280;
@@ -32,7 +32,7 @@
         /* Left panel */
         .left-panel {
             flex: 1;
-            background: var(--green-mid);
+            background: var(--navy-mid);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -45,20 +45,21 @@
         .left-panel::after { content: ''; position: absolute; bottom: -80px; left: -80px; width: 320px; height: 320px; border-radius: 50%; background: rgba(255,255,255,0.04); }
 
         .brand-mark { display: flex; align-items: center; gap: 14px; margin-bottom: 52px; position: relative; z-index: 1; }
-        .brand-icon { width: 48px; height: 48px; background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.25); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+        .brand-icon { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; }
+        .brand-icon img { width: 52px; height: 52px; object-fit: contain; filter: brightness(0) invert(1); }
         .brand-name { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: white; letter-spacing: 0.3px; }
         .brand-sub { font-size: 0.72rem; color: rgba(255,255,255,0.55); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
         .left-headline { font-family: 'DM Serif Display', serif; font-size: 2.6rem; color: white; line-height: 1.2; margin-bottom: 20px; position: relative; z-index: 1; }
-        .left-headline em { font-style: normal; color: var(--green-light); }
+        .left-headline em { font-style: normal; color: var(--navy-light); }
         .left-desc { font-size: 0.92rem; color: rgba(255,255,255,0.65); line-height: 1.7; max-width: 340px; position: relative; z-index: 1; }
         .features { margin-top: 44px; display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 1; }
         .feature-item { display: flex; align-items: center; gap: 12px; font-size: 0.88rem; color: rgba(255,255,255,0.75); }
-        .feature-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-light); flex-shrink: 0; }
+        .feature-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--navy-light); flex-shrink: 0; }
 
         /* Right panel */
         .right-panel { width: 440px; flex-shrink: 0; background: white; display: flex; flex-direction: column; justify-content: center; padding: 56px 48px; position: relative; }
 
-        .login-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--green-main); margin-bottom: 10px; }
+        .login-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--navy-main); margin-bottom: 10px; }
         .login-title { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--text-dark); margin-bottom: 8px; }
         .login-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 40px; line-height: 1.6; }
 
@@ -67,16 +68,16 @@
         .input-wrap { position: relative; }
         .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.45; pointer-events: none; }
         .form-group input { width: 100%; padding: 13px 14px 13px 42px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.95rem; font-family: 'DM Sans', sans-serif; color: var(--text-dark); background: #fafafa; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; outline: none; }
-        .form-group input:focus { border-color: var(--green-main); background: white; box-shadow: 0 0 0 3px rgba(76,175,80,0.12); }
+        .form-group input:focus { border-color: var(--navy-main); background: white; box-shadow: 0 0 0 3px rgba(74,95,168,0.12); }
         .form-group input::placeholder { color: #9ca3af; }
         .pwd-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 2px; color: #9ca3af; line-height: 1; }
         .pwd-toggle:hover { color: #6b7280; }
 
-        .forgot-btn { background: none; border: none; color: var(--green-mid); font-size: 0.82rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0; float: right; margin-top: -14px; margin-bottom: 20px; }
+        .forgot-btn { background: none; border: none; color: var(--navy-mid); font-size: 0.82rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0; float: right; margin-top: -14px; margin-bottom: 20px; }
         .forgot-btn:hover { text-decoration: underline; }
 
-        .submit-btn { width: 100%; padding: 14px; background: var(--green-mid); color: white; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 8px; letter-spacing: 0.3px; transition: background 0.2s, transform 0.1s, box-shadow 0.2s; }
-        .submit-btn:hover { background: var(--green-dark); box-shadow: 0 4px 16px rgba(46,125,50,0.3); }
+        .submit-btn { width: 100%; padding: 14px; background: var(--navy-mid); color: white; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 8px; letter-spacing: 0.3px; transition: background 0.2s, transform 0.1s, box-shadow 0.2s; }
+        .submit-btn:hover { background: var(--navy-dark); box-shadow: 0 4px 16px rgba(45,58,110,0.3); }
         .submit-btn:active { transform: scale(0.99); }
         .btn-inner { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
@@ -84,7 +85,7 @@
         .footer-note { font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.6; }
 
         .error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 0.85rem; padding: 10px 14px; border-radius: 8px; margin-bottom: 20px; display: none; }
-        .success-msg { background: #f0fdf4; border: 1px solid #a5d6a7; color: #2e7d32; font-size: 0.85rem; padding: 10px 14px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .success-msg { background: #f0fdf4; border: 1px solid #9fa8da; color: #2d3a6e; font-size: 0.85rem; padding: 10px 14px; border-radius: 8px; margin-bottom: 20px; display: none; }
 
         .right-panel > * { opacity: 0; transform: translateY(12px); animation: fadeUp 0.5s forwards; }
         .right-panel > *:nth-child(1) { animation-delay: 0.05s; }
@@ -105,16 +106,16 @@
         .popup-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
         .popup-group label { font-size: 0.82rem; font-weight: 500; color: #374151; }
         .popup-group input { width: 100%; padding: 11px 12px 11px 40px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.92rem; font-family: 'DM Sans', sans-serif; color: var(--text-dark); background: #fafafa; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
-        .popup-group input:focus { border-color: var(--green-main); background: white; box-shadow: 0 0 0 3px rgba(76,175,80,0.1); }
+        .popup-group input:focus { border-color: var(--navy-main); background: white; box-shadow: 0 0 0 3px rgba(74,95,168,0.1); }
         .popup-group input::placeholder { color: #9ca3af; }
         .popup-error { color: #ef4444; font-size: 0.82rem; margin: 0 0 12px; text-align: center; display: none; }
         .popup-error.visible { display: block; }
-        .popup-btn { width: 100%; padding: 13px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
-        .popup-btn:hover { background: #1b5e20; }
+        .popup-btn { width: 100%; padding: 13px; background: #2d3a6e; color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
+        .popup-btn:hover { background: #1e2a52; }
         .popup-cancel { width: 100%; padding: 11px; background: transparent; color: #666; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
         .popup-cancel:hover { background: #f5f5f5; }
         .code-input { width: 100%; padding: 14px; font-size: 1.8rem; font-weight: 700; letter-spacing: 12px; text-align: center; border: 2px solid #e5e7eb; border-radius: 10px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; margin-bottom: 4px; }
-        .code-input:focus { border-color: #4CAF50; box-shadow: 0 0 0 3px rgba(76,175,80,0.1); }
+        .code-input:focus { border-color: #4a5fa8; box-shadow: 0 0 0 3px rgba(74,95,168,0.1); }
 
         @media (max-width: 768px) { .left-panel { display: none; } .right-panel { width: 100%; padding: 40px 28px; } }
     </style>
@@ -123,9 +124,9 @@
 
     <div class="left-panel">
         <div class="brand-mark">
-            <div class="brand-icon">🌿</div>
+            <div class="brand-icon"><img src="/static/icons/logo-dark.png" alt="Logo"></div>
             <div>
-                <div class="brand-name">Gestão de Serviços</div>
+                <div class="brand-name">GestãoPro</div>
                 <div class="brand-sub">Encontre connosco a melhor forma de gerir a sua empresa</div>
             </div>
         </div>
@@ -174,7 +175,7 @@
                 <span class="btn-inner">Entrar →</span>
             </button>
             <div style="text-align:center; margin-top: 18px;">
-                <a href="/setup" style="font-size:0.88rem; color: var(--green-main); text-decoration:none; font-weight:500;">
+                <a href="/setup" style="font-size:0.88rem; color: var(--navy-main); text-decoration:none; font-weight:500;">
                     + Criar nova organização
                 </a>
             </div>
@@ -347,5 +348,6 @@
     });
 </script>
 
+<div id="cookieBanner" style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:3px solid #4a5fa8;padding:12px 20px;z-index:99990;box-shadow:0 -2px 16px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><p style="margin:0;font-size:0.82em;color:#555;flex:1;min-width:180px;">Este site utiliza cookies essenciais para autenticação e funcionamento da sessão. Ao continuar a utilizar o site, aceita o seu uso.</p><div style="display:flex;gap:8px;flex-shrink:0;"><a href="/politica-cookies" style="font-size:0.78em;color:#2d3a6e;text-decoration:underline;align-self:center;">Saber mais</a><button onclick="aceitarCookies()" style="background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;padding:8px 18px;border-radius:7px;font-size:0.82em;font-weight:bold;cursor:pointer;">Aceitar</button></div></div><script>(function(){if(localStorage.getItem("cookiesAceites")){document.getElementById("cookieBanner").style.display="none";}})();function aceitarCookies(){localStorage.setItem("cookiesAceites","1");document.getElementById("cookieBanner").style.display="none";}</script>
 </body>
 </html>

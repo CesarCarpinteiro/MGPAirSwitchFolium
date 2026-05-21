@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>As Minhas Obras</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; padding-bottom: 60px; }
+        .page-header { background: linear-gradient(135deg, #2d3a6e, #4a5fa8); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; letter-spacing: 0.3px; margin: 0; margin-top: 3px; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .page-header a { padding: 9px 20px; background: white; color: #2d3a6e; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: background 0.2s; }
+        .page-header a:hover { background: #f0f0f0; }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+        .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
+        /* ── Notification Bell ── */
+        .notif-wrap { position: relative; }
+        .notif-btn { cursor: pointer; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 8px 12px; color: white; font-size: 1.1em; user-select: none; display: flex; align-items: center; transition: background 0.2s; }
+        .notif-btn:hover { background: rgba(255,255,255,0.25); }
+        .notif-badge { position: absolute; top: -6px; right: -6px; background: #e53935; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65em; font-weight: bold; display: none; align-items: center; justify-content: center; }
+        .notif-dropdown { position: absolute; top: 46px; right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); width: 320px; z-index: 9000; display: none; overflow: hidden; }
+        .notif-dd-header { padding: 11px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .notif-dd-header span { font-size: 0.85em; font-weight: bold; color: #333; }
+        .notif-dd-header button { background: none; border: none; font-size: 0.75em; color: #2d3a6e; cursor: pointer; font-weight: bold; padding: 0; }
+        .notif-item { padding: 11px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: #f9f9f9; }
+        .notif-item-title { font-size: 0.84em; font-weight: bold; color: #1a1a1a; margin-bottom: 2px; }
+        .notif-item-body { font-size: 0.78em; color: #555; line-height: 1.35; }
+        .notif-item-time { font-size: 0.7em; color: #bbb; margin-top: 3px; }
+        .notif-empty { padding: 28px 16px; text-align: center; color: #bbb; font-size: 0.85em; }
+
+        .content { max-width: 720px; margin: 28px auto; padding: 0 16px; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #aaa; font-size: 1em; }
+        .obra-card { background: white; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; overflow: hidden; }
+        .obra-top { padding: 16px 20px; display: flex; align-items: flex-start; gap: 14px; }
+        .obra-estado-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+        .obra-estado-dot.agendada { background: #1565c0; }
+        .obra-estado-dot.em_curso { background: #f57c00; }
+        .obra-estado-dot.concluida { background: #2d3a6e; }
+        .obra-estado-dot.cancelada { background: #c62828; }
+        .obra-nome { font-size: 1em; font-weight: bold; color: #1a1a1a; margin-bottom: 4px; }
+        .obra-meta { font-size: 0.82em; color: #777; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+        .obra-meta span { display: flex; align-items: center; gap: 4px; }
+        .obra-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; margin-left: auto; flex-shrink: 0; }
+        .obra-badge.agendada { background: #e3f2fd; color: #1565c0; }
+        .obra-badge.em_curso { background: #fff3e0; color: #f57c00; }
+        .obra-badge.concluida { background: #e8eaf6; color: #2d3a6e; }
+        .obra-badge.cancelada { background: #ffebee; color: #c62828; }
+        .obra-details { padding: 0 20px 16px 44px; border-top: 1px solid #f5f5f5; margin-top: 4px; }
+        .obra-details-row { display: flex; flex-wrap: wrap; gap: 6px 20px; padding-top: 12px; font-size: 0.83em; color: #555; }
+        .obra-details-row strong { color: #333; }
+        .obra-colegas { margin-top: 8px; font-size: 0.82em; color: #555; }
+        .colega-chip { display: inline-block; background: #e8eaf6; color: #2d3a6e; border-radius: 20px; padding: 2px 10px; margin: 2px; font-size: 0.85em; }
+        @media (max-width: 600px) {
+            .page-header { padding: 10px 12px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions { gap: 6px; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+        }
+    </style>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2d3a6e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GestãoPro">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+</head>
+<body>
+
+<div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+        <div>
+        <div class="subtitle">{{ org_nome }}</div>
+        <h1>As Minhas Obras</h1>
+        </div>
+    </div>
+    <div class="header-actions">
+        {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
+        <a href="/registos">Registos</a>
+        <div class="notif-wrap" id="notifWrap">
+            <div class="notif-btn" id="notifBtn" onclick="toggleNotifDropdown(event)">
+                🔔<span class="notif-badge" id="notifBadge"></span>
+            </div>
+            <div class="notif-dropdown" id="notifDropdown">
+                <div class="notif-dd-header">
+                    <span>Notificações</span>
+                    <button onclick="marcarTodasLidas(event)">Limpar todas</button>
+                </div>
+                <div id="notifList"><div class="notif-empty">Sem notificações novas</div></div>
+            </div>
+        </div>
+        <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
+    </div>
+</div>
+
+<div class="content">
+    {% if not obras %}
+    <div class="empty-state">🔧 Ainda não estás atribuído a nenhuma obra.</div>
+    {% else %}
+    {% for obra in obras %}
+    <div class="obra-card">
+        <div class="obra-top">
+            <div class="obra-estado-dot {{ obra.estado }}"></div>
+            <div style="flex:1;">
+                <div class="obra-nome">{{ obra.nome }}</div>
+                <div class="obra-meta">
+                    {% if obra.local %}<span>📍 {{ obra.local }}</span>{% endif %}
+                    <span>📅 {{ obra.data_inicio }} → {{ obra.data_fim }}</span>
+                </div>
+            </div>
+            <span class="obra-badge {{ obra.estado }}">{{ estado_label.get(obra.estado, obra.estado) }}</span>
+        </div>
+        <div class="obra-details">
+            <div class="obra-details-row">
+                {% if obra.notas %}
+                <div><strong>Notas:</strong> {{ obra.notas }}</div>
+                {% endif %}
+            </div>
+            {% if colegas_map[obra.id] %}
+            <div class="obra-colegas">
+                <strong>Colegas:</strong>
+                {% for c in colegas_map[obra.id] %}
+                <span class="colega-chip">{{ c }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<footer style="text-align:center;padding:20px;font-size:0.8em;color:#aaa;">&copy; GestãoPro</footer>
+
+<script>
+(function() {
+    var _open = false, _data = [], _autoClose = null;
+    function toggleNotifDropdown(e) {
+        e.stopPropagation(); _open = !_open;
+        var dd = document.getElementById('notifDropdown');
+        dd.style.display = _open ? 'block' : 'none';
+        if (_open) { clearTimeout(_autoClose); _autoClose = setTimeout(closeDropdown, 3000); renderList(); }
+    }
+    window.toggleNotifDropdown = toggleNotifDropdown;
+    function closeDropdown() { _open = false; var dd = document.getElementById('notifDropdown'); if (dd) dd.style.display = 'none'; }
+    function renderList() {
+        var el = document.getElementById('notifList'); if (!el) return;
+        if (!_data.length) { el.innerHTML = '<div class="notif-empty">Sem notificações novas</div>'; return; }
+        el.innerHTML = _data.map(function(n) {
+            return '<div class="notif-item" onclick="openNotif(' + n.id + ',\'' + (n.url||'/').replace(/'/g,"\\'") + '\')">'
+                + '<div class="notif-item-title">' + n.titulo + '</div>'
+                + '<div class="notif-item-body">' + n.corpo + '</div>'
+                + '<div class="notif-item-time">' + n.criada_em + '</div></div>';
+        }).join('');
+    }
+    function openNotif(id, url) { fetch('/api/notificacoes/lida/'+id,{method:'POST'}); _data=_data.filter(function(n){return n.id!==id;}); updateBadge(_data.length); closeDropdown(); location.href=url; }
+    window.openNotif = openNotif;
+    function marcarTodasLidas(e) { e.stopPropagation(); fetch('/api/notificacoes/lidas-todas',{method:'POST'}); _data=[]; renderList(); updateBadge(0); closeDropdown(); }
+    window.marcarTodasLidas = marcarTodasLidas;
+    function updateBadge(count) { var b=document.getElementById('notifBadge'); if(!b) return; if(count>0){b.textContent=count>9?'9+':count;b.style.display='flex';}else{b.style.display='none';} }
+    function poll() { fetch('/api/notificacoes').then(function(r){return r.json();}).then(function(d){_data=d;updateBadge(d.length);if(_open)renderList();}).catch(function(){}); }
+    document.addEventListener('click', function(e) { var w=document.getElementById('notifWrap'); if(_open&&w&&!w.contains(e.target))closeDropdown(); });
+    if('BroadcastChannel' in window){var _bc2=new BroadcastChannel('mgp-push');_bc2.onmessage=function(){poll();};}
+    poll(); setInterval(poll,15000);
+})();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js');
+  if('BroadcastChannel' in window){
+    var _bc=new BroadcastChannel('mgp-push');
+    _bc.onmessage=function(e){
+      var d=e.data||{};
+      if(d.url&&d.url.indexOf('/minhas-obras')!==-1){location.reload();return;}
+      var t=document.createElement('div');
+      t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e2a52;color:#fff;padding:14px 20px;border-radius:10px;z-index:99999;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:Arial,sans-serif;font-size:14px;line-height:1.4;cursor:pointer;';
+      t.innerHTML='<strong>'+(d.title||'Notificação')+'</strong><br>'+(d.body||'');
+      t.onclick=function(){if(d.url)location.href=d.url;t.remove();};
+      document.body.appendChild(t);
+      setTimeout(function(){if(t.parentNode)t.remove();},7000);
+    };
+  }
+}
+</script>
+<div id="cookieBanner" style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:3px solid #4a5fa8;padding:12px 20px;z-index:99990;box-shadow:0 -2px 16px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><p style="margin:0;font-size:0.82em;color:#555;flex:1;min-width:180px;">Este site utiliza cookies essenciais para autenticação e funcionamento da sessão. Ao continuar a utilizar o site, aceita o seu uso.</p><div style="display:flex;gap:8px;flex-shrink:0;"><a href="/politica-cookies" style="font-size:0.78em;color:#2d3a6e;text-decoration:underline;align-self:center;">Saber mais</a><button onclick="aceitarCookies()" style="background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;padding:8px 18px;border-radius:7px;font-size:0.82em;font-weight:bold;cursor:pointer;">Aceitar</button></div></div>
+<script>(function(){if(localStorage.getItem("cookiesAceites")){document.getElementById("cookieBanner").style.display="none";}})();function aceitarCookies(){localStorage.setItem("cookiesAceites","1");document.getElementById("cookieBanner").style.display="none";}</script>
+</body>
+</html>

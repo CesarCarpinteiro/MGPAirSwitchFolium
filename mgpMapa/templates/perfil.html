@@ -11,7 +11,7 @@
         body { font-family: 'DM Sans', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
 
         .page-header {
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
             padding: 14px 24px;
             display: flex; align-items: center; justify-content: space-between;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -19,7 +19,7 @@
         .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
         .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
         .page-header a {
-            padding: 9px 20px; background: white; color: #2e7d32;
+            padding: 9px 20px; background: white; color: #2d3a6e;
             text-decoration: none; border-radius: 6px; font-size: 0.9em;
             font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: background 0.2s;
             font-family: 'DM Sans', sans-serif;
@@ -28,11 +28,27 @@
         .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
         .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
         .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
+        /* ── Notification Bell ── */
+        .notif-wrap { position: relative; }
+        .notif-btn { cursor: pointer; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 8px 12px; color: white; font-size: 1.1em; user-select: none; display: flex; align-items: center; transition: background 0.2s; }
+        .notif-btn:hover { background: rgba(255,255,255,0.25); }
+        .notif-badge { position: absolute; top: -6px; right: -6px; background: #e53935; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65em; font-weight: bold; display: none; align-items: center; justify-content: center; }
+        .notif-dropdown { position: absolute; top: 46px; right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); width: 320px; z-index: 9000; display: none; overflow: hidden; }
+        .notif-dd-header { padding: 11px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .notif-dd-header span { font-size: 0.85em; font-weight: bold; color: #333; }
+        .notif-dd-header button { background: none; border: none; font-size: 0.75em; color: #2d3a6e; cursor: pointer; font-weight: bold; padding: 0; }
+        .notif-item { padding: 11px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: #f9f9f9; }
+        .notif-item-title { font-size: 0.84em; font-weight: bold; color: #1a1a1a; margin-bottom: 2px; }
+        .notif-item-body { font-size: 0.78em; color: #555; line-height: 1.35; }
+        .notif-item-time { font-size: 0.7em; color: #bbb; margin-top: 3px; }
+        .notif-empty { padding: 28px 16px; text-align: center; color: #bbb; font-size: 0.85em; }
 
         .content { max-width: 960px; margin: 30px auto; padding: 0 20px; }
 
         .profile-banner {
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
             border-radius: 12px; padding: 28px 24px;
             display: flex; align-items: center; gap: 20px;
             margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
@@ -64,8 +80,8 @@
         }
         .tab-btn:hover { background: #f0f0f0; color: #333; }
         .tab-btn.active {
-            background: linear-gradient(135deg, #2e7d32, #4CAF50);
-            color: white; box-shadow: 0 2px 6px rgba(46,125,50,0.3);
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            color: white; box-shadow: 0 2px 6px rgba(45,58,110,0.3);
         }
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
@@ -85,7 +101,7 @@
             padding: 22px 24px; margin-bottom: 20px;
         }
         .section-title {
-            font-size: 0.72em; font-weight: 700; color: #2e7d32;
+            font-size: 0.72em; font-weight: 700; color: #2d3a6e;
             text-transform: uppercase; letter-spacing: 0.8px;
             margin-bottom: 16px; padding-bottom: 8px;
             border-bottom: 1px solid #eef4ee;
@@ -104,11 +120,11 @@
         .action-btn {
             display: flex; align-items: center; justify-content: space-between;
             padding: 12px 16px; border-radius: 8px; text-decoration: none;
-            font-size: 0.88em; font-weight: 600; color: #2e7d32;
+            font-size: 0.88em; font-weight: 600; color: #2d3a6e;
             background: #f4faf4; border: 1px solid #d8eed8;
             transition: background 0.15s, border-color 0.15s;
         }
-        .action-btn:hover { background: #e8f5e9; border-color: #b2dfb2; }
+        .action-btn:hover { background: #e8eaf6; border-color: #b2dfb2; }
         .action-btn::after { content: '→'; font-size: 0.95em; color: #a5c8a5; }
 
         .btn-logout {
@@ -130,9 +146,9 @@
             cursor: pointer; color: #666; transition: all 0.18s;
             font-family: 'DM Sans', sans-serif;
         }
-        .filter-btn:hover { border-color: #4CAF50; color: #2e7d32; }
+        .filter-btn:hover { border-color: #4a5fa8; color: #2d3a6e; }
         .filter-btn.active {
-            background: #2e7d32; color: white; border-color: #2e7d32;
+            background: #2d3a6e; color: white; border-color: #2d3a6e;
         }
         .filter-btn-valor {
             padding: 6px 16px; border: 1px solid #e0e0e0; background: white;
@@ -140,9 +156,9 @@
             cursor: pointer; color: #666; transition: all 0.18s;
             font-family: 'DM Sans', sans-serif;
         }
-        .filter-btn-valor:hover { border-color: #4CAF50; color: #2e7d32; }
+        .filter-btn-valor:hover { border-color: #4a5fa8; color: #2d3a6e; }
         .filter-btn-valor.active {
-            background: #2e7d32; color: white; border-color: #2e7d32;
+            background: #2d3a6e; color: white; border-color: #2d3a6e;
         }
 
         .filter-tipo-btn {
@@ -151,8 +167,8 @@
             cursor: pointer; color: #666; transition: all 0.15s;
             font-family: 'DM Sans', sans-serif;
         }
-        .filter-tipo-btn:hover { border-color: #4CAF50; color: #2e7d32; }
-        .filter-tipo-btn.active { background: #e8f5e9; color: #2e7d32; border-color: #81c784; font-weight: 600; }
+        .filter-tipo-btn:hover { border-color: #4a5fa8; color: #2d3a6e; }
+        .filter-tipo-btn.active { background: #e8eaf6; color: #2d3a6e; border-color: #81c784; font-weight: 600; }
 
         /* Users table */
         .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -167,7 +183,7 @@
         .users-table tr:hover td { background: #fafff9; }
 
         .badge-admin {
-            background: #e8f5e9; color: #2e7d32; padding: 3px 10px;
+            background: #e8eaf6; color: #2d3a6e; padding: 3px 10px;
             border-radius: 10px; font-size: 0.8em; font-weight: 600;
         }
         .badge-user {
@@ -179,6 +195,75 @@
             cursor: pointer; font-size: 1em; padding: 0; transition: color 0.15s;
         }
         .delete-user-btn:hover { color: #e53935; }
+        .icon-btn {
+            background: none; border: none; cursor: pointer; color: #aaa;
+            font-size: 0.95em; padding: 4px; transition: color 0.15s, transform 0.15s; line-height: 1;
+        }
+        .icon-btn:hover { color: #555; transform: scale(1.15); }
+        .icon-btn.danger:hover { color: #e53935; }
+        .icon-btn.edit:hover { color: #2d3a6e; }
+        /* keep legacy classes for tipos table */
+        .delete-user-btn { background:none;border:none;color:#aaa;cursor:pointer;font-size:0.95em;padding:4px;transition:color 0.15s,transform 0.15s; }
+        .delete-user-btn:hover { color:#e53935;transform:scale(1.15); }
+        /* confirm modal */
+        .confirm-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.38); z-index: 1100;
+            align-items: center; justify-content: center; padding: 16px;
+        }
+        .confirm-backdrop.open { display: flex; }
+        .confirm-box {
+            background: white; border-radius: 12px; width: 100%; max-width: 340px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.16); font-family: 'DM Sans', sans-serif;
+            padding: 24px 22px; text-align: center;
+        }
+        .confirm-title { font-size: 1em; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+        .confirm-sub { color: #888; font-size: 0.87em; margin-bottom: 22px; line-height: 1.5; }
+        .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+        .confirm-cancel { padding: 9px 22px; border: 1px solid #ddd; background: white; border-radius: 7px; font-size: 0.88em; cursor: pointer; color: #555; font-family: 'DM Sans', sans-serif; }
+        .confirm-cancel:hover { background: #f5f5f5; }
+        .confirm-ok { padding: 9px 22px; background: #e53935; color: white; border: none; border-radius: 7px; font-size: 0.88em; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+        .confirm-ok:hover { background: #c62828; }
+        .eu-modal-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.38); z-index: 1000;
+            align-items: center; justify-content: center; padding: 16px;
+        }
+        .eu-modal-backdrop.open { display: flex; }
+        .eu-modal {
+            background: white; border-radius: 14px; width: 100%; max-width: 380px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.16); font-family: 'DM Sans', sans-serif;
+            overflow: hidden;
+        }
+        .eu-modal-header {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            padding: 16px 20px; color: white;
+            font-size: 1em; font-weight: 700;
+        }
+        .eu-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .eu-field label { font-size: 0.78em; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px; }
+        .eu-field input {
+            width: 100%; padding: 9px 11px; border: 1px solid #e0e0e0;
+            border-radius: 7px; font-size: 0.9em; font-family: 'DM Sans', sans-serif;
+            color: #1a1a1a; box-sizing: border-box; transition: border-color 0.15s;
+        }
+        .eu-field input:focus { outline: none; border-color: #4a5fa8; }
+        .eu-modal-footer {
+            padding: 0 20px 20px; display: flex; gap: 8px; justify-content: flex-end;
+        }
+        .eu-btn-cancel {
+            padding: 9px 20px; border: 1px solid #e0e0e0; border-radius: 7px;
+            background: white; color: #666; font-size: 0.88em; font-weight: 600;
+            cursor: pointer; font-family: 'DM Sans', sans-serif;
+        }
+        .eu-btn-cancel:hover { background: #f5f5f5; }
+        .eu-btn-save {
+            padding: 9px 20px; border: none; border-radius: 7px;
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8); color: white;
+            font-size: 0.88em; font-weight: 600; cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .eu-btn-save:hover { opacity: 0.9; }
 
         .admin-toggle { position: relative; width: 34px; height: 18px; display: inline-block; }
         .admin-toggle input { opacity: 0; width: 0; height: 0; }
@@ -190,7 +275,7 @@
             content: ''; position: absolute; width: 12px; height: 12px;
             left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s;
         }
-        input:checked + .admin-slider { background: #4CAF50; }
+        input:checked + .admin-slider { background: #4a5fa8; }
         input:checked + .admin-slider:before { transform: translateX(16px); }
 
         /* Org info card */
@@ -214,7 +299,7 @@
             content: ''; position: absolute; width: 16px; height: 16px;
             left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s;
         }
-        input:checked + .slider { background: #4CAF50; }
+        input:checked + .slider { background: #4a5fa8; }
         input:checked + .slider:before { transform: translateX(22px); }
 
         .add-user-form { display: none; margin-top: 18px; padding-top: 18px; border-top: 1px solid #f0f0f0; }
@@ -230,10 +315,10 @@
             border-radius: 6px; font-size: 0.9em; font-family: 'DM Sans', sans-serif;
             color: #1a1a1a; transition: border-color 0.18s;
         }
-        .add-user-form input:focus { outline: none; border-color: #4CAF50; }
+        .add-user-form input:focus { outline: none; border-color: #4a5fa8; }
         .form-footer-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
         .btn-add {
-            padding: 9px 20px; background: linear-gradient(135deg, #2e7d32, #4CAF50);
+            padding: 9px 20px; background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
             color: white; border: none; border-radius: 6px;
             font-size: 0.88em; font-weight: 600; cursor: pointer;
             font-family: 'DM Sans', sans-serif;
@@ -241,7 +326,7 @@
         .btn-add:hover { opacity: 0.9; }
 
         footer {
-            text-align: center; padding: 10px; background: #2e7d32;
+            text-align: center; padding: 10px; background: #2d3a6e;
             color: rgba(255,255,255,0.8); font-size: 12px;
             position: fixed; bottom: 0; width: 100%;
         }
@@ -262,17 +347,39 @@
             .user-stats { grid-template-columns: 1fr 1fr; }
         }
     </style>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2d3a6e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GestãoPro">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 </head>
 <body>
 
 <div class="page-header">
-    <div>
+    <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+        <div>
         <div class="subtitle">{{ org_nome }}</div>
         <h1>Perfil</h1>
+        </div>
     </div>
     <div class="header-actions">
         {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
         <a href="/registos">Registos</a>
+        <div class="notif-wrap" id="notifWrap">
+            <div class="notif-btn" id="notifBtn" onclick="toggleNotifDropdown(event)">
+                🔔<span class="notif-badge" id="notifBadge"></span>
+            </div>
+            <div class="notif-dropdown" id="notifDropdown">
+                <div class="notif-dd-header">
+                    <span>Notificações</span>
+                    <button onclick="marcarTodasLidas(event)">Limpar todas</button>
+                </div>
+                <div id="notifList"><div class="notif-empty">Sem notificações novas</div></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -359,7 +466,7 @@
             </div>
             <div class="profile-row">
                 <span>Estado</span>
-                <strong style="color:#4CAF50;">● Ativo</strong>
+                <strong style="color:#4a5fa8;">● Ativo</strong>
             </div>
         </div>
 
@@ -385,12 +492,12 @@
                 </div>
             </div>
             <div style="margin-top:18px;padding-top:14px;border-top:1px solid #eef4ee;">
-                <div style="font-size:0.72em;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tipo de Negócio</div>
+                <div style="font-size:0.72em;font-weight:700;color:#2d3a6e;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tipo de Negócio</div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tipoNegocioGroup">
                     {% for val, label in [('cliente','Clientes (com mapa)'), ('espaco','Espaço (sem mapa)'), ('ambos','Ambos')] %}
                     <button onclick="setTipoNegocio('{{ val }}')"
                         id="tn-{{ val }}"
-                        style="padding:7px 16px;border-radius:20px;font-size:0.84em;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;border:2px solid {% if org.tipo_negocio == val %}#2e7d32{% else %}#ddd{% endif %};background:{% if org.tipo_negocio == val %}#2e7d32{% else %}white{% endif %};color:{% if org.tipo_negocio == val %}white{% else %}#555{% endif %};">
+                        style="padding:7px 16px;border-radius:20px;font-size:0.84em;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;border:2px solid {% if org.tipo_negocio == val %}#2d3a6e{% else %}#ddd{% endif %};background:{% if org.tipo_negocio == val %}#2d3a6e{% else %}white{% endif %};color:{% if org.tipo_negocio == val %}white{% else %}#555{% endif %};">
                         {{ label }}
                     </button>
                     {% endfor %}
@@ -403,10 +510,14 @@
         <div class="card">
             <div class="section-title">Acesso Rápido</div>
             <div class="actions-grid">
+                {% if user.is_admin %}<a href="/dashboard" class="action-btn">Dashboard</a>{% endif %}
                 <a href="/orcamentos" class="action-btn">Orçamentos</a>
                 <a href="/horas" class="action-btn">Horas de Trabalho</a>
                 <a href="/ferias" class="action-btn">Férias</a>
                 <a href="/faturas" class="action-btn">As Minhas Faturas</a>
+                {% if user.is_admin %}<a href="/marcacoes" class="action-btn">Marcações</a>{% else %}<a href="/minhas-obras" class="action-btn">As Minhas Obras</a>{% endif %}
+                <a id="btnInstalarApp" class="action-btn" href="#" onclick="instalarApp();return false;">Instalar App</a>
+                <a id="btnNotif" class="action-btn" href="#" onclick="toggleNotif();return false;">🔔 Ativar Notificações</a>
             </div>
             <a class="btn-logout" href="/logout">Terminar Sessão</a>
         </div>
@@ -419,7 +530,7 @@
 
         <!-- KPI Cards -->
         <div class="grid-4">
-            <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border-left:4px solid #2e7d32;">
+            <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border-left:4px solid #2d3a6e;">
                 <div style="font-size:0.72em;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">Total Clientes</div>
                 <div style="font-size:1.9em;font-weight:700;color:#1a1a1a;">{{ total_clientes }}</div>
             </div>
@@ -442,9 +553,9 @@
             <div class="card">
                 <div class="section-title">Estado da Frota de Clientes</div>
                 <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;">
-                    <div style="flex:1;text-align:center;background:#e8f5e9;border-radius:10px;padding:14px;">
-                        <div style="font-size:1.8em;font-weight:700;color:#2e7d32;">{{ em_dia }}</div>
-                        <div style="font-size:0.78em;color:#2e7d32;margin-top:2px;">Em Dia</div>
+                    <div style="flex:1;text-align:center;background:#e8eaf6;border-radius:10px;padding:14px;">
+                        <div style="font-size:1.8em;font-weight:700;color:#2d3a6e;">{{ em_dia }}</div>
+                        <div style="font-size:0.78em;color:#2d3a6e;margin-top:2px;">Em Dia</div>
                     </div>
                     <div style="flex:1;text-align:center;background:#fff3e0;border-radius:10px;padding:14px;">
                         <div style="font-size:1.8em;font-weight:700;color:#c47c2b;">{{ atencao }}</div>
@@ -472,13 +583,13 @@
                 <button class="filter-btn" data-tipo="ano" onclick="filtrarGrafico('ano', this)">Por Ano</button>
             </div>
             <div id="tipo-filter-inst" class="filter-row" style="display:none; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
-            <div id="metaInstCard" style="display:none; background:#f0f7f0; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
+            <div id="metaInstCard" style="display:none; background:#f0f2fa; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:16px; flex-wrap:wrap; gap:14px; align-items:center;">
                 <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mesmo mês ano anterior</div><div style="font-size:1.05em; font-weight:700; color:#555;" id="metaInstBase">—</div></div>
                 <div style="font-size:1.1em; color:#ddd;">→</div>
                 <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Meta</div><div style="font-size:1.05em; font-weight:700; color:#fd7e14;" id="metaInstMeta">—</div></div>
                 <div style="font-size:1.1em; color:#ddd;">→</div>
-                <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mês Atual</div><div style="font-size:1.05em; font-weight:700; color:#2e7d32;" id="metaInstAtual">—</div></div>
-                <div style="flex:1; min-width:160px;"><div style="background:#e0e0e0; border-radius:20px; height:8px; overflow:hidden; margin-bottom:5px;"><div id="metaInstBar" style="height:100%; background:linear-gradient(135deg,#2e7d32,#4CAF50); border-radius:20px; transition:width 0.6s; width:0%;"></div></div><div style="font-size:0.78em; color:#888;" id="metaInstPct">—</div></div>
+                <div><div style="font-size:0.72em; color:#aaa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Mês Atual</div><div style="font-size:1.05em; font-weight:700; color:#2d3a6e;" id="metaInstAtual">—</div></div>
+                <div style="flex:1; min-width:160px;"><div style="background:#e0e0e0; border-radius:20px; height:8px; overflow:hidden; margin-bottom:5px;"><div id="metaInstBar" style="height:100%; background:linear-gradient(135deg,#2d3a6e,#4a5fa8); border-radius:20px; transition:width 0.6s; width:0%;"></div></div><div style="font-size:0.78em; color:#888;" id="metaInstPct">—</div></div>
                 <div id="metaInstBadge" style="padding:5px 12px; border-radius:16px; font-size:0.78em; font-weight:600; white-space:nowrap;">—</div>
             </div>
             <canvas id="instalacaoChart" height="180"></canvas>
@@ -538,7 +649,7 @@
                 </thead>
                 <tbody>
                     {% for u in usuarios %}
-                    <tr>
+                    <tr data-userid="{{ u.id }}">
                         <td><strong>{{ u.nome }}</strong></td>
                         <td>{{ u.nome_completo or '—' }}</td>
                         <td>{{ u.email or '—' }}</td>
@@ -562,10 +673,18 @@
                                 <span style="color:#ccc; font-size:0.8em;">—</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td style="white-space:nowrap;">
+                            <button class="icon-btn edit"
+                                data-uid="{{ u.id }}"
+                                data-email="{{ u.email or '' }}"
+                                data-telefone="{{ u.telefone or '' }}"
+                                data-cargo="{{ u.cargo or '' }}"
+                                onclick="openEditUserFromBtn(this)" title="Editar">&#9998;</button>
                             {% if u.id != user.id %}
-                            <button class="delete-user-btn"
-                                onclick="deleteUser({{ u.id }}, '{{ u.nome }}', this)">🗑</button>
+                            <button class="icon-btn danger"
+                                data-uid="{{ u.id }}"
+                                data-nome="{{ u.nome|e }}"
+                                onclick="confirmDeleteUserFromBtn(this)" title="Remover">&#128465;</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -602,14 +721,7 @@
                     </div>
                     <div>
                         <label>Função / Cargo</label>
-                        <select id="newUserCargo" style="width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:0.9em;font-family:'DM Sans',sans-serif;color:#333;background:white;">
-                            <option value="">— Selecionar —</option>
-                            <option value="CEO">CEO / Diretor Geral</option>
-                            <option value="manager">Gerente</option>
-                            <option value="tech">Técnico</option>
-                            <option value="admin">Administrador de Sistemas</option>
-                            <option value="other">Outro</option>
-                        </select>
+                        <input type="text" id="newUserCargo" placeholder="Ex: Técnico, Gerente..." style="width:100%;">
                     </div>
                 </div>
                 <div class="form-footer-row">
@@ -641,8 +753,8 @@
                         </td>
                         <td style="text-align:right;display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px 12px;">
                             <button onclick="editTipo({{ t.id }})"
-                                style="padding:5px 12px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:0.8em;cursor:pointer;font-family:'DM Sans',sans-serif;">Guardar</button>
-                            <button onclick="deleteTipo({{ t.id }}, '{{ t.nome }}')" class="delete-user-btn">🗑</button>
+                                style="padding:5px 12px;background:#2d3a6e;color:white;border:none;border-radius:6px;font-size:0.8em;cursor:pointer;font-family:'DM Sans',sans-serif;">Guardar</button>
+                            <button data-tipoid="{{ t.id }}" data-tipnome="{{ t.nome|e }}" onclick="deleteTipoFromBtn(this)" class="delete-user-btn">🗑</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -663,7 +775,48 @@
 
 </div>
 
-<footer>&copy; {{ org_nome }}</footer>
+<footer>&copy; GestãoPro</footer>
+
+<div id="confirmModal" class="confirm-backdrop">
+    <div class="confirm-box">
+        <div class="confirm-title" id="confirmTitle"></div>
+        <div class="confirm-sub" id="confirmSub"></div>
+        <div class="confirm-btns">
+            <button class="confirm-cancel" onclick="closeConfirm()">Cancelar</button>
+            <button class="confirm-ok" id="confirmOkBtn">Remover</button>
+        </div>
+    </div>
+</div>
+
+<div id="editUserModal" class="eu-modal-backdrop">
+    <div class="eu-modal">
+        <div class="eu-modal-header">Editar Utilizador</div>
+        <div class="eu-modal-body">
+            <input type="hidden" id="editUserId">
+            <div class="eu-field">
+                <label>Email</label>
+                <input type="email" id="editUserEmail" placeholder="email@empresa.com">
+            </div>
+            <div class="eu-field">
+                <label>Telemóvel</label>
+                <input type="tel" id="editUserTelefone" placeholder="9XX XXX XXX">
+            </div>
+            <div class="eu-field">
+                <label>Função / Cargo</label>
+                <input type="text" id="editUserCargo" placeholder="Ex: Técnico">
+            </div>
+            <div class="eu-field">
+                <label>Nova Password <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb;">(opcional)</span></label>
+                <input type="password" id="editUserSenha" placeholder="Deixar vazio para não alterar">
+            </div>
+            <p id="editUserMsg" style="font-size:0.82em;margin:0;display:none;"></p>
+        </div>
+        <div class="eu-modal-footer">
+            <button class="eu-btn-cancel" onclick="closeEditUser()">Cancelar</button>
+            <button class="eu-btn-save" onclick="saveEditUser()">Guardar</button>
+        </div>
+    </div>
+</div>
 
 <script id="registos-data" type="application/json">{{ registos_json | safe }}</script>
 <script id="servicos-data" type="application/json">{{ servicos_json | safe }}</script>
@@ -797,9 +950,9 @@
         var badge=document.getElementById(prefix+'Badge'),pctEl=document.getElementById(prefix+'Pct');
         if(metaObj.achieved){
             var over=isCurrency?metaObj.diffPct:metaObj.diff;
-            pctEl.textContent=metaObj.pct+'% da meta atingida';pctEl.style.color='#2e7d32';
+            pctEl.textContent=metaObj.pct+'% da meta atingida';pctEl.style.color='#2d3a6e';
             badge.textContent=isCurrency?'Meta superada! +'+over+'%':'Meta superada! +'+over+' serviços';
-            badge.style.background='#e8f5e9';badge.style.color='#2e7d32';
+            badge.style.background='#e8eaf6';badge.style.color='#2d3a6e';
         }else{
             pctEl.textContent=metaObj.pct+'% — faltam '+fmt(metaObj.meta-metaObj.current);pctEl.style.color='#e65100';
             var under=isCurrency?Math.abs(metaObj.diffPct):(metaObj.meta-metaObj.current);
@@ -829,6 +982,9 @@
             if(_tipoFilterInst && s.tipo_servico !== _tipoFilterInst) return;
             if(!s.data_servico)return;
             var parts=s.data_servico.split('/');if(parts.length!==3)return;
+            var py=parseInt(parts[2]),pm=parseInt(parts[1]);
+            if(tipo==='mes'&&(py>currentYear||(py===currentYear&&pm>currentMonth)))return;
+            if(tipo==='ano'&&py>currentYear)return;
             var key=tipo==='mes'?parts[1]+'/'+parts[2]:parts[2];
             counts[key]=(counts[key]||0)+1;
         });
@@ -846,7 +1002,7 @@
         var curBar=al.map(function(l){return l===ck?(counts[ck]||0):null;});
         var fLine=fc?al.map(function(l){if(l===ck)return fc.currentForecast;var i=fc.nextKeys.indexOf(l);return i>=0?fc.nextForecasts[i]:null;}):null;
         var ds=[
-            {label:'Serviços',data:barData,backgroundColor:'rgba(46,125,50,0.75)',borderColor:'#2e7d32',borderWidth:1,borderRadius:5,order:2},
+            {label:'Serviços',data:barData,backgroundColor:'rgba(45,58,110,0.75)',borderColor:'#2d3a6e',borderWidth:1,borderRadius:5,order:2},
             {label:'Mês em curso',data:curBar,backgroundColor:'rgba(253,126,20,0.3)',borderColor:'#fd7e14',borderWidth:1,borderRadius:5,order:2}
         ];
         if(fLine)ds.push({label:'Previsão Holt-Winters',data:fLine,type:'line',borderColor:'#fd7e14',backgroundColor:'rgba(253,126,20,0.06)',borderWidth:2,borderDash:[5,4],pointRadius:3,pointBackgroundColor:'#fd7e14',fill:true,tension:0.3,order:0});
@@ -867,6 +1023,9 @@
             if(_tipoFilterVal && s.tipo_servico !== _tipoFilterVal) return;
             if(!s.data_servico||!s.valor_pago)return;
             var parts=s.data_servico.split('/');if(parts.length!==3)return;
+            var py=parseInt(parts[2]),pm=parseInt(parts[1]);
+            if(tipo==='mes'&&(py>currentYear||(py===currentYear&&pm>currentMonth)))return;
+            if(tipo==='ano'&&py>currentYear)return;
             var key=tipo==='mes'?parts[1]+'/'+parts[2]:parts[2];
             totais[key]=(totais[key]||0)+s.valor_pago;
         });
@@ -902,7 +1061,7 @@
                 labels: ['Em Dia', 'Atenção', 'Urgente'],
                 datasets: [{
                     data: [{{ em_dia }}, {{ atencao }}, {{ urgentes }}],
-                    backgroundColor: ['#4CAF50', '#c47c2b', '#a33b3b'],
+                    backgroundColor: ['#4a5fa8', '#c47c2b', '#a33b3b'],
                     borderWidth: 0
                 }]
             },
@@ -923,7 +1082,7 @@
         });
         var labels = Object.keys(counts);
         var vals = labels.map(function(l) { return counts[l]; });
-        var colors = ['#2e7d32','#1565c0','#c47c2b','#6a1b9a','#00695c','#a33b3b','#37474f'];
+        var colors = ['#2d3a6e','#1565c0','#c47c2b','#6a1b9a','#00695c','#a33b3b','#37474f'];
         new Chart(ctx.getContext('2d'), {
             type: 'pie',
             data: {
@@ -953,8 +1112,8 @@
                 datasets: [{
                     label: 'Serviços',
                     data: sorted.map(function(e){return e[1];}),
-                    backgroundColor: 'rgba(46,125,50,0.75)',
-                    borderColor: '#2e7d32', borderWidth: 1, borderRadius: 5
+                    backgroundColor: 'rgba(45,58,110,0.75)',
+                    borderColor: '#2d3a6e', borderWidth: 1, borderRadius: 5
                 }]
             },
             options: {
@@ -1020,8 +1179,8 @@
                 tr.innerHTML =
                     '<td><input type="text" id="tipo-input-' + data.id + '" value="' + data.nome + '" style="border:1px solid #e0e0e0;border-radius:6px;padding:5px 9px;font-size:0.88em;font-family:DM Sans,sans-serif;width:100%;max-width:280px;"></td>' +
                     '<td style="text-align:right;display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px 12px;">' +
-                    '<button onclick="editTipo(' + data.id + ')" style="padding:5px 12px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:0.8em;cursor:pointer;font-family:DM Sans,sans-serif;">Guardar</button>' +
-                    '<button onclick="deleteTipo(' + data.id + ', \'' + data.nome + '\')" class="delete-user-btn">🗑</button>' +
+                    '<button onclick="editTipo(' + data.id + ')" style="padding:5px 12px;background:#2d3a6e;color:white;border:none;border-radius:6px;font-size:0.8em;cursor:pointer;font-family:DM Sans,sans-serif;">Guardar</button>' +
+                    '<button data-tipoid="' + data.id + '" data-tipnome="' + data.nome.replace(/"/g, '&quot;') + '" onclick="deleteTipoFromBtn(this)" class="delete-user-btn">🗑</button>' +
                     '</td>';
                 tbody.appendChild(tr);
                 input.value = '';
@@ -1045,25 +1204,29 @@
         .then(function(data) {
             if (data.ok) {
                 var input = document.getElementById('tipo-input-' + id);
-                input.style.borderColor = '#4CAF50';
+                input.style.borderColor = '#4a5fa8';
                 setTimeout(function() { input.style.borderColor = '#e0e0e0'; }, 1200);
             }
         });
     }
 
+    function deleteTipoFromBtn(btn) {
+        deleteTipo(btn.getAttribute('data-tipoid'), btn.getAttribute('data-tipnome'));
+    }
     function deleteTipo(id, nome) {
-        if (!confirm('Remover tipo "' + nome + '"?')) return;
-        fetch('/tipos_servico/delete/' + id, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({})
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.ok) {
-                var row = document.getElementById('tipo-row-' + id);
-                if (row) row.remove();
-            }
+        showConfirm('Remover tipo de serviço', 'Tens a certeza que queres remover o tipo <strong>"' + nome + '"</strong>?<br>Esta ação não pode ser desfeita.', function() {
+            fetch('/tipos_servico/delete/' + id, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({})
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.ok) {
+                    var row = document.getElementById('tipo-row-' + id);
+                    if (row) row.remove();
+                }
+            });
         });
     }
 
@@ -1081,12 +1244,12 @@
                     var btn = document.getElementById('tn-' + v);
                     if (!btn) return;
                     var active = v === val;
-                    btn.style.background = active ? '#2e7d32' : 'white';
+                    btn.style.background = active ? '#2d3a6e' : 'white';
                     btn.style.color = active ? 'white' : '#555';
-                    btn.style.borderColor = active ? '#2e7d32' : '#ddd';
+                    btn.style.borderColor = active ? '#2d3a6e' : '#ddd';
                 });
                 msg.textContent = 'Guardado.';
-                msg.style.color = '#2e7d32';
+                msg.style.color = '#2d3a6e';
                 msg.style.display = 'block';
                 setTimeout(function() { msg.style.display = 'none'; }, 2500);
             } else {
@@ -1112,8 +1275,100 @@
         });
     }
 
-    function deleteUser(id, nome, btn) {
-        if (!confirm('Remover utilizador ' + nome + '?')) return;
+    function openEditUserFromBtn(btn) {
+        openEditUser(btn.getAttribute('data-uid'), btn.getAttribute('data-email'), btn.getAttribute('data-telefone'), btn.getAttribute('data-cargo'));
+    }
+    function openEditUser(id, email, telefone, cargo) {
+        document.getElementById('editUserId').value = id;
+        document.getElementById('editUserEmail').value = email || '';
+        document.getElementById('editUserTelefone').value = telefone || '';
+        document.getElementById('editUserCargo').value = cargo || '';
+        document.getElementById('editUserSenha').value = '';
+        var msg = document.getElementById('editUserMsg');
+        msg.style.display = 'none';
+        document.getElementById('editUserModal').classList.add('open');
+    }
+    function closeEditUser() {
+        document.getElementById('editUserModal').classList.remove('open');
+    }
+    function saveEditUser() {
+        var id = document.getElementById('editUserId').value;
+        var email = document.getElementById('editUserEmail').value.trim();
+        var telefone = document.getElementById('editUserTelefone').value.trim();
+        var cargo = document.getElementById('editUserCargo').value.trim();
+        var senha = document.getElementById('editUserSenha').value.trim();
+        var msg = document.getElementById('editUserMsg');
+        fetch('/edit_user/' + id, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, telefone: telefone, cargo: cargo, nova_senha: senha})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                var row = document.querySelector('tr[data-userid="' + id + '"]');
+                if (row) {
+                    var cells = row.querySelectorAll('td');
+                    if (cells[2]) cells[2].textContent = data.email;
+                    if (cells[3]) cells[3].textContent = data.telefone;
+                    if (cells[4]) cells[4].textContent = data.cargo;
+                    var editBtn = row.querySelector('.icon-btn.edit');
+                    if (editBtn) {
+                        editBtn.setAttribute('data-email', data.email);
+                        editBtn.setAttribute('data-telefone', data.telefone);
+                        editBtn.setAttribute('data-cargo', data.cargo);
+                    }
+                }
+                closeEditUser();
+                showToast('Utilizador atualizado.', 'success');
+            } else {
+                msg.textContent = data.error || 'Erro ao guardar.';
+                msg.style.color = '#e53935';
+                msg.style.display = 'block';
+            }
+        });
+    }
+    document.getElementById('editUserModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditUser();
+    });
+
+    var _confirmCallback = null;
+    var _pendingDeleteUserId = null;
+
+    function confirmDeleteUserFromBtn(btn) {
+        _pendingDeleteUserId = btn.getAttribute('data-uid');
+        _confirmCallback = null;
+        document.getElementById('confirmTitle').textContent = 'Remover utilizador';
+        document.getElementById('confirmSub').innerHTML = 'Tens a certeza que queres remover <strong>' + btn.getAttribute('data-nome') + '</strong>?<br>Esta ação não pode ser desfeita.';
+        document.getElementById('confirmModal').classList.add('open');
+    }
+    function showConfirm(title, sub, callback) {
+        _pendingDeleteUserId = null;
+        _confirmCallback = callback;
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmSub').innerHTML = sub;
+        document.getElementById('confirmModal').classList.add('open');
+    }
+    function closeConfirm() {
+        document.getElementById('confirmModal').classList.remove('open');
+        _confirmCallback = null;
+        _pendingDeleteUserId = null;
+    }
+    document.getElementById('confirmOkBtn').addEventListener('click', function() {
+        var uid = _pendingDeleteUserId;
+        var cb = _confirmCallback;
+        closeConfirm();
+        if (uid) {
+            deleteUser(uid);
+        } else if (cb) {
+            cb();
+        }
+    });
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) closeConfirm();
+    });
+
+    function deleteUser(id) {
         fetch('/delete_user/' + id, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -1122,10 +1377,14 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data.ok) {
-                var row = btn.closest('tr');
+                var row = document.querySelector('tr[data-userid="' + id + '"]');
                 if (row) row.remove();
+                showToast('Utilizador removido.', 'success');
+            } else {
+                showToast('Não foi possível remover o utilizador.', 'error');
             }
-        });
+        })
+        .catch(function() { showToast('Erro ao remover utilizador.', 'error'); });
     }
 
     function criarUtilizador() {
@@ -1151,9 +1410,9 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data.ok) {
-                // Add row to users table
                 var tbody = document.querySelector('.users-table tbody');
                 var tr = document.createElement('tr');
+                tr.setAttribute('data-userid', data.id);
                 tr.innerHTML =
                     '<td><strong>' + data.nome + '</strong></td>' +
                     '<td>—</td>' +
@@ -1162,31 +1421,33 @@
                     '<td>' + data.cargo + '</td>' +
                     '<td><span class="' + (data.is_admin ? 'badge-admin' : 'badge-user') + '">' + (data.is_admin ? 'Administrador' : 'Utilizador') + '</span></td>' +
                     '<td><span style="color:#ccc;font-size:0.8em;">—</span></td>' +
-                    '<td></td>';
+                    '<td style="white-space:nowrap;">' +
+                    '<button class="icon-btn edit" data-uid="' + data.id + '" data-email="' + data.email + '" data-telefone="' + data.telefone + '" data-cargo="' + data.cargo + '" onclick="openEditUserFromBtn(this)" title="Editar">&#9998;</button>' +
+                    '<button class="icon-btn danger" data-uid="' + data.id + '" data-nome="' + data.nome + '" onclick="confirmDeleteUserFromBtn(this)" title="Remover">&#128465;</button>' +
+                    '</td>';
                 tbody.appendChild(tr);
-                // Clear form
                 document.getElementById('newUserNome').value = '';
                 document.getElementById('newUserSenha').value = '';
                 document.getElementById('newUserEmail').value = '';
                 document.getElementById('newUserTelefone').value = '';
                 document.getElementById('newUserIsAdmin').checked = false;
                 document.getElementById('newUserCargo').value = '';
-                msg.textContent = 'Utilizador criado com sucesso!';
-                msg.style.color = '#2e7d32';
-                msg.style.display = 'block';
-                setTimeout(function() { msg.style.display = 'none'; }, 3000);
+                showToast('Utilizador criado com sucesso!', 'success');
             } else {
                 msg.textContent = data.error || 'Erro ao criar utilizador.';
                 msg.style.color = '#e53935';
                 msg.style.display = 'block';
             }
+        })
+        .catch(function() {
+            showToast('Erro ao criar utilizador.', 'error');
         });
     }
     function showToast(msg, type) {
         const c = document.getElementById('toast-container');
         const t = document.createElement('div');
         t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:DM Sans,sans-serif;white-space:nowrap;opacity:1;transition:opacity 0.4s;';
-        t.style.background = type === 'error' ? '#e53935' : '#2e7d32';
+        t.style.background = type === 'error' ? '#e53935' : '#2d3a6e';
         t.style.color = 'white';
         t.textContent = msg;
         c.appendChild(t);
@@ -1201,5 +1462,233 @@
 
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 
+<script>
+(function() {
+    var _open = false, _data = [], _autoClose = null;
+    function toggleNotifDropdown(e) {
+        e.stopPropagation();
+        _open = !_open;
+        var dd = document.getElementById('notifDropdown');
+        dd.style.display = _open ? 'block' : 'none';
+        if (_open) { clearTimeout(_autoClose); _autoClose = setTimeout(closeDropdown, 3000); renderList(); }
+    }
+    window.toggleNotifDropdown = toggleNotifDropdown;
+    function closeDropdown() { _open = false; var dd = document.getElementById('notifDropdown'); if (dd) dd.style.display = 'none'; }
+    function renderList() {
+        var el = document.getElementById('notifList'); if (!el) return;
+        if (!_data.length) { el.innerHTML = '<div class="notif-empty">Sem notificações novas</div>'; return; }
+        el.innerHTML = _data.map(function(n) {
+            return '<div class="notif-item" onclick="openNotif(' + n.id + ',\'' + (n.url||'/').replace(/'/g,"\\'") + '\')">'
+                + '<div class="notif-item-title">' + n.titulo + '</div>'
+                + '<div class="notif-item-body">' + n.corpo + '</div>'
+                + '<div class="notif-item-time">' + n.criada_em + '</div></div>';
+        }).join('');
+    }
+    function openNotif(id, url) {
+        fetch('/api/notificacoes/lida/' + id, {method:'POST'});
+        _data = _data.filter(function(n){ return n.id !== id; });
+        updateBadge(_data.length); closeDropdown(); location.href = url;
+    }
+    window.openNotif = openNotif;
+    function marcarTodasLidas(e) {
+        e.stopPropagation();
+        fetch('/api/notificacoes/lidas-todas', {method:'POST'});
+        _data = []; renderList(); updateBadge(0); closeDropdown();
+    }
+    window.marcarTodasLidas = marcarTodasLidas;
+    function updateBadge(count) {
+        var b = document.getElementById('notifBadge'); if (!b) return;
+        if (count > 0) { b.textContent = count > 9 ? '9+' : count; b.style.display = 'flex'; } else { b.style.display = 'none'; }
+    }
+    function poll() {
+        fetch('/api/notificacoes').then(function(r){return r.json();}).then(function(d){
+            _data = d; updateBadge(d.length); if (_open) renderList();
+        }).catch(function(){});
+    }
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (_open && wrap && !wrap.contains(e.target)) closeDropdown();
+    });
+    if ('BroadcastChannel' in window) { var _bc2 = new BroadcastChannel('mgp-push'); _bc2.onmessage = function() { poll(); }; }
+    poll(); setInterval(poll, 15000);
+})();
+</script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+        if ('BroadcastChannel' in window) {
+            var _bc = new BroadcastChannel('mgp-push');
+            _bc.onmessage = function(e) {
+                var d = e.data || {};
+                var t = document.createElement('div');
+                t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1e2a52;color:#fff;padding:14px 20px;border-radius:10px;z-index:99999;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:Arial,sans-serif;font-size:14px;line-height:1.4;cursor:pointer;';
+                t.innerHTML = '<strong>' + (d.title || 'Notificação') + '</strong><br>' + (d.body || '');
+                t.onclick = function() { if (d.url) location.href = d.url; t.remove(); };
+                document.body.appendChild(t);
+                setTimeout(function() { if (t.parentNode) t.remove(); }, 7000);
+            };
+        }
+    }
+
+    // ── PUSH NOTIFICATIONS ──
+    function updateNotifBtn(permission) {
+        var btn = document.getElementById('btnNotif');
+        if (!btn) return;
+        if (permission === 'granted') {
+            btn.textContent = '🔔 Notificações ativas';
+            btn.style.opacity = '0.65';
+            btn.style.cursor = 'default';
+        } else if (permission === 'denied') {
+            btn.textContent = '🔕 Notificações bloqueadas';
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'default';
+        } else {
+            btn.textContent = '🔔 Ativar Notificações';
+            btn.style.opacity = '1';
+        }
+    }
+
+    async function _getActiveSub() {
+        if (!('serviceWorker' in navigator)) return null;
+        var reg = await navigator.serviceWorker.ready;
+        return reg.pushManager.getSubscription();
+    }
+
+    async function updateNotifBtn() {
+        var btn = document.getElementById('btnNotif');
+        if (!btn) return;
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+            btn.textContent = '🔔 Notificações N/D'; return;
+        }
+        if (Notification.permission === 'denied') {
+            btn.textContent = '🔕 Notificações bloqueadas'; return;
+        }
+        var sub = await _getActiveSub();
+        if (sub) {
+            btn.textContent = '🔔 Notificações ativas';
+        } else {
+            btn.textContent = '🔔 Ativar Notificações';
+        }
+    }
+
+    async function toggleNotif() {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+            var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            if (isIOS) {
+                alert('No iOS, instala primeiro a app no ecrã inicial (botão "Instalar App") e abre-a a partir daí para ativar notificações.');
+            } else {
+                alert('O teu browser não suporta notificações push. Tenta com Chrome ou Edge.');
+            }
+            return;
+        }
+        if (Notification.permission === 'denied') {
+            alert('Notificações bloqueadas. Permite nas definições do browser.'); return;
+        }
+        var existingSub = await _getActiveSub();
+        if (existingSub) {
+            // Unsubscribe
+            await existingSub.unsubscribe();
+            await fetch('/push/unsubscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: existingSub.endpoint })
+            });
+            await fetch('/push/clear', { method: 'POST' });
+            await updateNotifBtn();
+            return;
+        }
+        // Subscribe fresh
+        var permission = Notification.permission === 'granted'
+            ? 'granted'
+            : await Notification.requestPermission();
+        if (permission !== 'granted') { await updateNotifBtn(); return; }
+
+        var res = await fetch('/push/vapid-public-key');
+        var { publicKey } = await res.json();
+        var reg = await navigator.serviceWorker.ready;
+        var sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+        await fetch('/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sub.toJSON())
+        });
+        await updateNotifBtn();
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        var padding = '='.repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        var raw = window.atob(base64);
+        var arr = new Uint8Array(raw.length);
+        for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+        return arr;
+    }
+
+    updateNotifBtn();
+</script>
+
+<script>
+    var _installPrompt = null;
+    var _isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    var _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        _installPrompt = e;
+    });
+    window.addEventListener('appinstalled', function() {
+        _installPrompt = null;
+        var btn = document.getElementById('btnInstalarApp');
+        if (btn) { btn.textContent = '✓ Instalado'; btn.style.opacity='0.6'; btn.onclick=null; }
+    });
+
+    function instalarApp() {
+        if (_isStandalone) return;
+        if (_installPrompt) {
+            _installPrompt.prompt();
+            _installPrompt.userChoice.then(function(r) {
+                if (r.outcome === 'accepted') { _installPrompt = null; }
+            });
+        } else if (_isIOS && navigator.share) {
+            navigator.share({ title: 'GestãoPro', url: window.location.origin + '/' });
+        } else {
+            document.getElementById('iosInstallModal').classList.add('open');
+        }
+    }
+    function closeIosModal() { document.getElementById('iosInstallModal').classList.remove('open'); }
+
+    if (_isStandalone) {
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('btnInstalarApp');
+            if (btn) { btn.textContent = '✓ Instalado'; btn.style.opacity='0.6'; btn.onclick=null; }
+        });
+    }
+</script>
+
+<div id="iosInstallModal" class="eu-modal-backdrop" style="z-index:9999;">
+    <div class="eu-modal" style="max-width:360px;">
+        <div class="eu-modal-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>Instalar App</span>
+            <button onclick="closeIosModal()" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;line-height:1;">&times;</button>
+        </div>
+        <div style="padding:20px;font-size:0.92em;color:#444;line-height:1.7;">
+            <p style="margin-bottom:14px;font-weight:600;">Para instalar no iPhone / iPad:</p>
+            <ol style="padding-left:18px;">
+                <li>Toca em <strong>⬆ Partilhar</strong> na barra do Safari</li>
+                <li>Seleciona <strong>"Adicionar ao ecrã inicial"</strong></li>
+                <li>Toca em <strong>Adicionar</strong></li>
+            </ol>
+            <p style="margin-top:14px;color:#888;font-size:0.85em;">A app vai aparecer no ecrã inicial como qualquer outra app.</p>
+        </div>
+        <div class="eu-modal-footer">
+            <button onclick="closeIosModal()" class="eu-btn-save">OK, percebo</button>
+        </div>
+    </div>
+</div>
+<div id="cookieBanner" style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:3px solid #4a5fa8;padding:12px 20px;z-index:99990;box-shadow:0 -2px 16px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><p style="margin:0;font-size:0.82em;color:#555;flex:1;min-width:180px;">Este site utiliza cookies essenciais para autenticação e funcionamento da sessão. Ao continuar a utilizar o site, aceita o seu uso.</p><div style="display:flex;gap:8px;flex-shrink:0;"><a href="/politica-cookies" style="font-size:0.78em;color:#2d3a6e;text-decoration:underline;align-self:center;">Saber mais</a><button onclick="aceitarCookies()" style="background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;padding:8px 18px;border-radius:7px;font-size:0.82em;font-weight:bold;cursor:pointer;">Aceitar</button></div></div><script>(function(){if(localStorage.getItem("cookiesAceites")){document.getElementById("cookieBanner").style.display="none";}})();function aceitarCookies(){localStorage.setItem("cookiesAceites","1");document.getElementById("cookieBanner").style.display="none";}</script>
 </body>
 </html>

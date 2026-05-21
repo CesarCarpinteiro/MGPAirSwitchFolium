@@ -118,6 +118,48 @@ class Orcamento(db.Model):
     created_at = db.Column(db.String(20))
     org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
 
+class PushSubscription(db.Model):
+    __tablename__ = 'push_subscriptions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
+    endpoint = db.Column(db.Text, nullable=False)
+    p256dh = db.Column(db.Text, nullable=False)
+    auth = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.String(20), default=lambda: datetime.now().strftime('%d/%m/%Y'))
+
+class Obra(db.Model):
+    __tablename__ = 'obras'
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=True)
+    nome = db.Column(db.String(200), nullable=False)
+    local = db.Column(db.String(300), default='')
+    data_inicio = db.Column(db.String(20), nullable=False)
+    data_fim = db.Column(db.String(20), nullable=False)
+    estado = db.Column(db.String(30), default='agendada')
+    notas = db.Column(db.String(500), default='')
+    created_at = db.Column(db.String(20), default=lambda: datetime.now().strftime('%d/%m/%Y'))
+
+class ObraFuncionario(db.Model):
+    __tablename__ = 'obra_funcionario'
+    id = db.Column(db.Integer, primary_key=True)
+    obra_id = db.Column(db.Integer, db.ForeignKey('obras.id'), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
+
+class Notificacao(db.Model):
+    __tablename__ = 'notificacoes'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    org_id = db.Column(db.Integer, nullable=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    corpo = db.Column(db.Text, nullable=False)
+    url = db.Column(db.String(500), default='/')
+    lida = db.Column(db.Boolean, default=False)
+    criada_em = db.Column(db.String(30), default=lambda: datetime.now().strftime('%d/%m/%Y %H:%M'))
+
+
 class Organizacao(db.Model):
     __tablename__ = 'organizacao'
     id = db.Column(db.Integer, primary_key=True)

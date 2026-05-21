@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcações</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; letter-spacing: 0.3px; margin: 0; margin-top: 3px; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a {
+            padding: 9px 20px; background: white; color: #2d3a6e;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: bold;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .header-actions a:hover { background: #f0f0f0; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+        .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); }
+        /* ── Notification Bell ── */
+        .notif-wrap { position: relative; }
+        .notif-btn { cursor: pointer; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 8px 12px; color: white; font-size: 1.1em; user-select: none; display: flex; align-items: center; transition: background 0.2s; }
+        .notif-btn:hover { background: rgba(255,255,255,0.25); }
+        .notif-badge { position: absolute; top: -6px; right: -6px; background: #e53935; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65em; font-weight: bold; display: none; align-items: center; justify-content: center; }
+        .notif-dropdown { position: absolute; top: 46px; right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); width: 320px; z-index: 9000; display: none; overflow: hidden; }
+        .notif-dd-header { padding: 11px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .notif-dd-header span { font-size: 0.85em; font-weight: bold; color: #333; }
+        .notif-dd-header button { background: none; border: none; font-size: 0.75em; color: #2d3a6e; cursor: pointer; font-weight: bold; padding: 0; }
+        .notif-item { padding: 11px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: #f9f9f9; }
+        .notif-item-title { font-size: 0.84em; font-weight: bold; color: #1a1a1a; margin-bottom: 2px; }
+        .notif-item-body { font-size: 0.78em; color: #555; line-height: 1.35; }
+        .notif-item-time { font-size: 0.7em; color: #bbb; margin-top: 3px; }
+        .notif-empty { padding: 28px 16px; text-align: center; color: #bbb; font-size: 0.85em; }
+
+
+        .content { max-width: 1200px; margin: 28px auto; padding: 0 20px; display: grid; grid-template-columns: 340px 1fr; gap: 20px; }
+
+        /* ── SIDEBAR ── */
+        .sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; }
+        .card-header {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            padding: 12px 16px; color: white; font-weight: 700; font-size: 0.95em;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-body { padding: 14px 16px; }
+
+        .btn-new {
+            background: white; color: #2d3a6e; border: none; padding: 6px 14px;
+            border-radius: 6px; font-size: 0.82em; font-weight: bold; cursor: pointer;
+        }
+        .btn-new:hover { background: #e8eaf6; }
+
+        .obra-item {
+            border-left: 4px solid #ccc; border-radius: 6px; padding: 10px 12px;
+            margin-bottom: 8px; background: #fafafa; cursor: pointer;
+            transition: box-shadow 0.15s;
+        }
+        .obra-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .obra-item.agendada { border-left-color: #1976d2; }
+        .obra-item.em_curso { border-left-color: #f57c00; }
+        .obra-item.concluida { border-left-color: #2d3a6e; }
+        .obra-item.cancelada { border-left-color: #aaa; opacity: 0.7; }
+
+        .obra-nome { font-weight: bold; font-size: 0.92em; color: #222; }
+        .obra-local { font-size: 0.8em; color: #888; margin-top: 2px; }
+        .obra-datas { font-size: 0.78em; color: #666; margin-top: 4px; }
+        .obra-funcs { font-size: 0.78em; color: #555; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px; }
+        .func-chip { background: #e8eaf6; color: #2d3a6e; padding: 1px 7px; border-radius: 10px; font-size: 0.9em; }
+
+        .estado-badge {
+            display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.72em; font-weight: bold; margin-left: 6px;
+        }
+        .estado-badge.agendada { background: #e3f2fd; color: #1565c0; }
+        .estado-badge.em_curso { background: #fff3e0; color: #e65100; }
+        .estado-badge.concluida { background: #e8eaf6; color: #2d3a6e; }
+        .estado-badge.cancelada { background: #f5f5f5; color: #999; }
+
+        .empty-list { text-align: center; color: #bbb; padding: 24px 0; font-size: 0.9em; }
+
+        /* ── CALENDAR ── */
+        .cal-nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+        .cal-nav span { font-weight: bold; font-size: 1em; color: #2d3a6e; }
+        .cal-nav button {
+            background: none; border: 1px solid #ddd; border-radius: 6px;
+            width: 30px; height: 30px; cursor: pointer; font-size: 1em; color: #555;
+        }
+        .cal-nav button:hover { background: #f0f0f0; }
+
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #eee; margin: 0 1px 1px; }
+        .cal-day-header { background: #f5f5f5; text-align: center; padding: 6px 0; font-size: 0.75em; font-weight: bold; color: #888; }
+        .cal-cell {
+            background: white; min-height: 80px; padding: 4px; position: relative;
+            vertical-align: top; cursor: default;
+        }
+        .cal-cell.other-month { background: #fafafa; }
+        .cal-cell.today { background: #f1f8e9; }
+        .cal-day-num { font-size: 0.78em; color: #aaa; font-weight: 600; margin-bottom: 3px; }
+        .cal-cell.today .cal-day-num { color: #2d3a6e; font-weight: 800; }
+
+        .cal-event {
+            font-size: 0.7em; border-radius: 3px; padding: 1px 5px; margin-bottom: 2px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            cursor: pointer; font-weight: 600;
+        }
+        .cal-event.agendada { background: #e3f2fd; color: #1565c0; }
+        .cal-event.em_curso { background: #fff3e0; color: #e65100; }
+        .cal-event.concluida { background: #e8eaf6; color: #2d3a6e; }
+        .cal-event.cancelada { background: #f5f5f5; color: #999; }
+        .cal-event:hover { filter: brightness(0.93); }
+
+        /* ── MODAL FORM ── */
+        .modal-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 1000;
+            align-items: center; justify-content: center; padding: 16px;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal-box {
+            background: white; border-radius: 14px; width: 100%; max-width: 520px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18); overflow: hidden; max-height: 90vh; display: flex; flex-direction: column;
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            padding: 16px 20px; color: white; font-weight: 700; font-size: 1em;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-close { background: none; border: none; color: white; font-size: 1.3em; cursor: pointer; line-height: 1; }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 14px 20px; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: flex-end; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.82em; font-weight: bold; color: #555; margin-bottom: 5px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 7px;
+            font-size: 0.9em; background: #fafafa; outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #4a5fa8; background: white; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group textarea { resize: vertical; min-height: 70px; }
+
+        .func-list { display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; padding: 4px 0; }
+        .func-check-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+            border: 1px solid #eee; border-radius: 7px; cursor: pointer;
+            transition: background 0.15s;
+        }
+        .func-check-item:hover { background: #f9fbe7; }
+        .func-check-item input[type=checkbox] { accent-color: #2d3a6e; width: 16px; height: 16px; cursor: pointer; }
+        .func-check-item .fn { font-size: 0.88em; font-weight: 600; color: #333; flex: 1; }
+        .func-check-item .fc { font-size: 0.76em; color: #888; }
+        .func-warning {
+            display: none; font-size: 0.75em; color: #c62828;
+            background: #ffebee; border-radius: 5px; padding: 4px 8px; margin-top: 3px;
+            line-height: 1.6;
+        }
+        .func-check-item.has-conflict { border-color: #ef9a9a; background: #fff8f8; }
+
+        .btn-save {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            color: white; border: none; padding: 10px 24px; border-radius: 8px;
+            font-size: 0.9em; font-weight: bold; cursor: pointer;
+        }
+        .btn-save:hover { opacity: 0.9; }
+        .btn-cancel {
+            background: #f5f5f5; color: #555; border: none; padding: 10px 20px;
+            border-radius: 8px; font-size: 0.9em; cursor: pointer;
+        }
+        .btn-cancel:hover { background: #eee; }
+        .btn-danger {
+            background: #ffebee; color: #c62828; border: none; padding: 10px 20px;
+            border-radius: 8px; font-size: 0.9em; font-weight: bold; cursor: pointer; margin-right: auto;
+        }
+        .btn-danger:hover { background: #ffcdd2; }
+
+        /* ── CONFIRM MODAL ── */
+        .confirm-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.38); z-index:2000; align-items:center; justify-content:center; padding:16px; }
+        .confirm-backdrop.open { display:flex; }
+        .confirm-box { background:white; border-radius:12px; padding:28px 24px; width:100%; max-width:360px; box-shadow:0 6px 24px rgba(0,0,0,0.15); }
+        .confirm-title { font-size:1.05em; font-weight:700; color:#1a1a1a; margin-bottom:8px; }
+        .confirm-sub { font-size:0.9em; color:#666; margin-bottom:20px; line-height:1.5; }
+        .confirm-btns { display:flex; gap:10px; justify-content:flex-end; }
+        .confirm-cancel { background:#f5f5f5; color:#555; border:none; padding:9px 20px; border-radius:8px; font-size:0.9em; cursor:pointer; }
+        .confirm-cancel:hover { background:#eee; }
+        .confirm-ok { background:#e53935; color:white; border:none; padding:9px 20px; border-radius:8px; font-size:0.9em; font-weight:bold; cursor:pointer; }
+        .confirm-ok:hover { background:#c62828; }
+
+        footer { text-align: center; padding: 10px; background: #2d3a6e; color: rgba(255,255,255,0.8); font-size: 12px; position: fixed; bottom: 0; width: 100%; }
+
+        @media (max-width: 900px) {
+            .content { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px) {
+            .page-header { padding: 10px 12px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions { gap: 6px; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+            .cal-cell { min-height: 54px; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2d3a6e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GestãoPro">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+</head>
+<body>
+
+<div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+        <div>
+        <div class="subtitle">{{ org_nome }}</div>
+        <h1>Marcações</h1>
+        </div>
+    </div>
+    <div class="header-actions">
+        {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
+        <a href="/registos">Registos</a>
+        <div class="notif-wrap" id="notifWrap">
+            <div class="notif-btn" id="notifBtn" onclick="toggleNotifDropdown(event)">
+                🔔<span class="notif-badge" id="notifBadge"></span>
+            </div>
+            <div class="notif-dropdown" id="notifDropdown">
+                <div class="notif-dd-header">
+                    <span>Notificações</span>
+                    <button onclick="marcarTodasLidas(event)">Limpar todas</button>
+                </div>
+                <div id="notifList"><div class="notif-empty">Sem notificações novas</div></div>
+            </div>
+        </div>
+
+        <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
+    </div>
+</div>
+
+<div class="content">
+    <!-- SIDEBAR: lista de obras -->
+    <div class="sidebar">
+        <div class="card">
+            <div class="card-header">
+                Obras / Trabalhos
+                <button class="btn-new" onclick="openModal()">+ Nova</button>
+            </div>
+            <div class="card-body" id="obraList">
+                <div class="empty-list" id="emptyList" style="display:none;">Ainda não há obras marcadas.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="card">
+        <div class="cal-nav">
+            <button onclick="changeMonth(-1)">&#8249;</button>
+            <span id="calTitle"></span>
+            <button onclick="changeMonth(1)">&#8250;</button>
+        </div>
+        <div class="cal-grid" id="calGrid">
+            <div class="cal-day-header">Dom</div>
+            <div class="cal-day-header">Seg</div>
+            <div class="cal-day-header">Ter</div>
+            <div class="cal-day-header">Qua</div>
+            <div class="cal-day-header">Qui</div>
+            <div class="cal-day-header">Sex</div>
+            <div class="cal-day-header">Sáb</div>
+        </div>
+    </div>
+</div>
+
+<!-- OBRA MODAL -->
+<div id="obraModal" class="modal-backdrop">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span id="modalTitle">Nova Obra</span>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editId" value="">
+
+            <div class="form-group">
+                <label>Nome da obra *</label>
+                <input type="text" id="fNome" placeholder="Ex: Instalação AC — Rua das Flores">
+            </div>
+            <div class="form-group">
+                <label>Local / Morada</label>
+                <input type="text" id="fLocal" placeholder="Ex: Rua das Flores 12, Lisboa">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Data de início *</label>
+                    <input type="date" id="fInicio" onchange="checkConflicts()">
+                </div>
+                <div class="form-group">
+                    <label>Data de fim *</label>
+                    <input type="date" id="fFim" onchange="checkConflicts()">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Estado</label>
+                <select id="fEstado">
+                    <option value="agendada">Agendada</option>
+                    <option value="em_curso">Em curso</option>
+                    <option value="concluida">Concluída</option>
+                    <option value="cancelada">Cancelada</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Funcionários</label>
+                <div class="func-list" id="funcList"></div>
+            </div>
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea id="fNotas" placeholder="Observações, materiais, contactos..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-danger" id="btnDelete" style="display:none;" onclick="confirmDelete()">Remover</button>
+            <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+            <button class="btn-save" onclick="saveObra()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirmModal" class="confirm-backdrop">
+    <div class="confirm-box">
+        <div class="confirm-title" id="confirmTitle">Remover obra</div>
+        <div class="confirm-sub" id="confirmSub"></div>
+        <div class="confirm-btns">
+            <button class="confirm-cancel" onclick="closeConfirm()">Cancelar</button>
+            <button class="confirm-ok" id="confirmOkBtn">Remover</button>
+        </div>
+    </div>
+</div>
+
+<footer>&copy; GestãoPro</footer>
+
+<script id="obras-data" type="application/json">{{ obras_json | safe }}</script>
+<script id="ferias-data" type="application/json">{{ ferias_json | safe }}</script>
+<script id="funcs-data" type="application/json">{{ funcionarios_json | safe }}</script>
+
+<script>
+    var obrasData = JSON.parse(document.getElementById('obras-data').textContent);
+    var feriasData = JSON.parse(document.getElementById('ferias-data').textContent);
+    var funcsData = JSON.parse(document.getElementById('funcs-data').textContent);
+
+    var mesesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    var today = new Date();
+    var calYear = today.getFullYear();
+    var calMonth = today.getMonth();
+
+    // ── DATE HELPERS ──
+    function parsePT(s) {
+        if (!s) return null;
+        var p = s.split('/');
+        if (p.length === 3) return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+        return null;
+    }
+    function toISO(s) {
+        if (!s) return '';
+        var p = s.split('/');
+        if (p.length === 3) return p[2]+'-'+p[1]+'-'+p[0];
+        return s;
+    }
+    function fromISO(s) {
+        if (!s) return '';
+        var p = s.split('-');
+        if (p.length === 3) return p[2]+'/'+p[1]+'/'+p[0];
+        return s;
+    }
+    function isoToDate(s) { var p=s.split('-'); return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])); }
+    function dateToISO(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+    function overlaps(aStart, aEnd, bStart, bEnd) {
+        return aStart <= bEnd && aEnd >= bStart;
+    }
+
+    // ── FIND USER BY ID ──
+    function getUserName(id) {
+        var u = funcsData.find(function(f){ return f.id === id; });
+        return u ? u.nome : '?';
+    }
+
+    // ── RENDER SIDEBAR LIST ──
+    function renderList() {
+        var list = document.getElementById('obraList');
+        var empty = document.getElementById('emptyList');
+        var sorted = obrasData.slice().sort(function(a,b){
+            var da = parsePT(a.data_inicio), db2 = parsePT(b.data_inicio);
+            return (da||0) - (db2||0);
+        });
+        // Remove old items
+        var old = list.querySelectorAll('.obra-item');
+        old.forEach(function(el){ el.remove(); });
+
+        if (sorted.length === 0) { empty.style.display=''; return; }
+        empty.style.display = 'none';
+
+        sorted.forEach(function(o) {
+            var div = document.createElement('div');
+            div.className = 'obra-item ' + o.estado;
+            div.setAttribute('data-id', o.id);
+
+            var estadoLabel = {agendada:'Agendada', em_curso:'Em curso', concluida:'Concluída', cancelada:'Cancelada'}[o.estado] || o.estado;
+            var funcsHtml = o.funcionarios.map(function(uid){
+                return '<span class="func-chip">'+getUserName(uid)+'</span>';
+            }).join('');
+
+            div.innerHTML = '<div class="obra-nome">'+escHtml(o.nome)+'<span class="estado-badge '+o.estado+'">'+estadoLabel+'</span></div>'
+                + (o.local ? '<div class="obra-local">📍 '+escHtml(o.local)+'</div>' : '')
+                + '<div class="obra-datas">📅 '+escHtml(o.data_inicio)+' → '+escHtml(o.data_fim)+'</div>'
+                + (funcsHtml ? '<div class="obra-funcs">'+funcsHtml+'</div>' : '');
+
+            div.onclick = function(){ openModal(o.id); };
+            list.appendChild(div);
+        });
+    }
+
+    function escHtml(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── CALENDAR ──
+    function renderCalendar() {
+        document.getElementById('calTitle').textContent = mesesNomes[calMonth] + ' ' + calYear;
+        var grid = document.getElementById('calGrid');
+        // Remove old cells (keep headers)
+        var cells = grid.querySelectorAll('.cal-cell');
+        cells.forEach(function(c){ c.remove(); });
+
+        var firstDay = new Date(calYear, calMonth, 1).getDay();
+        var daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+        var daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+        // Prev month filler
+        for (var i = firstDay-1; i >= 0; i--) {
+            var cell = document.createElement('div');
+            cell.className = 'cal-cell other-month';
+            cell.innerHTML = '<div class="cal-day-num">'+(daysInPrev-i)+'</div>';
+            grid.appendChild(cell);
+        }
+
+        // Current month days
+        for (var d = 1; d <= daysInMonth; d++) {
+            var cell = document.createElement('div');
+            var isToday = (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear());
+            cell.className = 'cal-cell' + (isToday ? ' today' : '');
+            cell.innerHTML = '<div class="cal-day-num">'+d+'</div>';
+
+            var dayDate = new Date(calYear, calMonth, d);
+            var dayISO = dateToISO(dayDate);
+
+            // Find obras active this day
+            obrasData.forEach(function(o) {
+                var oStart = parsePT(o.data_inicio);
+                var oEnd = parsePT(o.data_fim);
+                if (!oStart || !oEnd) return;
+                var oStartISO = dateToISO(oStart);
+                var oEndISO = dateToISO(oEnd);
+                if (dayISO >= oStartISO && dayISO <= oEndISO) {
+                    var ev = document.createElement('div');
+                    ev.className = 'cal-event ' + o.estado;
+                    ev.title = o.nome + (o.local ? ' — ' + o.local : '');
+                    ev.textContent = o.nome;
+                    ev.setAttribute('data-id', o.id);
+                    ev.onclick = function(e) { e.stopPropagation(); openModal(o.id); };
+                    cell.appendChild(ev);
+                }
+            });
+
+            grid.appendChild(cell);
+        }
+
+        // Next month filler
+        var totalCells = firstDay + daysInMonth;
+        var remaining = (7 - (totalCells % 7)) % 7;
+        for (var n = 1; n <= remaining; n++) {
+            var cell = document.createElement('div');
+            cell.className = 'cal-cell other-month';
+            cell.innerHTML = '<div class="cal-day-num">'+n+'</div>';
+            grid.appendChild(cell);
+        }
+    }
+
+    function changeMonth(dir) {
+        calMonth += dir;
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        if (calMonth < 0) { calMonth = 11; calYear--; }
+        renderCalendar();
+    }
+
+    // ── VACATION CONFLICT CHECK ──
+    function checkConflicts() {
+        var startVal = document.getElementById('fInicio').value;
+        var endVal = document.getElementById('fFim').value;
+        if (!startVal || !endVal) return;
+        var oStart = isoToDate(startVal);
+        var oEnd = isoToDate(endVal);
+        var currentEditId = parseInt(document.getElementById('editId').value) || null;
+
+        document.querySelectorAll('.func-check-item').forEach(function(item) {
+            var uid = parseInt(item.getAttribute('data-uid'));
+            var warn = item.querySelector('.func-warning');
+            var msgs = [];
+
+            // férias aprovadas
+            feriasData.forEach(function(f) {
+                if (f.user_id !== uid) return;
+                var fs = parsePT(f.data_inicio), fe = parsePT(f.data_fim);
+                if (!fs || !fe) return;
+                if (overlaps(oStart, oEnd, fs, fe))
+                    msgs.push('🏖 Férias: ' + f.data_inicio + ' → ' + f.data_fim);
+            });
+
+            // outras obras (excluindo a que está a ser editada)
+            obrasData.forEach(function(o) {
+                if (o.id === currentEditId) return;
+                if (o.estado === 'cancelada') return;
+                if (!o.funcionarios || o.funcionarios.indexOf(uid) === -1) return;
+                var os = parsePT(o.data_inicio), oe = parsePT(o.data_fim);
+                if (!os || !oe) return;
+                if (overlaps(oStart, oEnd, os, oe))
+                    msgs.push('🔨 Obra "' + o.nome + '": ' + o.data_inicio + ' → ' + o.data_fim);
+            });
+
+            if (msgs.length > 0) {
+                warn.innerHTML = msgs.map(function(m){ return '<div>⚠ ' + escHtml(m.slice(2)) + '</div>'; }).join('');
+                warn.style.display = 'block';
+                item.classList.add('has-conflict');
+            } else {
+                warn.style.display = 'none';
+                warn.innerHTML = '';
+                item.classList.remove('has-conflict');
+            }
+        });
+    }
+
+    // ── MODAL ──
+    function openModal(obraId) {
+        var modal = document.getElementById('obraModal');
+        var editId = document.getElementById('editId');
+        var btnDel = document.getElementById('btnDelete');
+        document.getElementById('modalTitle').textContent = obraId ? 'Editar Obra' : 'Nova Obra';
+
+        // Build func checkboxes
+        var funcList = document.getElementById('funcList');
+        funcList.innerHTML = '';
+        funcsData.forEach(function(u) {
+            var item = document.createElement('div');
+            item.className = 'func-check-item';
+            item.setAttribute('data-uid', u.id);
+            item.innerHTML = '<input type="checkbox" id="fc'+u.id+'" value="'+u.id+'" onchange="checkConflicts()">'
+                + '<label for="fc'+u.id+'" style="flex:1;cursor:pointer;">'
+                + '<span class="fn">'+escHtml(u.nome)+'</span>'
+                + (u.cargo ? ' <span class="fc">'+escHtml(u.cargo)+'</span>' : '')
+                + '</label>'
+                + '<div class="func-warning"></div>';
+            funcList.appendChild(item);
+        });
+
+        if (obraId) {
+            var o = obrasData.find(function(x){ return x.id === obraId; });
+            if (!o) return;
+            editId.value = obraId;
+            document.getElementById('fNome').value = o.nome;
+            document.getElementById('fLocal').value = o.local;
+            document.getElementById('fInicio').value = toISO(o.data_inicio);
+            document.getElementById('fFim').value = toISO(o.data_fim);
+            document.getElementById('fEstado').value = o.estado;
+            document.getElementById('fNotas').value = o.notas;
+            o.funcionarios.forEach(function(uid) {
+                var cb = document.getElementById('fc'+uid);
+                if (cb) cb.checked = true;
+            });
+            btnDel.style.display = '';
+        } else {
+            editId.value = '';
+            document.getElementById('fNome').value = '';
+            document.getElementById('fLocal').value = '';
+            document.getElementById('fInicio').value = '';
+            document.getElementById('fFim').value = '';
+            document.getElementById('fEstado').value = 'agendada';
+            document.getElementById('fNotas').value = '';
+            btnDel.style.display = 'none';
+        }
+
+        checkConflicts();
+        modal.classList.add('open');
+    }
+
+    function closeModal() {
+        document.getElementById('obraModal').classList.remove('open');
+    }
+    document.getElementById('obraModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // ── SAVE ──
+    function saveObra() {
+        var nome = document.getElementById('fNome').value.trim();
+        var inicio = document.getElementById('fInicio').value;
+        var fim = document.getElementById('fFim').value;
+        if (!nome || !inicio || !fim) { alert('Preenche nome e datas.'); return; }
+        if (inicio > fim) { alert('A data de início deve ser anterior ao fim.'); return; }
+
+        var funcionarios = [];
+        document.querySelectorAll('#funcList input[type=checkbox]:checked').forEach(function(cb) {
+            funcionarios.push(parseInt(cb.value));
+        });
+
+        var editId = document.getElementById('editId').value;
+        var payload = {
+            nome: nome,
+            local: document.getElementById('fLocal').value.trim(),
+            data_inicio: fromISO(inicio),
+            data_fim: fromISO(fim),
+            estado: document.getElementById('fEstado').value,
+            notas: document.getElementById('fNotas').value.trim(),
+            funcionarios: funcionarios
+        };
+
+        var url = editId ? '/marcacoes/editar/' + editId : '/marcacoes/criar';
+        fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        }).then(function(r){ return r.json(); }).then(function(res) {
+            if (res.ok) {
+                if (editId) {
+                    var idx = obrasData.findIndex(function(x){ return x.id === parseInt(editId); });
+                    if (idx >= 0) { obrasData[idx] = Object.assign(obrasData[idx], payload); }
+                } else {
+                    payload.id = res.id;
+                    obrasData.push(payload);
+                }
+                closeModal();
+                renderList();
+                renderCalendar();
+            }
+        });
+    }
+
+    // ── DELETE ──
+    var _pendingDeleteId = null;
+    function confirmDelete() {
+        var editId = document.getElementById('editId').value;
+        var o = obrasData.find(function(x){ return x.id === parseInt(editId); });
+        _pendingDeleteId = editId;
+        document.getElementById('confirmSub').innerHTML = 'Tens a certeza que queres remover <strong>' + escHtml(o ? o.nome : '') + '</strong>?<br>Esta ação não pode ser desfeita.';
+        document.getElementById('confirmModal').classList.add('open');
+    }
+    function closeConfirm() {
+        document.getElementById('confirmModal').classList.remove('open');
+    }
+    document.getElementById('confirmOkBtn').addEventListener('click', function() {
+        var id = _pendingDeleteId;
+        closeConfirm();
+        if (!id) return;
+        fetch('/marcacoes/apagar/' + id, { method: 'POST' })
+            .then(function(r){ return r.json(); })
+            .then(function(res) {
+                if (res.ok) {
+                    obrasData = obrasData.filter(function(x){ return x.id !== parseInt(id); });
+                    closeModal();
+                    renderList();
+                    renderCalendar();
+                }
+            });
+    });
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) closeConfirm();
+    });
+
+    // ── INIT ──
+    renderList();
+    renderCalendar();
+</script>
+
+
+<script>
+(function() {
+    var _open = false, _data = [], _autoClose = null;
+
+    function toggleNotifDropdown(e) {
+        e.stopPropagation();
+        _open = !_open;
+        var dd = document.getElementById('notifDropdown');
+        dd.style.display = _open ? 'block' : 'none';
+        if (_open) {
+            clearTimeout(_autoClose);
+            _autoClose = setTimeout(closeDropdown, 3000);
+            renderList();
+        }
+    }
+    window.toggleNotifDropdown = toggleNotifDropdown;
+
+    function closeDropdown() {
+        _open = false;
+        var dd = document.getElementById('notifDropdown');
+        if (dd) dd.style.display = 'none';
+    }
+
+    function renderList() {
+        var el = document.getElementById('notifList');
+        if (!el) return;
+        if (!_data.length) { el.innerHTML = '<div class="notif-empty">Sem notificações novas</div>'; return; }
+        el.innerHTML = _data.map(function(n) {
+            return '<div class="notif-item" onclick="openNotif(' + n.id + ',\'' + (n.url||'/').replace(/'/g,"\'") + '\')">'
+                + '<div class="notif-item-title">' + n.titulo + '</div>'
+                + '<div class="notif-item-body">' + n.corpo + '</div>'
+                + '<div class="notif-item-time">' + n.criada_em + '</div>'
+                + '</div>';
+        }).join('');
+    }
+
+    function openNotif(id, url) {
+        fetch('/api/notificacoes/lida/' + id, {method:'POST'});
+        _data = _data.filter(function(n){ return n.id !== id; });
+        updateBadge(_data.length);
+        closeDropdown();
+        location.href = url;
+    }
+    window.openNotif = openNotif;
+
+    function marcarTodasLidas(e) {
+        e.stopPropagation();
+        fetch('/api/notificacoes/lidas-todas', {method:'POST'});
+        _data = []; renderList(); updateBadge(0); closeDropdown();
+    }
+    window.marcarTodasLidas = marcarTodasLidas;
+
+    function updateBadge(count) {
+        var b = document.getElementById('notifBadge');
+        if (!b) return;
+        if (count > 0) { b.textContent = count > 9 ? '9+' : count; b.style.display = 'flex'; }
+        else { b.style.display = 'none'; }
+    }
+
+    function poll() {
+        fetch('/api/notificacoes').then(function(r){return r.json();}).then(function(d){
+            _data = d; updateBadge(d.length);
+            if (_open) renderList();
+        }).catch(function(){});
+    }
+
+    // Close when clicking outside
+    document.addEventListener('click', function(e) {
+        var wrap = document.getElementById('notifWrap');
+        if (_open && wrap && !wrap.contains(e.target)) closeDropdown();
+    });
+
+    // Also listen for BroadcastChannel push to refresh immediately
+    if ('BroadcastChannel' in window) {
+        var _bc2 = new BroadcastChannel('mgp-push');
+        _bc2.onmessage = function() { poll(); };
+    }
+
+    poll();
+    setInterval(poll, 15000);
+})();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js');
+  if('BroadcastChannel' in window){
+    var _bc=new BroadcastChannel('mgp-push');
+    _bc.onmessage=function(e){
+      var d=e.data||{};
+      var t=document.createElement('div');
+      t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e2a52;color:#fff;padding:14px 20px;border-radius:10px;z-index:99999;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:Arial,sans-serif;font-size:14px;line-height:1.4;cursor:pointer;';
+      t.innerHTML='<strong>'+(d.title||'Notificação')+'</strong><br>'+(d.body||'');
+      t.onclick=function(){if(d.url)location.href=d.url;t.remove();};
+      document.body.appendChild(t);
+      setTimeout(function(){if(t.parentNode)t.remove();},7000);
+    };
+  }
+}
+</script>
+<div id="cookieBanner" style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:3px solid #4a5fa8;padding:12px 20px;z-index:99990;box-shadow:0 -2px 16px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><p style="margin:0;font-size:0.82em;color:#555;flex:1;min-width:180px;">Este site utiliza cookies essenciais para autenticação e funcionamento da sessão. Ao continuar a utilizar o site, aceita o seu uso.</p><div style="display:flex;gap:8px;flex-shrink:0;"><a href="/politica-cookies" style="font-size:0.78em;color:#2d3a6e;text-decoration:underline;align-self:center;">Saber mais</a><button onclick="aceitarCookies()" style="background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;padding:8px 18px;border-radius:7px;font-size:0.82em;font-weight:bold;cursor:pointer;">Aceitar</button></div></div><script>(function(){if(localStorage.getItem("cookiesAceites")){document.getElementById("cookieBanner").style.display="none";}})();function aceitarCookies(){localStorage.setItem("cookiesAceites","1");document.getElementById("cookieBanner").style.display="none";}</script>
+</body>
+</html>

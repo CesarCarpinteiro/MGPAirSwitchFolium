@@ -7,3 +7,4 @@ flask-login
 flask_sqlalchemy
 gunicorn==21.2.0
 python-dotenv
+pywebpush

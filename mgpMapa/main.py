@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, render_template_string, jsonify, session as flask_session, flash
+from flask import Flask, render_template, request, redirect, url_for, render_template_string, jsonify, session as flask_session, flash, send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from models import Usuario, Registo, Servico, TipoServico, Fatura, Ferias, Mensagem, HorasTrabalhadas, Orcamento, Organizacao
+from models import Usuario, Registo, Servico, TipoServico, Fatura, Ferias, Mensagem, HorasTrabalhadas, Orcamento, Organizacao, Obra, ObraFuncionario, PushSubscription, Notificacao
 from folium.plugins import Geocoder, TagFilterButton, Fullscreen
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
@@ -13,6 +13,7 @@ import os
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import smtplib
+import threading
 import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -46,7 +47,7 @@ def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo
         ) if criado_por else ""
         html = f"""
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
-            <div style="background:#2e7d32;padding:28px 32px;text-align:center;">
+            <div style="background:#2d3a6e;padding:28px 32px;text-align:center;">
                 <p style="color:white;font-size:20px;font-weight:bold;margin:0 0 4px;">Bem-vindo à plataforma</p>
                 <p style="color:rgba(255,255,255,0.75);font-size:13px;margin:0;">{org_nome}</p>
             </div>
@@ -55,9 +56,9 @@ def send_welcome_email(to_email, nome, org_nome, username, password_temp, codigo
                 <p style="font-size:14px;color:#555;line-height:1.6;margin:0 0 20px;">A tua conta foi criada com sucesso na plataforma <strong>{org_nome}</strong>. Aqui estão os teus dados de acesso:</p>
                 <div style="background:#eaf3de;border:1px solid #c0dd97;border-radius:8px;padding:20px 24px;margin-bottom:20px;">
                     <p style="font-size:11px;color:#639922;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Utilizador</p>
-                    <p style="font-size:20px;font-weight:bold;color:#2e7d32;margin:0 0 16px;">{username}</p>
+                    <p style="font-size:20px;font-weight:bold;color:#2d3a6e;margin:0 0 16px;">{username}</p>
                     <p style="font-size:11px;color:#639922;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Password temporária</p>
-                    <p style="font-size:20px;font-weight:bold;color:#2e7d32;margin:0;">{password_temp}</p>
+                    <p style="font-size:20px;font-weight:bold;color:#2d3a6e;margin:0;">{password_temp}</p>
                 </div>
                 {f'<div style="background:#e8f0fe;border:1px solid #b3c6f7;border-radius:8px;padding:20px 24px;margin-bottom:20px;"><p style="font-size:11px;color:#3c5a99;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Código de verificação</p><p style="font-size:32px;font-weight:bold;color:#1a3a8f;margin:0;letter-spacing:8px;">' + (codigo or '') + '</p></div>' if codigo else ''}
                 <div style="background:#faeeda;border:1px solid #fac775;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
@@ -108,6 +109,57 @@ def inject_org():
         return dict(org_nome='A minha Organização', org=None, tem_mapa=True)
     except:
         return dict(org_nome='A minha Organização', org=None, tem_mapa=True)
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+    now = datetime.now()
+    mes, ano = now.month, now.year
+    org_id = current_user.org_id
+    org = db.session.query(Organizacao).filter_by(id=org_id).first()
+    org_nome = org.nome if org else 'A minha Organização'
+    tem_mapa = org.tipo_negocio != 'espaco' if org else True
+
+    # Férias pendentes
+    pendentes = db.session.query(Ferias, Usuario).join(Usuario, Ferias.user_id == Usuario.id).filter(
+        Ferias.org_id == org_id, Ferias.estado == 'pendente').order_by(Ferias.id.desc()).all()
+
+    # Horas este mês
+    horas_mes = db.session.query(HorasTrabalhadas).filter_by(org_id=org_id, mes=mes, ano=ano).all()
+    total_horas = sum(h.total or 0 for h in horas_mes)
+    horas_por_func = {}
+    for h in horas_mes:
+        horas_por_func[h.user_nome] = horas_por_func.get(h.user_nome, 0) + (h.total or 0)
+
+    # Faturas este mês
+    faturas_mes = db.session.query(Fatura).filter_by(org_id=org_id).filter(
+        Fatura.data.like(f'%/{str(mes).zfill(2)}/{ano}')).all()
+    total_faturas = sum(f.valor or 0 for f in faturas_mes)
+
+    # Orçamentos pendentes
+    orcamentos_pendentes = db.session.query(Orcamento).filter_by(org_id=org_id, estado='Pendente').count()
+
+    # Obras
+    obras_ativas = db.session.query(Obra).filter_by(org_id=org_id).filter(
+        Obra.estado.in_(['agendada', 'em_curso'])).order_by(Obra.data_inicio).all()
+    obra_funcs = {of.obra_id: [] for of in db.session.query(ObraFuncionario).filter_by(org_id=org_id).all()}
+    for of in db.session.query(ObraFuncionario, Usuario).join(
+            Usuario, ObraFuncionario.usuario_id == Usuario.id).filter(ObraFuncionario.org_id == org_id).all():
+        obra_funcs.setdefault(of[0].obra_id, []).append(of[1].nome)
+
+    # Funcionários
+    num_funcionarios = db.session.query(Usuario).filter_by(org_id=org_id).count()
+
+    return render_template('dashboard.html',
+        org_nome=org_nome, tem_mapa=tem_mapa,
+        pendentes=pendentes, total_horas=total_horas, horas_por_func=horas_por_func,
+        total_faturas=total_faturas, orcamentos_pendentes=orcamentos_pendentes,
+        obras_ativas=obras_ativas, obra_funcs=obra_funcs,
+        num_funcionarios=num_funcionarios,
+        mes_nome=now.strftime('%B %Y').capitalize(), now=now)
 
 
 @app.route('/')
@@ -298,17 +350,17 @@ def home():
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
                     html, body { height: 100%; font-family: 'DM Sans', sans-serif !important; background-color: #f0f2f5; display: flex; flex-direction: column; overflow: hidden; }
-                    .page-header { background: linear-gradient(135deg, #2e7d32, #4CAF50) !important; padding: 14px 24px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; flex-shrink: 0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important; font-family: 'DM Sans', sans-serif !important; }
+                    .page-header { background: linear-gradient(135deg, #2d3a6e, #4a5fa8) !important; padding: 14px 24px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; flex-shrink: 0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important; font-family: 'DM Sans', sans-serif !important; }
                     .page-header .subtitle { all: unset; display: block; font-size: 0.8em; color: rgba(255,255,255,0.75); font-family: 'DM Sans', sans-serif; }
                     .page-header h1 { all: unset; display: block; font-size: 1.4em; color: white; font-weight: 700; letter-spacing: 0.3px; margin-top: 3px; font-family: 'DM Sans', sans-serif; }
                     .header-actions { display: flex !important; align-items: center !important; gap: 10px !important; margin-left: auto !important; }
-                    .header-actions a { padding: 9px 20px !important; background: white !important; color: #2e7d32 !important; text-decoration: none !important; border-radius: 6px !important; font-size: 0.9em !important; font-weight: 600 !important; white-space: nowrap !important; box-shadow: 0 1px 4px rgba(0,0,0,0.15) !important; font-family: 'DM Sans', sans-serif !important; display: inline-block !important; transition: background 0.2s; }
-                    .header-actions a:hover { background: #f0f0f0 !important; color: #2e7d32 !important; text-decoration: none !important; }
+                    .header-actions a { padding: 9px 20px !important; background: white !important; color: #2d3a6e !important; text-decoration: none !important; border-radius: 6px !important; font-size: 0.9em !important; font-weight: 600 !important; white-space: nowrap !important; box-shadow: 0 1px 4px rgba(0,0,0,0.15) !important; font-family: 'DM Sans', sans-serif !important; display: inline-block !important; transition: background 0.2s; }
+                    .header-actions a:hover { background: #f0f0f0 !important; color: #2d3a6e !important; text-decoration: none !important; }
                     .header-actions a.user-pill { padding: 9px 16px !important; background: rgba(255,255,255,0.15) !important; color: white !important; border: 1px solid rgba(255,255,255,0.3) !important; border-radius: 6px !important; font-size: 0.9em !important; font-weight: 600 !important; white-space: nowrap !important; font-family: 'DM Sans', sans-serif !important; display: inline-block !important; box-shadow: none !important; text-decoration: none !important; }
                     .header-actions a.user-pill:hover { background: rgba(255,255,255,0.25); color: white; text-decoration: none; }
                     .main-content { display: flex; flex: 1; min-height: 0; gap: 10px; padding: 10px; overflow: hidden; }
                     .sidebar { width: 260px; flex-shrink: 0; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
-                    .sidebar-header { background: #2e7d32; color: white; padding: 12px 16px; font-size: 14px; font-weight: 600; flex-shrink: 0; font-family: 'DM Sans', sans-serif; }
+                    .sidebar-header { background: #2d3a6e; color: white; padding: 12px 16px; font-size: 14px; font-weight: 600; flex-shrink: 0; font-family: 'DM Sans', sans-serif; }
                     .sidebar-search { padding: 8px 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
                     .sidebar-search input { width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; }
                     .sidebar-list { overflow-y: auto; flex: 1; }
@@ -317,18 +369,21 @@ def home():
                     .map-container { flex: 1; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; min-width: 0; position: relative; }
                     .map-container > div { position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; }
                     .folium-map { width: 100% !important; height: 100% !important; }
-                    footer { flex-shrink: 0; text-align: center; padding: 7px; background: #2e7d32; color: rgba(255,255,255,0.8); font-size: 12px; font-family: 'DM Sans', sans-serif; }
+                    footer { flex-shrink: 0; text-align: center; padding: 7px; background: #2d3a6e; color: rgba(255,255,255,0.8); font-size: 12px; font-family: 'DM Sans', sans-serif; }
                     @media only screen and (max-width: 767px) { .sidebar { display: none; } .main-content { padding: 6px; } .page-header h1 { font-size: 1em !important; } }
                 </style>
             </head>
             <body>
                 <div class="page-header">
-                    <div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+                        <div>
                         <div class="subtitle">{{ org_nome }}</div>
                         <h1>Mapa de Serviços</h1>
+                        </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
-                        <a href="/registos" style="padding:9px 20px;background:white;color:#2e7d32;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,0.15);white-space:nowrap;display:inline-block;line-height:1.2;">Registos</a>
+                        <a href="/registos" style="padding:9px 20px;background:white;color:#2d3a6e;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,0.15);white-space:nowrap;display:inline-block;line-height:1.2;">Registos</a>
                         <a href="/perfil" style="padding:9px 16px;background:rgba(255,255,255,0.15);color:white;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border:1px solid rgba(255,255,255,0.3);white-space:nowrap;display:inline-block;line-height:1.2;">{{ current_user.nome }}</a>
                     </div>
                 </div>
@@ -342,7 +397,7 @@ def home():
                     </div>
                     <div class="map-container">{{ body_html|safe }}</div>
                 </div>
-                <footer>&copy; {{ org_nome }}</footer>
+                <footer>&copy; GestãoPro</footer>
                 <script>
                     {{ script|safe }}
                     function filterSidebar(query) {
@@ -485,18 +540,15 @@ def registrar():
     db.session.commit()
 
     if email:
-        try:
-            org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
-            send_welcome_email(
-                to_email=email,
-                nome=nome,
-                org_nome=org.nome if org else 'A minha Organização',
-                username=nome,
-                password_temp=senha,
-                criado_por=current_user.nome_completo or current_user.nome
-            )
-        except Exception as e:
-            print(f'Erro email registar: {e}')
+        org_nome = (db.session.query(Organizacao).filter_by(id=current_user.org_id).first() or type('', (), {'nome': 'A minha Organização'})()).nome
+        criado_por = current_user.nome_completo or current_user.nome
+        def _send():
+            try:
+                send_welcome_email(to_email=email, nome=nome, org_nome=org_nome,
+                                   username=nome, password_temp=senha, criado_por=criado_por)
+            except Exception as e:
+                print(f'Erro email registar: {e}')
+        threading.Thread(target=_send, daemon=True).start()
 
     return jsonify({
         'ok': True,
@@ -506,6 +558,33 @@ def registrar():
         'telefone': telefone or '—',
         'cargo': cargo or '—',
         'is_admin': is_admin_user
+    })
+
+
+@app.route('/edit_user/<int:id>', methods=['POST'])
+@login_required
+def edit_user(id):
+    if not current_user.is_admin:
+        return jsonify({'ok': False, 'error': 'Sem permissão'})
+    u = db.session.query(Usuario).filter_by(id=id, org_id=current_user.org_id).first()
+    if not u:
+        return jsonify({'ok': False, 'error': 'Utilizador não encontrado'})
+    data = request.get_json()
+    email = data.get('email', '').strip()
+    telefone = data.get('telefone', '').strip()
+    cargo = data.get('cargo', '').strip()
+    nova_senha = data.get('nova_senha', '').strip()
+    u.email = email or u.email
+    u.telefone = telefone or u.telefone
+    u.cargo = cargo
+    if nova_senha:
+        u.senha = hash(nova_senha)
+    db.session.commit()
+    return jsonify({
+        'ok': True,
+        'email': u.email or '—',
+        'telefone': u.telefone or '—',
+        'cargo': u.cargo or '—',
     })
 
 
@@ -702,7 +781,7 @@ def nova_pagina():
             except Exception:
                 pass
         if months <= 8:
-            status_map[r.id] = ('Em dia', '#2e7d32', '#e8f5e9')
+            status_map[r.id] = ('Em dia', '#2d3a6e', '#e8eaf6')
         elif months <= 10:
             status_map[r.id] = ('Atenção', '#c47c2b', '#fff8e1')
         else:
@@ -906,6 +985,23 @@ def ferias():
             db.session.add(nova)
             db.session.commit()
             flash('Pedido de férias enviado.', 'success')
+
+            # Notify all admins in the org
+            _nome = current_user.nome_completo or current_user.nome
+            _org_id = current_user.org_id
+            _di = data_inicio
+            _df = data_fim
+            def _notify_admins(nome=_nome, org_id=_org_id, di=_di, df=_df):
+                with app.app_context():
+                    admins = db.session.query(Usuario).filter_by(org_id=org_id, is_admin=True).all()
+                    for admin in admins:
+                        send_push_to_user(
+                            admin.id,
+                            '📅 Novo pedido de férias',
+                            f'{nome} pediu férias de {di} a {df}.',
+                            '/ferias'
+                        )
+            threading.Thread(target=_notify_admins, daemon=True).start()
     is_admin = current_user.is_admin
     usuarios = db.session.query(Usuario).filter_by(org_id=current_user.org_id).all() if is_admin else []
     if is_admin:
@@ -918,6 +1014,32 @@ def ferias():
                                'data_fim': f.data_fim, 'num_dias': f.num_dias or 0} for f, u in todos])
     return render_template('ferias.html', ferias=todos, ferias_json=ferias_json, is_admin=is_admin,
                        usuarios=usuarios, current_user=current_user, now=datetime.now())
+
+
+@app.route('/ferias/responder-bulk', methods=['POST'])
+@login_required
+def responder_ferias_bulk():
+    if not current_user.is_admin:
+        return redirect(url_for('ferias'))
+    ids = request.form.getlist('ids')
+    estado = request.form.get('estado', 'aprovado')
+    notified = []
+    for fid in ids:
+        f = db.session.query(Ferias).filter_by(id=int(fid), org_id=current_user.org_id).first()
+        if f and f.estado == 'pendente':
+            f.estado = estado
+            f.aprovado_por = current_user.nome
+            notified.append((f.user_id, f.data_inicio, f.data_fim))
+    db.session.commit()
+    flash(f'{len(notified)} pedido(s) {"aprovado" if estado == "aprovado" else "rejeitado"}(s).', 'success')
+    emoji = '✅' if estado == 'aprovado' else '❌'
+    label = 'aprovadas' if estado == 'aprovado' else 'recusadas'
+    def _bulk_notify(notified=notified, emoji=emoji, label=label):
+        for uid, di, df in notified:
+            send_push_to_user(uid, f'{emoji} Férias {label}',
+                              f'As tuas férias de {di} a {df} foram {label}.', '/ferias')
+    threading.Thread(target=_bulk_notify, daemon=True).start()
+    return redirect(url_for('ferias'))
 
 
 @app.route('/ferias/responder/<int:id>', methods=['POST'])
@@ -935,58 +1057,79 @@ def responder_ferias(id):
         db.session.commit()
         flash('Resposta enviada.' , 'success')
 
+        # Collect values before handing off to background thread
         user = db.session.query(Usuario).filter_by(id=f.user_id).first()
         org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
-        if user and user.email:
-            try:
-                estado_label = 'aprovadas' if estado == 'aprovado' else 'recusadas'
-                cor = '#2e7d32' if estado == 'aprovado' else '#c62828'
-                bg = '#eaf3de' if estado == 'aprovado' else '#fef2f2'
-                brd = '#c0dd97' if estado == 'aprovado' else '#fecaca'
-                admin_nome = current_user.nome_completo or current_user.nome
-                org_nome_str = org.nome if org else 'A minha Organização'
-                acao = 'aprovou' if estado == 'aprovado' else 'recusou'
-                comentario_block = ''
-                if comentario:
-                    comentario_block = (
-                        '<div style="background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:16px;">'
-                        '<p style="font-size:12px;color:#888;margin:0 0 4px;">Comentário do administrador</p>'
-                        f'<p style="font-size:14px;color:#333;margin:0;">{comentario}</p>'
+        _user_id = f.user_id
+        _user_email = user.email if user else None
+        _user_nome = (user.nome_completo or user.nome) if user else ''
+        _org_nome = org.nome if org else 'A minha Organização'
+        _admin_nome = current_user.nome_completo or current_user.nome
+        _data_inicio = f.data_inicio
+        _data_fim = f.data_fim
+        _num_dias = f.num_dias
+
+        def _send_ferias_bg(estado=estado, comentario=comentario,
+                            user_email=_user_email, user_nome=_user_nome,
+                            org_nome=_org_nome, admin_nome=_admin_nome,
+                            data_inicio=_data_inicio, data_fim=_data_fim,
+                            num_dias=_num_dias, user_id=_user_id):
+            # Email
+            if user_email:
+                try:
+                    estado_label = 'aprovadas' if estado == 'aprovado' else 'recusadas'
+                    cor = '#2d3a6e' if estado == 'aprovado' else '#c62828'
+                    bg = '#eaf3de' if estado == 'aprovado' else '#fef2f2'
+                    brd = '#c0dd97' if estado == 'aprovado' else '#fecaca'
+                    acao = 'aprovou' if estado == 'aprovado' else 'recusou'
+                    comentario_block = ''
+                    if comentario:
+                        comentario_block = (
+                            '<div style="background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:16px;">'
+                            '<p style="font-size:12px;color:#888;margin:0 0 4px;">Comentário do administrador</p>'
+                            f'<p style="font-size:14px;color:#333;margin:0;">{comentario}</p>'
+                            '</div>'
+                        )
+                    periodo = f'{data_inicio} a {data_fim} ({num_dias} dia(s))'
+                    html_ferias = (
+                        '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">'
+                        f'<div style="background:{cor};padding:28px 32px;text-align:center;">'
+                        '<p style="color:white;font-size:20px;font-weight:bold;margin:0 0 4px;">Pedido de Férias</p>'
+                        f'<p style="color:rgba(255,255,255,0.8);font-size:13px;margin:0;">{org_nome}</p>'
+                        '</div>'
+                        '<div style="background:white;padding:28px 32px;">'
+                        f'<p style="font-size:15px;color:#1a1a1a;margin:0 0 16px;">Olá <strong>{user_nome}</strong>,</p>'
+                        f'<p style="font-size:14px;color:#555;margin:0 0 20px;">O seu administrador <strong>{admin_nome}</strong> {acao} o seu pedido de férias.</p>'
+                        f'<div style="background:{bg};border:1px solid {brd};border-radius:8px;padding:16px 20px;margin-bottom:20px;">'
+                        '<p style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Período</p>'
+                        f'<p style="font-size:16px;font-weight:bold;color:{cor};margin:0;">{periodo}</p>'
+                        '</div>'
+                        f'{comentario_block}'
+                        '<p style="font-size:13px;color:#888;margin:0;">Se tiver questões, contacte o seu administrador.</p>'
+                        '</div>'
+                        '<div style="background:#f8f8f8;border-top:1px solid #eee;padding:16px 32px;text-align:center;">'
+                        f'<p style="font-size:12px;color:#aaa;margin:0;">© {org_nome} — Plataforma de Gestão</p>'
+                        '</div>'
                         '</div>'
                     )
-                periodo = f'{f.data_inicio} a {f.data_fim} ({f.num_dias} dia(s))'
-                html_ferias = (
-                    '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">'
-                    f'<div style="background:{cor};padding:28px 32px;text-align:center;">'
-                    '<p style="color:white;font-size:20px;font-weight:bold;margin:0 0 4px;">Pedido de Férias</p>'
-                    f'<p style="color:rgba(255,255,255,0.8);font-size:13px;margin:0;">{org_nome_str}</p>'
-                    '</div>'
-                    '<div style="background:white;padding:28px 32px;">'
-                    f'<p style="font-size:15px;color:#1a1a1a;margin:0 0 16px;">Olá <strong>{user.nome_completo or user.nome}</strong>,</p>'
-                    f'<p style="font-size:14px;color:#555;margin:0 0 20px;">O seu administrador <strong>{admin_nome}</strong> {acao} o seu pedido de férias.</p>'
-                    f'<div style="background:{bg};border:1px solid {brd};border-radius:8px;padding:16px 20px;margin-bottom:20px;">'
-                    '<p style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Período</p>'
-                    f'<p style="font-size:16px;font-weight:bold;color:{cor};margin:0;">{periodo}</p>'
-                    '</div>'
-                    f'{comentario_block}'
-                    '<p style="font-size:13px;color:#888;margin:0;">Se tiver questões, contacte o seu administrador.</p>'
-                    '</div>'
-                    '<div style="background:#f8f8f8;border-top:1px solid #eee;padding:16px 32px;text-align:center;">'
-                    f'<p style="font-size:12px;color:#aaa;margin:0;">© {org_nome_str} — Plataforma de Gestão</p>'
-                    '</div>'
-                    '</div>'
-                )
-                msg_ferias = MIMEMultipart('alternative')
-                msg_ferias["Subject"] = f"As suas férias foram {estado_label}"
-                msg_ferias["From"] = formataddr((str(Header("GestãoPro", "utf-8")), GMAIL_USER))
-                msg_ferias["To"] = user.email
-                msg_ferias.attach(MIMEText(html_ferias, 'html'))
-                with smtplib.SMTP("smtp.gmail.com", 587) as conn:
-                    conn.starttls()
-                    conn.login(user=GMAIL_USER, password=GMAIL_PASS)
-                    conn.send_message(msg_ferias)
-            except Exception as e:
-                print(f'Erro email ferias: {e}')
+                    msg_ferias = MIMEMultipart('alternative')
+                    msg_ferias["Subject"] = f"As suas férias foram {estado_label}"
+                    msg_ferias["From"] = formataddr((str(Header("GestãoPro", "utf-8")), GMAIL_USER))
+                    msg_ferias["To"] = user_email
+                    msg_ferias.attach(MIMEText(html_ferias, 'html'))
+                    with smtplib.SMTP("smtp.gmail.com", 587) as conn:
+                        conn.starttls()
+                        conn.login(user=GMAIL_USER, password=GMAIL_PASS)
+                        conn.send_message(msg_ferias)
+                except Exception as e:
+                    print(f'Erro email ferias: {e}')
+            # Push
+            emoji = '✅' if estado == 'aprovado' else '❌'
+            label = 'aprovadas' if estado == 'aprovado' else 'recusadas'
+            send_push_to_user(user_id, f'{emoji} Férias {label}',
+                              f'As tuas férias de {data_inicio} a {data_fim} foram {label}.', '/ferias')
+
+        threading.Thread(target=_send_ferias_bg, daemon=True).start()
 
     return redirect(url_for('ferias'))
 
@@ -1197,7 +1340,7 @@ def forgot_password():
         msg["To"] = email
         html = f"""
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
-            <div style="background:#2e7d32;padding:28px 32px;text-align:center;">
+            <div style="background:#2d3a6e;padding:28px 32px;text-align:center;">
                 <p style="color:white;font-size:20px;font-weight:bold;margin:0;">Recuperação de Password</p>
             </div>
             <div style="background:white;padding:28px 32px;">
@@ -1258,6 +1401,364 @@ def update_tipo_negocio():
         db.session.commit()
         return jsonify({'ok': True})
     return jsonify({'ok': False})
+
+
+@app.route('/minhas-obras')
+@login_required
+def minhas_obras():
+    org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
+    org_nome = org.nome if org else 'A minha Organização'
+    tem_mapa = org.tipo_negocio != 'espaco' if org else True
+    obra_ids = [of.obra_id for of in db.session.query(ObraFuncionario).filter_by(
+        usuario_id=current_user.id, org_id=current_user.org_id).all()]
+    obras = db.session.query(Obra).filter(Obra.id.in_(obra_ids)).order_by(Obra.data_inicio).all() if obra_ids else []
+    colegas_map = {}
+    for obra in obras:
+        funcs = db.session.query(ObraFuncionario, Usuario).join(
+            Usuario, ObraFuncionario.usuario_id == Usuario.id
+        ).filter(ObraFuncionario.obra_id == obra.id).all()
+        colegas_map[obra.id] = [u.nome for _, u in funcs if u.id != current_user.id]
+    estado_label = {'agendada': '📅 Agendada', 'em_curso': '🔧 Em curso', 'concluida': '✅ Concluída', 'cancelada': '❌ Cancelada'}
+    return render_template('minhas_obras.html', obras=obras, colegas_map=colegas_map,
+                           estado_label=estado_label, org_nome=org_nome, tem_mapa=tem_mapa, is_admin=current_user.is_admin)
+
+
+@app.route('/marcacoes')
+@login_required
+def marcacoes():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
+    org_nome = org.nome if org else 'A minha Organização'
+    tem_mapa = org.tipo_negocio != 'espaco' if org else True
+
+    obras = db.session.query(Obra).filter_by(org_id=current_user.org_id).order_by(Obra.data_inicio).all()
+    all_users = db.session.query(Usuario).filter_by(org_id=current_user.org_id).all()
+    obra_funcs = db.session.query(ObraFuncionario).filter_by(org_id=current_user.org_id).all()
+    obra_funcs_map = {}
+    for of in obra_funcs:
+        obra_funcs_map.setdefault(of.obra_id, []).append(of.usuario_id)
+
+    ferias_aprovadas = db.session.query(Ferias, Usuario).join(Usuario, Ferias.user_id == Usuario.id).filter(
+        Ferias.org_id == current_user.org_id, Ferias.estado == 'aprovado').all()
+
+    ferias_json = json.dumps([{
+        'user_id': u.id, 'user_nome': u.nome,
+        'data_inicio': f.data_inicio, 'data_fim': f.data_fim
+    } for f, u in ferias_aprovadas])
+
+    obras_json = json.dumps([{
+        'id': o.id, 'nome': o.nome, 'local': o.local or '',
+        'data_inicio': o.data_inicio, 'data_fim': o.data_fim,
+        'estado': o.estado, 'notas': o.notas or '',
+        'funcionarios': obra_funcs_map.get(o.id, [])
+    } for o in obras])
+
+    funcionarios_json = json.dumps([{
+        'id': u.id, 'nome': u.nome, 'cargo': u.cargo or ''
+    } for u in all_users])
+
+    return render_template('marcacoes.html',
+        obras=obras, obra_funcs_map=obra_funcs_map, all_users=all_users,
+        obras_json=obras_json, ferias_json=ferias_json, funcionarios_json=funcionarios_json,
+        org_nome=org_nome, tem_mapa=tem_mapa, is_admin=True)
+
+
+@app.route('/marcacoes/criar', methods=['POST'])
+@login_required
+def criar_obra():
+    if not current_user.is_admin:
+        return jsonify({'ok': False}), 403
+    data = request.get_json()
+    obra = Obra(
+        org_id=current_user.org_id, created_by=current_user.id,
+        nome=data.get('nome', '').strip(), local=data.get('local', '').strip(),
+        data_inicio=data.get('data_inicio', '').strip(), data_fim=data.get('data_fim', '').strip(),
+        estado=data.get('estado', 'agendada'), notas=data.get('notas', '').strip()
+    )
+    db.session.add(obra)
+    db.session.flush()
+    funcionarios = data.get('funcionarios', [])
+    for uid in funcionarios:
+        db.session.add(ObraFuncionario(obra_id=obra.id, usuario_id=int(uid), org_id=current_user.org_id))
+    db.session.commit()
+    local_str = f' em {obra.local}' if obra.local else ''
+    for uid in funcionarios:
+        threading.Thread(target=lambda u=uid: send_push_to_user(
+            u, '🔨 Nova obra atribuída',
+            f'{obra.nome}{local_str} — {obra.data_inicio} a {obra.data_fim}',
+            '/minhas-obras'
+        ), daemon=True).start()
+    return jsonify({'ok': True, 'id': obra.id, 'created_at': obra.created_at})
+
+
+@app.route('/marcacoes/editar/<int:id>', methods=['POST'])
+@login_required
+def editar_obra(id):
+    if not current_user.is_admin:
+        return jsonify({'ok': False}), 403
+    obra = db.session.query(Obra).filter_by(id=id, org_id=current_user.org_id).first()
+    if not obra:
+        return jsonify({'ok': False}), 404
+    data = request.get_json()
+    obra.nome = data.get('nome', obra.nome).strip()
+    obra.local = data.get('local', obra.local or '').strip()
+    obra.data_inicio = data.get('data_inicio', obra.data_inicio).strip()
+    obra.data_fim = data.get('data_fim', obra.data_fim).strip()
+    obra.estado = data.get('estado', obra.estado)
+    obra.notas = data.get('notas', obra.notas or '').strip()
+    db.session.query(ObraFuncionario).filter_by(obra_id=id).delete()
+    for uid in data.get('funcionarios', []):
+        db.session.add(ObraFuncionario(obra_id=id, usuario_id=int(uid), org_id=current_user.org_id))
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/marcacoes/apagar/<int:id>', methods=['POST'])
+@login_required
+def apagar_obra(id):
+    if not current_user.is_admin:
+        return jsonify({'ok': False}), 403
+    obra = db.session.query(Obra).filter_by(id=id, org_id=current_user.org_id).first()
+    if not obra:
+        return jsonify({'ok': False}), 404
+    db.session.query(ObraFuncionario).filter_by(obra_id=id).delete()
+    db.session.delete(obra)
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
+_vapid_pem_path = os.path.join(os.path.dirname(__file__), 'vapid_private.pem')
+
+
+def _load_vapid_private_key():
+    """py_vapid 1.x expects a raw 32-byte EC private key encoded as base64url."""
+    if os.path.exists(_vapid_pem_path):
+        try:
+            from cryptography.hazmat.primitives.serialization import load_pem_private_key
+            import base64
+            with open(_vapid_pem_path, 'rb') as f:
+                pem = f.read()
+            key = load_pem_private_key(pem, password=None)
+            d = key.private_numbers().private_value.to_bytes(32, 'big')
+            return base64.urlsafe_b64encode(d).rstrip(b'=').decode()
+        except Exception as e:
+            print(f'VAPID PEM load error: {e}')
+    return os.getenv('VAPID_PRIVATE_KEY', '').replace('\\n', '\n')
+
+
+VAPID_PRIVATE_KEY = _load_vapid_private_key()
+VAPID_CLAIMS = {'sub': os.getenv('VAPID_CLAIMS_EMAIL', 'mailto:admin@example.com')}
+
+def save_notificacao(user_id, org_id, title, body, url='/'):
+    """Persist an in-app notification. Call inside an app context."""
+    try:
+        db.session.add(Notificacao(user_id=user_id, org_id=org_id,
+                                   titulo=title, corpo=body, url=url))
+        db.session.commit()
+    except Exception as e:
+        print(f'save_notificacao error: {e}')
+
+
+def send_push_to_user(user_id, title, body, url='/'):
+    with app.app_context():
+        user = db.session.query(Usuario).filter_by(id=user_id).first()
+        org_id = user.org_id if user else None
+        save_notificacao(user_id, org_id, title, body, url)
+        subs = db.session.query(PushSubscription).filter_by(user_id=user_id).all()
+        if not subs or not VAPID_PUBLIC_KEY:
+            return
+        try:
+            from pywebpush import webpush
+        except ImportError:
+            print('pywebpush not installed')
+            return
+        import json as _json
+        data = _json.dumps({'title': title, 'body': body, 'url': url})
+        for sub in subs:
+            try:
+                webpush(
+                    subscription_info={'endpoint': sub.endpoint, 'keys': {'p256dh': sub.p256dh, 'auth': sub.auth}},
+                    data=data,
+                    vapid_private_key=VAPID_PRIVATE_KEY,
+                    vapid_claims=VAPID_CLAIMS
+                )
+                print(f'Push OK → user {user_id}')
+            except Exception as e:
+                print(f'Push error user {user_id}: {e}')
+                if any(c in str(e) for c in ['410', '404', 'expired', 'unsubscribed']):
+                    db.session.delete(sub)
+                    db.session.commit()
+
+
+@app.route('/push/vapid-public-key')
+def push_vapid_key():
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+
+
+@app.route('/push/test')
+@login_required
+def push_test():
+    try:
+        from pywebpush import webpush
+        import json as _json
+        subs = db.session.query(PushSubscription).filter_by(user_id=current_user.id).all()
+        if not subs:
+            return jsonify({'ok': False, 'error': 'Sem subscrições para este user'})
+        results = []
+        for sub in subs:
+            try:
+                webpush(
+                    subscription_info={'endpoint': sub.endpoint, 'keys': {'p256dh': sub.p256dh, 'auth': sub.auth}},
+                    data=_json.dumps({'title': '🔔 Teste', 'body': 'As notificações estão a funcionar!', 'url': '/'}),
+                    vapid_private_key=VAPID_PRIVATE_KEY,
+                    vapid_claims=VAPID_CLAIMS
+                )
+                results.append({'ok': True, 'endpoint': sub.endpoint[:50]})
+            except Exception as e:
+                results.append({'ok': False, 'error': str(e), 'endpoint': sub.endpoint[:50]})
+        return jsonify({'results': results})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+
+@app.route('/push/subscribe', methods=['POST'])
+@login_required
+def push_subscribe():
+    data = request.get_json()
+    endpoint = data.get('endpoint')
+    p256dh = data.get('keys', {}).get('p256dh')
+    auth = data.get('keys', {}).get('auth')
+    if not endpoint or not p256dh or not auth:
+        return jsonify({'ok': False})
+    # Remove all old subscriptions for this user and replace with the new one
+    db.session.query(PushSubscription).filter_by(user_id=current_user.id).delete()
+    db.session.add(PushSubscription(
+        user_id=current_user.id, org_id=current_user.org_id,
+        endpoint=endpoint, p256dh=p256dh, auth=auth
+    ))
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/push/clear', methods=['POST'])
+@login_required
+def push_clear():
+    db.session.query(PushSubscription).filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/push/unsubscribe', methods=['POST'])
+@login_required
+def push_unsubscribe():
+    data = request.get_json()
+    endpoint = data.get('endpoint')
+    sub = db.session.query(PushSubscription).filter_by(user_id=current_user.id, endpoint=endpoint).first()
+    if sub:
+        db.session.delete(sub)
+        db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/notificacoes')
+@login_required
+def api_notificacoes():
+    notifs = db.session.query(Notificacao).filter_by(
+        user_id=current_user.id, lida=False
+    ).order_by(Notificacao.id.desc()).limit(20).all()
+    return jsonify([{
+        'id': n.id, 'titulo': n.titulo, 'corpo': n.corpo,
+        'url': n.url, 'criada_em': n.criada_em
+    } for n in notifs])
+
+
+@app.route('/api/notificacoes/lida/<int:nid>', methods=['POST'])
+@login_required
+def api_notificacao_lida(nid):
+    n = db.session.query(Notificacao).filter_by(id=nid, user_id=current_user.id).first()
+    if n:
+        n.lida = True
+        db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/notificacoes/lidas-todas', methods=['POST'])
+@login_required
+def api_notificacoes_lidas_todas():
+    db.session.query(Notificacao).filter_by(user_id=current_user.id, lida=False).update({'lida': True})
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/mensagens/estado')
+@login_required
+def api_mensagens_estado():
+    if current_user.is_admin:
+        rows = db.session.query(Mensagem.id).filter_by(org_id=current_user.org_id).all()
+    else:
+        rows = db.session.query(Mensagem.id).filter_by(
+            org_id=current_user.org_id, user_id=current_user.id).all()
+    fp = hashlib.md5('|'.join(str(r.id) for r in rows).encode()).hexdigest()
+    return jsonify({'fp': fp})
+
+
+@app.route('/api/ferias/estado')
+@login_required
+def api_ferias_estado():
+    if current_user.is_admin:
+        rows = db.session.query(Ferias.id, Ferias.estado).filter_by(org_id=current_user.org_id).all()
+    else:
+        rows = db.session.query(Ferias.id, Ferias.estado).filter_by(
+            org_id=current_user.org_id, user_id=current_user.id).all()
+    fp = hashlib.md5('|'.join(f'{r.id}:{r.estado}' for r in rows).encode()).hexdigest()
+    return jsonify({'fp': fp})
+
+
+@app.route('/politica-cookies')
+def politica_cookies():
+    org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first() if current_user.is_authenticated else None
+    org_nome = org.nome if org else 'GestãoPro'
+    return render_template_string('''<!DOCTYPE html>
+<html lang="pt"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Política de Cookies</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#f0f2f5;padding-bottom:60px}
+.header{background:linear-gradient(135deg,#2d3a6e,#4a5fa8);padding:14px 24px;color:white}
+.header h1{font-size:1.3em;font-weight:700}.header a{color:rgba(255,255,255,0.85);font-size:0.85em;text-decoration:none}
+.content{max-width:700px;margin:32px auto;padding:0 20px}
+.card{background:white;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,0.07)}
+h2{color:#2d3a6e;font-size:1em;margin:20px 0 8px}p,li{color:#555;font-size:0.9em;line-height:1.7}
+ul{padding-left:18px;margin-top:6px}
+footer{text-align:center;padding:10px;background:#2d3a6e;color:rgba(255,255,255,0.8);font-size:12px;position:fixed;bottom:0;width:100%}
+</style></head><body>
+<div class="header"><a href="javascript:history.back()">← Voltar</a><h1>Política de Cookies</h1></div>
+<div class="content"><div class="card">
+<h2>O que são cookies?</h2>
+<p>Cookies são pequenos ficheiros de texto armazenados no seu dispositivo quando visita um site.</p>
+<h2>Que cookies utilizamos?</h2>
+<p>Este site utiliza exclusivamente <strong>cookies essenciais</strong>:</p>
+<ul>
+<li><strong>Cookie de sessão</strong> — mantém a sua sessão ativa após o login. Expira quando fecha o browser.</li>
+<li><strong>Preferências locais</strong> — guardadas no seu dispositivo (localStorage) para lembrar preferências como o aceite deste aviso.</li>
+</ul>
+<h2>Não utilizamos</h2>
+<ul><li>Cookies de publicidade ou rastreamento</li><li>Cookies de terceiros para analytics</li><li>Partilha de dados com terceiros</li></ul>
+<h2>Base legal</h2>
+<p>Os cookies essenciais são necessários para o funcionamento do serviço e não requerem consentimento ao abrigo do RGPD (Regulamento Geral sobre a Proteção de Dados).</p>
+<h2>Contacto</h2>
+<p>Para questões sobre privacidade, contacte o administrador da plataforma <strong>{{ org_nome }}</strong>.</p>
+</div></div>
+<footer>&copy; GestãoPro</footer>
+</body></html>''', org_nome=org_nome)
+
+
+@app.route('/sw.js')
+def service_worker():
+    response = send_from_directory('static', 'sw.js')
+    response.headers['Service-Worker-Allowed'] = '/'
+    response.headers['Content-Type'] = 'application/javascript'
+    return response
 
 
 def criar_admin():
