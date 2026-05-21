@@ -1653,8 +1653,6 @@
             _installPrompt.userChoice.then(function(r) {
                 if (r.outcome === 'accepted') { _installPrompt = null; }
             });
-        } else if (_isIOS && navigator.share) {
-            navigator.share({ title: 'GestãoPro', url: window.location.origin + '/' });
         } else {
             document.getElementById('iosInstallModal').classList.add('open');
         }
