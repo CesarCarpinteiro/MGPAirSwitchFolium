@@ -185,7 +185,8 @@
         .month-title { background: #f8faf8; padding: 10px 14px; font-weight: bold; color: #2d3a6e; font-size: 0.95em; border-bottom: 1px solid #e8f0e8; }
         .month-grid { padding: 10px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
         .day-header { text-align: center; font-size: 0.68em; color: #aaa; font-weight: bold; padding: 4px 0; }
-        .day-cell { text-align: center; font-size: 0.78em; padding: 4px 2px; border-radius: 4px; cursor: default; min-height: 24px; display: flex; align-items: center; justify-content: center; position: relative; touch-action: manipulation; }
+        .day-cell { text-align: center; font-size: 0.78em; padding: 4px 2px 8px; border-radius: 4px; cursor: default; min-height: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; touch-action: manipulation; }
+        .day-dots { display: flex; gap: 2px; justify-content: center; position: absolute; bottom: 2px; left: 0; right: 0; }
         .day-cell.empty { background: transparent; }
         .day-cell.weekend { color: #ccc; }
         .day-cell.today { font-weight: bold; color: #2d3a6e; outline: 2px solid #2d3a6e; border-radius: 50%; }
@@ -281,30 +282,31 @@
                 {% endif %}
             {% endif %}
         {% endfor %}
-        {% set disp = 22 - usados.v %}
-        {% set pct = ((usados.v / 22) * 100)|int %}
+        {% set total_yr = configs_ferias.get(yr, dias_ano) %}
+        {% set disp = total_yr - usados.v %}
+        {% set pct = ((usados.v / total_yr) * 100)|int if total_yr > 0 else 0 %}
         <div class="days-counter">
             <div class="year-flag">{{ yr }}</div>
             <div class="stats">
                 <div class="stat">
                     <div class="label">Adquiridos</div>
-                    <div class="value">22</div>
+                    <div class="value" id="adquiridos-{{ yr }}">{{ total_yr }}</div>
                 </div>
                 <div class="divider"></div>
                 <div class="stat">
                     <div class="label">Utilizados</div>
-                    <div class="value">{{ usados.v }}</div>
+                    <div class="value" id="utilizados-{{ yr }}">{{ usados.v }}</div>
                 </div>
                 <div class="divider"></div>
                 <div class="stat">
                     <div class="label">Disponíveis</div>
-                    <div class="value">{{ disp if disp >= 0 else 0 }}</div>
+                    <div class="value" id="disponiveis-{{ yr }}">{{ disp if disp >= 0 else 0 }}</div>
                 </div>
                 <div class="progress-wrap">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width:{{ pct if pct <= 100 else 100 }}%;"></div>
+                        <div class="progress-fill" id="progress-{{ yr }}" style="width:{{ pct if pct <= 100 else 100 }}%;"></div>
                     </div>
-                    <div class="progress-label">{{ pct }}% utilizado</div>
+                    <div class="progress-label" id="pct-label-{{ yr }}">{{ pct }}% utilizado</div>
                 </div>
             </div>
         </div>
@@ -314,6 +316,7 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('lista', this)">📋 Lista</button>
         <button class="tab-btn" onclick="switchTab('calendario', this)">📅 Calendário</button>
+        {% if is_admin %}<button class="tab-btn" onclick="switchTab('resumo', this)">📊 Resumo</button>{% endif %}
     </div>
 
     <!-- TAB: LISTA -->
@@ -327,6 +330,17 @@
         <div class="form-container" id="formContainer">
             <h3>Novo Pedido de Férias</h3>
             <form method="POST" action="/ferias">
+                {% if is_admin %}
+                <label>Funcionário</label>
+                <select name="target_user_id" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.92em;font-family:'DM Sans',sans-serif;margin-bottom:12px;color:#333;">
+                    <option value="">— Para mim —</option>
+                    {% for u in usuarios %}
+                    {% if u.id != current_user.id %}
+                    <option value="{{ u.id }}">{{ u.nome_completo or u.nome }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                {% endif %}
                 <label>Seleciona o período</label>
                 <div class="calendar-wrapper">
                     <input type="text" id="calendarInput" readonly style="position:absolute;opacity:0;pointer-events:none;height:0;width:0;overflow:hidden;">
@@ -465,6 +479,74 @@
     </div>
 </div>
 
+{% if is_admin %}
+<div class="tab-panel" id="tab-resumo">
+    <div style="max-width:700px;margin:0 auto;padding:16px 0;">
+
+        <!-- Config dias por ano -->
+        <div style="background:white;border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+            <div style="font-size:0.85em;font-weight:700;color:#2d3a6e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">⚙️ Dias disponíveis por ano</div>
+            <div id="configList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+                {% set anos_config = configs_ferias.keys()|list|sort %}
+                {% for ano in anos_config %}
+                <div id="cfg-row-{{ ano }}" style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" value="{{ ano }}" min="2020" max="2100" readonly
+                        style="width:80px;flex-shrink:0;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;font-size:0.88em;font-family:'DM Sans',sans-serif;background:#f5f5f5;color:#777;">
+                    <input type="number" id="dias-{{ ano }}" value="{{ configs_ferias[ano] }}" min="1" max="365"
+                        style="flex:1;min-width:0;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;font-size:0.88em;font-family:'DM Sans',sans-serif;">
+                    <span style="font-size:0.82em;color:#888;flex-shrink:0;">dias</span>
+                    <button onclick="saveConfigDias({{ ano }})" style="flex-shrink:0;padding:7px 12px;background:#2d3a6e;color:white;border:none;border-radius:6px;font-size:0.82em;cursor:pointer;font-family:'DM Sans',sans-serif;">Guardar</button>
+                    <button onclick="deleteConfigDias({{ ano }})" style="flex-shrink:0;padding:7px 10px;background:none;border:1px solid #ddd;border-radius:6px;font-size:0.9em;cursor:pointer;">🗑</button>
+                </div>
+                {% endfor %}
+                {% if not anos_config %}
+                <div style="font-size:0.85em;color:#aaa;">Sem configurações. O padrão é 22 dias/ano.</div>
+                {% endif %}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <input type="number" id="novoAno" placeholder="Ano" min="2020" max="2100" value="{{ ano_atual + 1 }}"
+                    style="width:80px;flex-shrink:0;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;font-size:0.88em;font-family:'DM Sans',sans-serif;">
+                <input type="number" id="novosDias" placeholder="Dias" min="1" max="365" value="22"
+                    style="flex:1;min-width:0;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;font-size:0.88em;font-family:'DM Sans',sans-serif;">
+                <span style="font-size:0.82em;color:#888;flex-shrink:0;">dias</span>
+                <button onclick="addConfigDias()" style="flex-shrink:0;padding:7px 14px;background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;border-radius:6px;font-size:0.82em;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">+ Adicionar</button>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+            <div class="resumo-label" style="font-size:0.85em;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Resumo {{ ano_atual }} — {{ dias_ano }} dias úteis/ano</div>
+        </div>
+        {% for r in resumo_ferias %}
+        {% set pct_usado = ((r.aprovadas / r.total) * 100)|round|int %}
+        {% set pct_pend = ((r.pendentes / r.total) * 100)|round|int %}
+        <div class="resumo-func-card" data-aprovadas="{{ r.aprovadas }}" data-pendentes="{{ r.pendentes }}" data-ano="{{ ano_atual }}" style="background:white;border-radius:12px;padding:16px 20px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
+                <div style="font-weight:600;font-size:0.95em;color:#1a1a1a;">{{ r.user.nome_completo or r.user.nome }}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.8em;">
+                    <span style="background:#e8eaf6;color:#2d3a6e;padding:3px 10px;border-radius:12px;font-weight:600;">✅ {{ r.aprovadas }} aprovados</span>
+                    {% if r.pendentes > 0 %}<span style="background:#fff3e0;color:#e65100;padding:3px 10px;border-radius:12px;font-weight:600;">⏳ {{ r.pendentes }} pendentes</span>{% endif %}
+                    <span class="badge-disponiveis" style="background:{% if r.disponiveis == 0 %}#ffebee;color:#c62828{% else %}#e8f5e9;color:#2e7d32{% endif %};padding:3px 10px;border-radius:12px;font-weight:600;">{{ r.disponiveis }} disponíveis</span>
+                </div>
+            </div>
+            <div style="background:#f0f2f5;border-radius:6px;height:8px;overflow:hidden;">
+                <div class="bar-resumo" style="display:flex;height:100%;">
+                    <div class="bar-aprovados" style="width:{{ pct_usado }}%;background:#2d3a6e;transition:width 0.4s;"></div>
+                    <div class="bar-pendentes" style="width:{{ pct_pend }}%;background:#fd7e14;transition:width 0.4s;"></div>
+                </div>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:6px;font-size:0.75em;color:#aaa;">
+                <span>🟦 Aprovados</span>
+                {% if r.pendentes > 0 %}<span>🟧 Pendentes</span>{% endif %}
+                <span>⬜ Disponíveis</span>
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:40px;color:#aaa;font-size:0.9em;">Nenhum funcionário com pedidos este ano.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <div class="modal-overlay" id="deleteModal">
     <div class="modal">
         <div class="modal-icon">🗑️</div>
@@ -493,12 +575,12 @@
                 {% endif %}
             {% endif %}
         {% endfor %}
-        availableByYear[{{ yr }}] = {{ [22 - usados2.v, 0]|max }};
+        availableByYear[{{ yr }}] = {{ [configs_ferias.get(yr, dias_ano) - usados2.v, 0]|max }};
     {% endfor %}
 
     function getAvailableForYear(year) {
         if (availableByYear[year] !== undefined) return availableByYear[year];
-        return 22; // new year = full 22 days
+        return {{ dias_ano }}; // new year = full default days
     }
 
     // ===== HOLIDAYS =====
@@ -778,10 +860,20 @@
                 if (k === todayKey) cell.classList.add('today');
                 var tooltipParts = [];
                 if (hasAprovado) {
-                    var entry = dayEntries.find(function(e) { return e.estado === 'aprovado'; });
-                    cell.style.background = entry.color;
+                    var aprovados = dayEntries.filter(function(e) { return e.estado === 'aprovado'; });
+                    cell.style.background = aprovados[0].color;
                     cell.classList.add('ferias-aprovado');
-                    tooltipParts.push('🏖️ ' + dayEntries.filter(function(e){return e.estado==='aprovado';}).map(function(e){return e.user;}).join(', '));
+                    tooltipParts.push('🏖️ ' + aprovados.map(function(e){return e.user;}).join(', '));
+                    if (aprovados.length > 1) {
+                        var dots = document.createElement('div');
+                        dots.className = 'day-dots';
+                        aprovados.forEach(function(e) {
+                            var dot = document.createElement('div');
+                            dot.style.cssText = 'width:5px;height:5px;border-radius:50%;background:' + e.color + ';border:1px solid rgba(0,0,0,0.15);flex-shrink:0;';
+                            dots.appendChild(dot);
+                        });
+                        cell.appendChild(dots);
+                    }
                 } else if (hasPendente) {
                     cell.classList.add('ferias-pendente');
                     tooltipParts.push('⏳ ' + dayEntries.map(function(e){return e.user;}).join(', '));
@@ -934,6 +1026,109 @@
 })();
 </script>
 
+<script>
+function _applyConfigDias(ano, dias) {
+    // Update availableByYear so calendar validation uses the new config
+    if (typeof availableByYear !== 'undefined') {
+        var util0 = document.getElementById('utilizados-' + ano);
+        var usados0 = parseInt(util0 ? util0.textContent : 0) || 0;
+        availableByYear[ano] = Math.max(0, dias - usados0);
+    }
+    var adq  = document.getElementById('adquiridos-'  + ano);
+    var util = document.getElementById('utilizados-'  + ano);
+    var disp = document.getElementById('disponiveis-' + ano);
+    var prog = document.getElementById('progress-'    + ano);
+    var pctLbl = document.getElementById('pct-label-' + ano);
+    if (adq) {
+        var utilizados = parseInt(util ? util.textContent : 0);
+        var disponiveis = Math.max(0, dias - utilizados);
+        var pct = dias > 0 ? Math.min(100, Math.round((utilizados / dias) * 100)) : 0;
+        adq.textContent = dias;
+        if (disp) disp.textContent = disponiveis;
+        if (prog) prog.style.width = pct + '%';
+        if (pctLbl) pctLbl.textContent = pct + '% utilizado';
+    }
+    var resumoLabel = document.querySelector('#tab-resumo .resumo-label');
+    if (resumoLabel) resumoLabel.textContent = 'Resumo ' + ano + ' — ' + dias + ' dias úteis/ano';
+
+    // Update per-employee resumo cards
+    document.querySelectorAll('.resumo-func-card[data-ano="' + ano + '"]').forEach(function(card) {
+        var aprovadas = parseInt(card.dataset.aprovadas) || 0;
+        var pendentes = parseInt(card.dataset.pendentes) || 0;
+        var disp = Math.max(0, dias - aprovadas - pendentes);
+        var pct_usado = dias > 0 ? Math.min(100, Math.round((aprovadas / dias) * 100)) : 0;
+        var pct_pend = dias > 0 ? Math.min(100, Math.round((pendentes / dias) * 100)) : 0;
+        var badge = card.querySelector('.badge-disponiveis');
+        if (badge) {
+            badge.textContent = disp + ' disponíveis';
+            badge.style.background = disp === 0 ? '#ffebee' : '#e8f5e9';
+            badge.style.color = disp === 0 ? '#c62828' : '#2e7d32';
+        }
+        var barAprov = card.querySelector('.bar-aprovados');
+        if (barAprov) barAprov.style.width = pct_usado + '%';
+        var barPend = card.querySelector('.bar-pendentes');
+        if (barPend) barPend.style.width = pct_pend + '%';
+    });
+}
+function saveConfigDias(ano) {
+    var dias = parseInt(document.getElementById('dias-' + ano).value);
+    if (!dias || dias < 1) return;
+    fetch('/ferias/config-dias', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ano: ano, dias: dias})
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) {
+            var inp = document.getElementById('dias-' + ano);
+            inp.style.borderColor = '#4a5fa8';
+            setTimeout(function() { inp.style.borderColor = '#e0e0e0'; }, 800);
+            _applyConfigDias(ano, dias);
+        }
+    });
+}
+function deleteConfigDias(ano) {
+    fetch('/ferias/config-dias/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ano: ano})
+    }).then(function() {
+        var row = document.getElementById('cfg-row-' + ano);
+        if (row) row.remove();
+        _applyConfigDias(ano, 22);
+    });
+}
+function addConfigDias() {
+    var ano = parseInt(document.getElementById('novoAno').value);
+    var dias = parseInt(document.getElementById('novosDias').value);
+    if (!ano || !dias || dias < 1) return;
+    fetch('/ferias/config-dias', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ano: ano, dias: dias})
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        if (!d.ok) return;
+        // Add row to config list
+        var list = document.getElementById('configList');
+        var existing = document.getElementById('cfg-row-' + ano);
+        if (existing) { document.getElementById('dias-' + ano).value = dias; }
+        else {
+            var row = document.createElement('div');
+            row.id = 'cfg-row-' + ano;
+            row.style.cssText = 'display:flex;align-items:center;gap:8px;';
+            row.innerHTML = '<input type="number" value="' + ano + '" readonly style="width:80px;flex-shrink:0;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;font-size:0.88em;font-family:DM Sans,sans-serif;background:#f5f5f5;color:#777;">'
+                + '<input type="number" id="dias-' + ano + '" value="' + dias + '" min="1" max="365" style="flex:1;min-width:0;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;font-size:0.88em;font-family:DM Sans,sans-serif;">'
+                + '<span style="font-size:0.82em;color:#888;flex-shrink:0;">dias</span>'
+                + '<button onclick="saveConfigDias(' + ano + ')" style="flex-shrink:0;padding:7px 12px;background:#2d3a6e;color:white;border:none;border-radius:6px;font-size:0.82em;cursor:pointer;font-family:DM Sans,sans-serif;">Guardar</button>'
+                + '<button onclick="deleteConfigDias(' + ano + ')" style="flex-shrink:0;padding:7px 10px;background:none;border:1px solid #ddd;border-radius:6px;font-size:0.9em;cursor:pointer;">🗑</button>';
+            // Insert before the add row
+            list.insertBefore(row, list.lastElementChild);
+        }
+        _applyConfigDias(ano, dias);
+        document.getElementById('novoAno').value = ano + 1;
+        document.getElementById('novosDias').value = 22;
+    });
+}
+</script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js');

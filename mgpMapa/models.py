@@ -5,7 +5,7 @@ from datetime import datetime
 class Usuario(UserMixin, db.Model):
     __tablename__ = 'usuario'
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(30), unique=True)
+    nome = db.Column(db.String(100), unique=True)
     senha = db.Column(db.String())
     is_admin = db.Column(db.Boolean, default=False)
     email = db.Column(db.String(120))
@@ -159,6 +159,13 @@ class Notificacao(db.Model):
     lida = db.Column(db.Boolean, default=False)
     criada_em = db.Column(db.String(30), default=lambda: datetime.now().strftime('%d/%m/%Y %H:%M'))
 
+
+class ConfigFeriasAno(db.Model):
+    __tablename__ = 'config_ferias_ano'
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=False)
+    ano = db.Column(db.Integer, nullable=False)
+    dias = db.Column(db.Integer, default=22)
 
 class Organizacao(db.Model):
     __tablename__ = 'organizacao'

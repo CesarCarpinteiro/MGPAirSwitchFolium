@@ -211,9 +211,11 @@
         .add-servico-form {
             display: none; background: #f0f2fa; border: 1px solid #c8e6c9;
             border-radius: 8px; padding: 16px; margin-top: 8px;
+            overflow: hidden; box-sizing: border-box;
         }
         .add-servico-form input, .add-servico-form select {
-            width: 100%; padding: 8px 10px; margin-bottom: 10px; border: 1px solid #ddd;
+            width: 100%; max-width: 100%; box-sizing: border-box;
+            padding: 8px 10px; margin-bottom: 10px; border: 1px solid #ddd;
             border-radius: 6px; font-size: 0.88em; font-family: 'DM Sans', sans-serif; color: #333;
         }
         .add-servico-form input:focus, .add-servico-form select:focus { outline: none; border-color: #4a5fa8; }
@@ -342,7 +344,7 @@
             <input type="text" id="searchInput" placeholder="Pesquisar por nome, contacto ou morada..." oninput="pesquisar()">
         </div>
         {% endif %}
-        <button class="btn-new" onclick="toggleForm()">
+        <button class="btn-new" onclick="{% if not tipos_servico %}openSemTiposModal(){% else %}toggleForm(){% endif %}">
             <span id="formBtnIcon">+</span> Novo Registo
         </button>
     </div>
@@ -467,7 +469,7 @@
             <div class="registo-detail">
                 <div class="servicos-header">
                     <span class="servicos-title">Histórico de Serviços ({{ r.servicos | length }})</span>
-                    <button class="btn-add-servico" onclick="toggleAddServico(this)">+ Novo Serviço</button>
+                    <button class="btn-add-servico" onclick="{% if not tipos_servico %}openSemTiposModal(){% else %}toggleAddServico(this){% endif %}">+ Novo Serviço</button>
                 </div>
 
                 <!-- Form adicionar serviço -->
@@ -614,18 +616,18 @@
 
     <div class="pagination">
         {% if page > 1 %}
-        <a href="{{ url_for('nova_pagina', page=1) }}">«</a>
-        <a href="{{ url_for('nova_pagina', page=page-1) }}">‹</a>
+        <a href="{{ url_for('registos.nova_pagina', page=1) }}">«</a>
+        <a href="{{ url_for('registos.nova_pagina', page=page-1) }}">‹</a>
         {% else %}
         <span class="disabled">«</span>
         <span class="disabled">‹</span>
         {% endif %}
         {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
-        <a href="{{ url_for('nova_pagina', page=p) }}" class="{{ 'active' if p == page else '' }}">{{ p }}</a>
+        <a href="{{ url_for('registos.nova_pagina', page=p) }}" class="{{ 'active' if p == page else '' }}">{{ p }}</a>
         {% endfor %}
         {% if page < total_pages %}
-        <a href="{{ url_for('nova_pagina', page=page+1) }}">›</a>
-        <a href="{{ url_for('nova_pagina', page=total_pages) }}">»</a>
+        <a href="{{ url_for('registos.nova_pagina', page=page+1) }}">›</a>
+        <a href="{{ url_for('registos.nova_pagina', page=total_pages) }}">»</a>
         {% else %}
         <span class="disabled">›</span>
         <span class="disabled">»</span>
@@ -638,6 +640,17 @@
         <div style="font-size:0.85em;color:#bbb;">Clica em <strong>Novo Registo</strong> para adicionar o primeiro registo.</div>
     </div>
     {% endif %}
+
+    <div class="modal-overlay" id="semTiposModal">
+        <div class="modal">
+            <div class="modal-title">⚠️ Sem tipos de serviço</div>
+            <div class="modal-sub">Ainda não tens nenhum tipo de serviço definido.<br>Vai ao <strong>Perfil → Tipos de Serviço</strong> e adiciona pelo menos um antes de criar um registo.</div>
+            <div class="modal-buttons">
+                <button class="modal-cancel" onclick="document.getElementById('semTiposModal').classList.remove('active')">Fechar</button>
+                <a href="/perfil#tipos-servico" class="modal-confirm" style="text-decoration:none;display:inline-block;padding:9px 22px;">Ir ao Perfil</a>
+            </div>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="deleteModal">
         <div class="modal">
@@ -725,6 +738,9 @@
         }
 
         let formToSubmit = null;
+        function openSemTiposModal() {
+            document.getElementById('semTiposModal').classList.add('active');
+        }
         function openModal(formId) {
             formToSubmit = document.getElementById(formId);
             document.getElementById('deleteModal').classList.add('active');

@@ -733,33 +733,21 @@
                 <p id="addUserMsg" style="font-size:0.82em;margin-top:8px;display:none;"></p>
             </div>
         </div>
-        <div class="card" style="margin-top:20px;">
+        <div class="card" id="tipos-servico" style="margin-top:20px;">
             <div class="section-title">Tipos de Serviço</div>
             <p style="font-size:0.83em;color:#888;margin-bottom:16px;">Opções disponíveis no campo "Tipo de Serviço" ao criar ou editar registos.</p>
 
-            <table class="users-table" style="margin-bottom:16px;">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th style="width:160px;"></th>
-                    </tr>
-                </thead>
-                <tbody id="tiposTableBody">
-                    {% for t in tipos_servico %}
-                    <tr id="tipo-row-{{ t.id }}">
-                        <td>
-                            <input type="text" id="tipo-input-{{ t.id }}" value="{{ t.nome }}"
-                                style="border:1px solid #e0e0e0;border-radius:6px;padding:5px 9px;font-size:0.88em;font-family:'DM Sans',sans-serif;width:100%;max-width:280px;">
-                        </td>
-                        <td style="text-align:right;display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px 12px;">
-                            <button onclick="editTipo({{ t.id }})"
-                                style="padding:5px 12px;background:#2d3a6e;color:white;border:none;border-radius:6px;font-size:0.8em;cursor:pointer;font-family:'DM Sans',sans-serif;">Guardar</button>
-                            <button data-tipoid="{{ t.id }}" data-tipnome="{{ t.nome|e }}" onclick="deleteTipoFromBtn(this)" class="delete-user-btn">🗑</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div id="tiposTableBody" style="margin-bottom:16px;display:flex;flex-direction:column;gap:8px;">
+                {% for t in tipos_servico %}
+                <div id="tipo-row-{{ t.id }}" style="display:flex;align-items:center;gap:8px;">
+                    <input type="text" id="tipo-input-{{ t.id }}" value="{{ t.nome }}"
+                        style="flex:1;min-width:0;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;font-size:0.88em;font-family:'DM Sans',sans-serif;">
+                    <button onclick="editTipo({{ t.id }})"
+                        style="flex-shrink:0;padding:7px 12px;background:#2d3a6e;color:white;border:none;border-radius:6px;font-size:0.82em;cursor:pointer;font-family:'DM Sans',sans-serif;">Guardar</button>
+                    <button data-tipoid="{{ t.id }}" data-tipnome="{{ t.nome|e }}" onclick="deleteTipoFromBtn(this)" class="delete-user-btn" style="flex-shrink:0;">🗑</button>
+                </div>
+                {% endfor %}
+            </div>
 
             <div style="display:flex;gap:8px;align-items:center;">
                 <input type="text" id="novoTipoInput" placeholder="Ex: Instalação AC"
@@ -1174,14 +1162,13 @@
         .then(function(data) {
             if (data.ok) {
                 var tbody = document.getElementById('tiposTableBody');
-                var tr = document.createElement('tr');
+                var tr = document.createElement('div');
                 tr.id = 'tipo-row-' + data.id;
+                tr.style.cssText = 'display:flex;align-items:center;gap:8px;';
                 tr.innerHTML =
-                    '<td><input type="text" id="tipo-input-' + data.id + '" value="' + data.nome + '" style="border:1px solid #e0e0e0;border-radius:6px;padding:5px 9px;font-size:0.88em;font-family:DM Sans,sans-serif;width:100%;max-width:280px;"></td>' +
-                    '<td style="text-align:right;display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px 12px;">' +
-                    '<button onclick="editTipo(' + data.id + ')" style="padding:5px 12px;background:#2d3a6e;color:white;border:none;border-radius:6px;font-size:0.8em;cursor:pointer;font-family:DM Sans,sans-serif;">Guardar</button>' +
-                    '<button data-tipoid="' + data.id + '" data-tipnome="' + data.nome.replace(/"/g, '&quot;') + '" onclick="deleteTipoFromBtn(this)" class="delete-user-btn">🗑</button>' +
-                    '</td>';
+                    '<input type="text" id="tipo-input-' + data.id + '" value="' + data.nome + '" style="flex:1;min-width:0;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;font-size:0.88em;font-family:DM Sans,sans-serif;">' +
+                    '<button onclick="editTipo(' + data.id + ')" style="flex-shrink:0;padding:7px 12px;background:#2d3a6e;color:white;border:none;border-radius:6px;font-size:0.82em;cursor:pointer;font-family:DM Sans,sans-serif;">Guardar</button>' +
+                    '<button data-tipoid="' + data.id + '" data-tipnome="' + data.nome.replace(/"/g, '&quot;') + '" onclick="deleteTipoFromBtn(this)" class="delete-user-btn" style="flex-shrink:0;">🗑</button>';
                 tbody.appendChild(tr);
                 input.value = '';
                 msg.style.display = 'none';
@@ -1664,6 +1651,26 @@
             var btn = document.getElementById('btnInstalarApp');
             if (btn) { btn.textContent = '✓ Instalado'; btn.style.opacity='0.6'; btn.onclick=null; }
         });
+    }
+
+    if (window.location.hash === '#tipos-servico') {
+        // Activate the Admin tab first
+        document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        var adminPanel = document.getElementById('tab-admin');
+        if (adminPanel) adminPanel.classList.add('active');
+        var adminBtn = document.querySelector('.tab-btn[onclick*="tab-admin"]');
+        if (adminBtn) adminBtn.classList.add('active');
+
+        var el = document.getElementById('tipos-servico');
+        if (el) {
+            setTimeout(function() {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                el.style.transition = 'box-shadow 0.3s';
+                el.style.boxShadow = '0 0 0 3px #4a5fa8';
+                setTimeout(function() { el.style.boxShadow = ''; }, 2000);
+            }, 300);
+        }
     }
 </script>
 

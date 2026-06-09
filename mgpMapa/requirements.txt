@@ -1,10 +1,14 @@
-FLASK>=2.1.0
+Flask>=2.1.0
 folium
 pandas
 markupsafe
 jinja2<3.1.0
 flask-login
 flask_sqlalchemy
+flask-migrate
+flask-session
 gunicorn==21.2.0
 python-dotenv
 pywebpush
+psycopg2-binary
+redis
