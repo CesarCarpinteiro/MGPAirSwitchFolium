@@ -1560,13 +1560,15 @@
     }
 
     async function toggleNotif() {
+        var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+        var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        if (isIOS && !isStandalone) {
+            alert('No iPhone/iPad, as notificações só funcionam com a app instalada no ecrã inicial.\n\nInstala primeiro a app (botão "Instalar App") e abre-a a partir do ícone.');
+            return;
+        }
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-            var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-            if (isIOS) {
-                alert('No iOS, instala primeiro a app no ecrã inicial (botão "Instalar App") e abre-a a partir daí para ativar notificações.');
-            } else {
-                alert('O teu browser não suporta notificações push. Tenta com Chrome ou Edge.');
-            }
+            alert('O teu browser não suporta notificações push. Tenta com Chrome ou Edge.');
             return;
         }
         if (Notification.permission === 'denied') {
@@ -1720,7 +1722,6 @@
         </div>
         <div id="installStepDesktop" style="display:none;font-size:0.9em;color:#444;line-height:1.7;">
             <p style="margin-bottom:12px;">Clica no ícone <strong style="font-size:1.1em;">⊕</strong> na barra de endereço do browser para instalar a app.</p>
-            <img src="/static/icons/install-hint.png" onerror="this.style.display='none'" style="width:100%;border-radius:8px;margin-bottom:14px;">
             <button onclick="closeIosModal()" style="width:100%;padding:14px;background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;border-radius:12px;font-size:1em;font-weight:700;cursor:pointer;">OK, percebo</button>
         </div>
     </div>
