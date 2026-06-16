@@ -176,4 +176,11 @@ def service_worker():
     response = send_from_directory('static', 'sw.js')
     response.headers['Service-Worker-Allowed'] = '/'
     response.headers['Content-Type'] = 'application/javascript'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
+
+@push_bp.route('/manifest.json')
+def manifest():
+    response = send_from_directory('static', 'manifest.json')
+    response.headers['Content-Type'] = 'application/manifest+json'
     return response

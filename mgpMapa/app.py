@@ -14,6 +14,8 @@ login_manager = LoginManager()
 migrate = Migrate()
 
 
+APP_VERSION = os.getenv('APP_VERSION', '1.0')
+
 def create_app():
     app = Flask(__name__)
 
@@ -88,10 +90,11 @@ def create_app():
                 return dict(
                     org_nome=org.nome if org else 'A minha Organização',
                     org=org,
-                    tem_mapa=tipo != 'espaco'
+                    tem_mapa=tipo != 'espaco',
+                    app_version=APP_VERSION
                 )
-            return dict(org_nome='A minha Organização', org=None, tem_mapa=True)
+            return dict(org_nome='A minha Organização', org=None, tem_mapa=True, app_version=APP_VERSION)
         except Exception:
-            return dict(org_nome='A minha Organização', org=None, tem_mapa=True)
+            return dict(org_nome='A minha Organização', org=None, tem_mapa=True, app_version=APP_VERSION)
 
     return app

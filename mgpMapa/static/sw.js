@@ -1,4 +1,4 @@
-const CACHE = 'gestaopro-v1';
+const CACHE = 'gestaopro-v2';
 const STATIC = [
   '/static/manifest.json',
   '/static/icons/icon-192.png',
@@ -9,7 +9,10 @@ self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open(CACHE).then(function(c) { return c.addAll(STATIC); })
   );
-  self.skipWaiting();
+});
+
+self.addEventListener('message', function(e) {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', function(e) {

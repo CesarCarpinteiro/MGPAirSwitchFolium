@@ -347,7 +347,7 @@
             .user-stats { grid-template-columns: 1fr 1fr; }
         }
     </style>
-    <link rel="manifest" href="/static/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#2d3a6e">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -763,7 +763,7 @@
 
 </div>
 
-<footer>&copy; GestãoPro</footer>
+<footer>&copy; GestãoPro &nbsp;·&nbsp; v{{ app_version }}</footer>
 
 <div id="confirmModal" class="confirm-backdrop">
     <div class="confirm-box">
@@ -1726,6 +1726,36 @@
         </div>
     </div>
 </div>
+<div id="updateBanner" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:20px;padding:32px 28px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+        <div style="font-size:2.5em;margin-bottom:12px;">🆕</div>
+        <div style="font-size:1.2em;font-weight:700;color:#1a1a2e;margin-bottom:8px;">Nova versão disponível</div>
+        <div style="font-size:0.88em;color:#666;margin-bottom:24px;line-height:1.5;">A app foi atualizada com melhorias. Carrega para aplicar.</div>
+        <button onclick="applyUpdate()" style="width:100%;padding:14px;background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;border-radius:12px;font-size:1em;font-weight:700;cursor:pointer;">Atualizar agora</button>
+    </div>
+</div>
+<script>
+if ('serviceWorker' in navigator) {
+    var _refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!_refreshing) { _refreshing = true; window.location.reload(); }
+    });
+    navigator.serviceWorker.register('/sw.js').then(function(reg) {
+        if (reg.waiting) { document.getElementById('updateBanner').style.display = 'flex'; }
+        reg.addEventListener('updatefound', function() {
+            var nw = reg.installing;
+            nw.addEventListener('statechange', function() {
+                if (nw.state === 'installed') { document.getElementById('updateBanner').style.display = 'flex'; }
+            });
+        });
+    });
+}
+function applyUpdate() {
+    navigator.serviceWorker.ready.then(function(reg) {
+        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+    });
+}
+</script>
 <div id="cookieBanner" style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:3px solid #4a5fa8;padding:12px 20px;z-index:99990;box-shadow:0 -2px 16px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><p style="margin:0;font-size:0.82em;color:#555;flex:1;min-width:180px;">Este site utiliza cookies essenciais para autenticação e funcionamento da sessão. Ao continuar a utilizar o site, aceita o seu uso.</p><div style="display:flex;gap:8px;flex-shrink:0;"><a href="/politica-cookies" style="font-size:0.78em;color:#2d3a6e;text-decoration:underline;align-self:center;">Saber mais</a><button onclick="aceitarCookies()" style="background:linear-gradient(135deg,#2d3a6e,#4a5fa8);color:white;border:none;padding:8px 18px;border-radius:7px;font-size:0.82em;font-weight:bold;cursor:pointer;">Aceitar</button></div></div><script>(function(){if(localStorage.getItem("cookiesAceites")){document.getElementById("cookieBanner").style.display="none";}})();function aceitarCookies(){localStorage.setItem("cookiesAceites","1");document.getElementById("cookieBanner").style.display="none";}</script>
 </body>
 </html>
