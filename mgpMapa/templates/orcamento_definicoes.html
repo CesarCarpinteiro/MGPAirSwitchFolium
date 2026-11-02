@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ org_nome }} — Definições do orçamento</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .page-header a {
+            padding: 9px 20px; background: white; color: #2d3a6e;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em;
+            font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+
+        .content { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 22px 24px; margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1em; font-weight: bold; color: #2d3a6e;
+            margin-bottom: 6px; padding-bottom: 8px;
+            border-bottom: 2px solid #e8f0e8;
+        }
+        .ajuda { font-size: 0.82em; color: #888; margin: 8px 0 16px; line-height: 1.5; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 0.83em; font-weight: bold; color: #555; }
+        input[type=text], input[type=email], input[type=number], textarea {
+            padding: 9px 11px; border: 1px solid #ddd; border-radius: 7px;
+            font-size: 0.92em; font-family: Arial; color: #333; background: #fafafa; outline: none; width: 100%;
+        }
+        input:focus, textarea:focus { border-color: #4a5fa8; box-shadow: 0 0 0 3px rgba(74,95,168,0.1); background: white; }
+        textarea { resize: vertical; line-height: 1.45; }
+
+        .logo-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .logo-preview { height: 56px; max-width: 160px; object-fit: contain; border: 1px solid #eee; border-radius: 6px; padding: 4px; background: white; }
+        .check { font-size: 0.85em; color: #555; display: flex; gap: 6px; align-items: center; }
+
+        .margem-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .margem-row input { width: 110px; text-align: right; }
+        .exemplo { font-size: 0.88em; color: #555; background: #f5f6fc; border-radius: 7px; padding: 9px 12px; }
+        .exemplo strong { color: #2d3a6e; }
+
+        .btn-submit {
+            padding: 12px 30px; width: 100%;
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            color: white; border: none; border-radius: 7px;
+            font-size: 0.95em; font-weight: bold; cursor: pointer;
+        }
+        .btn-submit:hover { opacity: 0.9; }
+
+        footer {
+            text-align: center; padding: 10px; background: #2d3a6e;
+            color: rgba(255,255,255,0.8); font-size: 12px;
+            position: fixed; bottom: 0; width: 100%;
+        }
+        @media (max-width: 700px) {
+            .content { padding: 0 10px; margin-top: 16px; }
+            .card { padding: 18px 14px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-grid .full { grid-column: 1; }
+            .page-header { padding: 10px 12px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+        <div>
+            <div class="subtitle">{{ org_nome }}</div>
+            <h1>Definições do orçamento</h1>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="/orcamentos">← Orçamentos</a>
+        <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
+    </div>
+</div>
+
+<div class="content">
+    <form method="POST" action="/orcamentos/definicoes" enctype="multipart/form-data">
+
+        <div class="card">
+            <div class="section-title">🏢 Empresa (cabeçalho do PDF)</div>
+            <p class="ajuda">Estes dados aparecem no topo de todos os orçamentos enviados aos clientes.</p>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Designação social</label>
+                    <input type="text" name="designacao_social" value="{{ o.designacao_social or '' }}" placeholder="{{ o.nome }}">
+                </div>
+                <div class="form-group">
+                    <label>NIF</label>
+                    <input type="text" name="nif" value="{{ o.nif or '' }}" inputmode="numeric">
+                </div>
+                <div class="form-group full">
+                    <label>Morada</label>
+                    <input type="text" name="morada" value="{{ o.morada or '' }}" placeholder="Rua, nº, localidade">
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="text" name="telefone" value="{{ o.telefone or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ o.email or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Instagram / site</label>
+                    <input type="text" name="redes" value="{{ o.redes or '' }}" placeholder="@empresa">
+                </div>
+                <div class="form-group">
+                    <label>Logótipo (PNG ou JPG)</label>
+                    <div class="logo-row">
+                        {% if o.logo %}<img src="/static/uploads/{{ o.logo }}" class="logo-preview" alt="Logótipo atual">{% endif %}
+                        <input type="file" name="logo" accept=".png,.jpg,.jpeg">
+                    </div>
+                    {% if o.logo %}<label class="check"><input type="checkbox" name="remover_logo" value="1"> Remover logótipo</label>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">💶 Preços</div>
+            <p class="ajuda">Os preços importados das tabelas são de catálogo. A margem é somada automaticamente quando escolhe um produto no orçamento, e o preço continua editável em cada linha.</p>
+            <div class="margem-row">
+                <div class="form-group">
+                    <label>Margem sobre o catálogo (%)</label>
+                    <input type="number" name="orc_margem" id="margem" min="0" step="0.5" value="{{ '%g' % margem }}">
+                </div>
+                <div class="exemplo" id="exemplo"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📝 Textos por omissão</div>
+            <p class="ajuda">Aparecem já preenchidos em cada novo orçamento. Pode ajustá-los em cada orçamento antes de o criar.</p>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Termos e condições</label>
+                    <textarea name="orc_termos" rows="9">{{ termos }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Condições de pagamento (uma por linha)</label>
+                    <textarea name="orc_pagamento" rows="9">{{ pagamento }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Guardar definições</button>
+    </form>
+</div>
+
+<footer>&copy; GestãoPro</footer>
+
+<div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
+
+<script>
+    var fmt = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function atualizarExemplo() {
+        var m = parseFloat(document.getElementById('margem').value) || 0;
+        document.getElementById('exemplo').innerHTML =
+            'Ex.: produto de <strong>' + fmt.format(1050) + ' €</strong> no catálogo → <strong>' +
+            fmt.format(1050 * (1 + m / 100)) + ' €</strong> no orçamento (sem IVA)';
+    }
+    document.getElementById('margem').addEventListener('input', atualizarExemplo);
+    atualizarExemplo();
+
+    function showToast(msg, type) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:Arial,sans-serif;max-width:90vw;opacity:1;transition:opacity 0.4s;';
+        t.style.background = type === 'error' ? '#e53935' : '#2d3a6e';
+        t.style.color = 'white';
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
+    }
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    showToast({{ message|tojson }}, {{ category|tojson }});
+    {% endfor %}
+    {% endwith %}
+</script>
+</body>
+</html>

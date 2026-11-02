@@ -117,6 +117,36 @@ class Orcamento(db.Model):
     estado = db.Column(db.String(50), default='Pendente')
     created_at = db.Column(db.String(20))
     org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
+    # Campos do orçamento automático (valor = total com IVA)
+    cliente_nif = db.Column(db.String(20))
+    cliente_contacto = db.Column(db.String(50))
+    cliente_email = db.Column(db.String(120))
+    cliente_morada = db.Column(db.String(300))
+    desconto = db.Column(db.Float, default=0)
+    iva_taxa = db.Column(db.Float, default=23)
+    termos = db.Column(db.Text)
+    condicoes_pagamento = db.Column(db.Text)
+    linhas = db.relationship('OrcamentoLinha', backref='orcamento', cascade='all, delete-orphan',
+                             order_by='OrcamentoLinha.id')
+
+class OrcamentoLinha(db.Model):
+    __tablename__ = 'orcamento_linhas'
+    id = db.Column(db.Integer, primary_key=True)
+    orcamento_id = db.Column(db.Integer, db.ForeignKey('orcamentos.id'), nullable=False)
+    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id', ondelete='SET NULL'), nullable=True)
+    descricao = db.Column(db.String(300), nullable=False)
+    quantidade = db.Column(db.Float, default=1)
+    preco_unitario = db.Column(db.Float, default=0)  # sem IVA
+
+class Produto(db.Model):
+    __tablename__ = 'produtos'
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=False)
+    marca = db.Column(db.String(100))
+    modelo = db.Column(db.String(200), nullable=False)
+    descricao = db.Column(db.String(300))
+    categoria = db.Column(db.String(100))
+    preco = db.Column(db.Float, nullable=False)  # sem IVA
 
 class PushSubscription(db.Model):
     __tablename__ = 'push_subscriptions'
@@ -175,3 +205,13 @@ class Organizacao(db.Model):
     telefone = db.Column(db.String(30))
     created_at = db.Column(db.String(20))
     tipo_negocio = db.Column(db.String(20), default='cliente')  # 'espaco', 'cliente', 'ambos'
+    # Dados e predefinições do orçamento (cabeçalho do PDF, margem, termos)
+    designacao_social = db.Column(db.String(200))
+    morada = db.Column(db.String(300))
+    email = db.Column(db.String(120))
+    redes = db.Column(db.String(120))
+    nif = db.Column(db.String(20))
+    logo = db.Column(db.String(200))
+    orc_margem = db.Column(db.Float, default=35)  # % sobre o preço de catálogo
+    orc_termos = db.Column(db.Text)
+    orc_pagamento = db.Column(db.Text)

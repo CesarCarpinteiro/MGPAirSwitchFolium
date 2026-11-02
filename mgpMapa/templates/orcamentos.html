@@ -58,29 +58,6 @@
             display: flex; align-items: center; gap: 8px;
         }
 
-        /* Form grid */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 14px;
-            margin-bottom: 16px;
-        }
-        .form-grid .full { grid-column: 1 / -1; }
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        .form-group label { font-size: 0.83em; font-weight: bold; color: #555; }
-        .form-group input, .form-group textarea, .form-group select {
-            padding: 9px 11px; border: 1px solid #ddd; border-radius: 7px;
-            font-size: 0.92em; font-family: Arial; color: #333;
-            background: #fafafa; outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            border-color: #4a5fa8;
-            box-shadow: 0 0 0 3px rgba(74,95,168,0.1);
-            background: white;
-        }
-        .form-group textarea { resize: vertical; min-height: 70px; }
-
         .btn-submit {
             padding: 10px 28px;
             background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
@@ -89,80 +66,19 @@
             transition: opacity 0.2s;
         }
         .btn-submit:hover { opacity: 0.9; }
+        a.btn-submit { text-decoration: none; display: inline-block; }
 
-        /* Predictor */
-        .predictor-box {
-            background: linear-gradient(135deg, #e8eaf6, #f1f8f1);
-            border: 1.5px solid #c8e6c9;
-            border-radius: 10px;
-            padding: 18px 20px;
-            margin-top: 16px;
+        .action-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-left: 4px solid #4a5fa8; }
+        .auto-title { font-weight: bold; color: #2d3a6e; margin-bottom: 4px; }
+        .auto-sub { font-size: 0.85em; color: #777; }
+        .auto-actions { display: flex; gap: 10px; flex-shrink: 0; }
+        .btn-secondary {
+            padding: 10px 18px; background: white; color: #2d3a6e; border: 1.5px solid #c5cae9;
+            border-radius: 7px; font-size: 0.92em; font-weight: bold; text-decoration: none;
         }
-
-        .predictor-title {
-            font-size: 0.88em; font-weight: bold; color: #2d3a6e;
-            margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
-        }
-
-        .predictor-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .predictor-controls label {
-            font-size: 0.8em; font-weight: bold; color: #555;
-            display: block; margin-bottom: 4px;
-        }
-
-        .predictor-controls input[type="number"],
-        .predictor-controls input[type="range"] {
-            width: 100%; padding: 8px 10px;
-            border: 1px solid #ddd; border-radius: 6px;
-            font-size: 0.9em; background: white;
-        }
-
-        .predictor-results {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .pred-card {
-            background: white;
-            border-radius: 8px;
-            padding: 14px 16px;
-            border: 1px solid #e0f0e0;
-            text-align: center;
-        }
-
-        .pred-card .emp-label {
-            font-size: 0.78em; color: #888; margin-bottom: 6px;
-            font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px;
-        }
-
-        .pred-card .pred-hours {
-            font-size: 1.5em; font-weight: bold; color: #2d3a6e; line-height: 1.1;
-        }
-
-        .pred-card .pred-days {
-            font-size: 0.82em; color: #666; margin-top: 4px;
-        }
-
-        .pred-card .pred-bar-bg {
-            height: 4px; background: #e8f0e8; border-radius: 99px;
-            margin-top: 10px; overflow: hidden;
-        }
-
-        .pred-card .pred-bar {
-            height: 100%; background: linear-gradient(90deg, #2d3a6e, #4a5fa8);
-            border-radius: 99px; transition: width 0.4s ease;
-        }
-
-        .horas-note {
-            font-size: 0.78em; color: #888; margin-top: 10px; text-align: center;
-        }
+        .btn-secondary:hover { background: #f5f6fc; }
+        .pdf-link { color: #2d3a6e; font-size: 0.82em; font-weight: bold; text-decoration: none; padding: 3px 8px; border: 1px solid #c5cae9; border-radius: 5px; }
+        .pdf-link:hover { background: #eef0fa; }
 
         /* Table */
         .orcamentos-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
@@ -175,6 +91,8 @@
         }
         .orcamentos-table tr:last-child td { border-bottom: none; }
         .orcamentos-table tr:hover td { background: #fafff9; }
+        .orcamentos-table tr.orc-novo td { background: #eef0fa; animation: orcNovo 3s ease-out; }
+        @keyframes orcNovo { from { background: #c5cae9; } to { background: #eef0fa; } }
 
         .badge {
             padding: 3px 10px; border-radius: 12px;
@@ -232,11 +150,9 @@
         }
 
         @media (max-width: 700px) {
-            .form-grid { grid-template-columns: 1fr; }
-            .form-grid .full { grid-column: 1; }
-            .predictor-controls { grid-template-columns: 1fr; }
-            .predictor-results { grid-template-columns: 1fr; }
             .summary-row { grid-template-columns: 1fr 1fr; }
+            .action-bar { flex-direction: column; align-items: stretch; }
+            .auto-actions { flex-direction: column; text-align: center; }
             .content { padding: 0 10px; }
             .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .orcamentos-table th, .orcamentos-table td { white-space: nowrap; font-size: 0.82em; padding: 8px 10px; }
@@ -310,56 +226,24 @@
         <div class="summary-card">
             <div class="s-label">Valor Total</div>
             <div class="s-value">
-                {{ '%.0f€' % (orcamentos | sum(attribute='0.valor') if orcamentos else 0) }}
+                {{ '%.0f€' % (orcamentos | map(attribute='0.valor') | select | sum) }}
             </div>
             <div class="s-sub">em orçamentos</div>
         </div>
     </div>
 
-    <!-- New quote form -->
-    <div class="card">
-        <div class="section-title">➕ Novo Orçamento</div>
-        <form method="POST" action="/orcamentos">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Cliente *</label>
-                    <input type="text" name="cliente" placeholder="Nome do cliente" required>
-                </div>
-                <div class="form-group">
-                    <label>Nº de Máquinas</label>
-                    <input type="number" name="num_maquinas" id="formMaquinas" min="1" placeholder="Ex: 5" oninput="updatePredictor()">
-                </div>
-                <div class="form-group">
-                    <label>Valor (€)</label>
-                    <input type="number" name="valor" step="0.01" placeholder="Ex: 350.00">
-                </div>
-                <div class="form-group full">
-                    <label>Descrição do trabalho</label>
-                    <textarea name="descricao" placeholder="Descreva o trabalho a realizar..."></textarea>
-                </div>
-            </div>
-            <button type="submit" class="btn-submit">+ Criar Orçamento</button>
-        </form>
-
-        <!-- Predictor -->
-        <div class="predictor-box">
-            <div class="predictor-title">⏱️ Previsão de Duração do Trabalho</div>
-            <div class="predictor-controls">
-                <div>
-                    <label>Nº de Máquinas</label>
-                    <input type="number" id="predMaquinas" min="1" value="5" oninput="syncMaquinas('pred'); calcPredictor()">
-                </div>
-                <div>
-                    <label>Horas por máquina</label>
-                    <input type="number" id="predHorasMaquina" min="0.5" step="0.5" value="2" oninput="calcPredictor()">
-                </div>
-                <div>
-                    <label>Horas de trabalho/dia</label>
-                    <input type="number" id="predHораsDia" min="1" max="24" value="8" oninput="calcPredictor()">
-                </div>
-            </div>
-            <div class="predictor-results" id="predResults"></div>
-            <div class="horas-note" id="predNote"></div>
+    <!-- Ações -->
+    <div class="card action-bar">
+        <div>
+            <div class="auto-title">Novo orçamento</div>
+            <div class="auto-sub">Escolha os modelos do catálogo com o preço já calculado, ajuste os termos e gere o PDF para o cliente.</div>
+        </div>
+        <div class="auto-actions">
+            {% if is_admin %}
+            <a href="/orcamentos/catalogo" class="btn-secondary">📦 Catálogo</a>
+            <a href="/orcamentos/definicoes" class="btn-secondary">⚙️ Definições</a>
+            {% endif %}
+            <a href="/orcamentos/novo" class="btn-submit">+ Novo orçamento</a>
         </div>
     </div>
 
@@ -384,7 +268,7 @@
             </thead>
             <tbody>
                 {% for o, u in orcamentos %}
-                <tr>
+                <tr id="orc-{{ o.id }}"{% if novo_id == o.id %} class="orc-novo"{% endif %}>
                     <td style="color:#aaa; font-size:0.85em;">#{{ o.id }}</td>
                     <td><strong>{{ o.cliente }}</strong></td>
                     <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#666;">
@@ -418,8 +302,9 @@
                     {% if is_admin %}
                     <td style="font-size:0.85em; color:#888;">{{ u.nome }}</td>
                     {% endif %}
-                    <td>
-                        <form method="POST" action="/orcamentos/delete/{{ o.id }}" id="odel-{{ o.id }}" style="margin:0;">
+                    <td style="white-space:nowrap;">
+                        {% if o.linhas %}<a href="/orcamentos/{{ o.id }}/pdf" target="_blank" class="pdf-link" title="Ver PDF">PDF</a>{% endif %}
+                        <form method="POST" action="/orcamentos/delete/{{ o.id }}" id="odel-{{ o.id }}" style="margin:0;display:inline;">
                             <button type="button" class="delete-btn"
                                 data-formid="odel-{{ o.id }}"
                                 data-cliente="{{ o.cliente|e }}"
@@ -444,66 +329,11 @@
 <footer>&copy; GestãoPro</footer>
 
 <script>
-    var EMPLOYEE_CONFIGS = [
-        { label: '1 Técnico', count: 1, color: '#e65100' },
-        { label: '2 Técnicos', count: 2, color: '#2d3a6e' },
-        { label: '3 Técnicos', count: 3, color: '#1565c0' },
-    ];
-
-    function calcPredictor() {
-        var maquinas = parseFloat(document.getElementById('predMaquinas').value) || 0;
-        var horasPorMaquina = parseFloat(document.getElementById('predHorasMaquina').value) || 2;
-        var horasDia = parseFloat(document.getElementById('predHораsDia').value) || 8;
-
-        var totalHoras = maquinas * horasPorMaquina;
-        var container = document.getElementById('predResults');
-        var note = document.getElementById('predNote');
-
-        if (maquinas <= 0) {
-            container.innerHTML = '<div style="color:#aaa; font-size:0.85em; grid-column:1/-1; text-align:center; padding:10px;">Introduza o número de máquinas para ver a previsão.</div>';
-            note.textContent = '';
-            return;
-        }
-
-        var maxHours = Math.max(...EMPLOYEE_CONFIGS.map(function(e) { return totalHoras / e.count; }));
-
-        container.innerHTML = EMPLOYEE_CONFIGS.map(function(emp) {
-            var horas = totalHoras / emp.count;
-            var dias = horas / horasDia;
-            var horasDisplay = horas % 1 === 0 ? horas + 'h' : horas.toFixed(1) + 'h';
-            var diasDisplay = dias < 1
-                ? Math.round(dias * horasDia) + 'h no dia'
-                : (dias % 1 < 0.1 ? Math.round(dias) : dias.toFixed(1)) + ' dias';
-            var barWidth = Math.round((horas / maxHours) * 100);
-
-            return '<div class="pred-card">' +
-                '<div class="emp-label">' + emp.label + '</div>' +
-                '<div class="pred-hours" style="color:' + emp.color + '">' + horasDisplay + '</div>' +
-                '<div class="pred-days">' + diasDisplay + '</div>' +
-                '<div class="pred-bar-bg"><div class="pred-bar" style="width:' + barWidth + '%; background:' + emp.color + ';"></div></div>' +
-                '</div>';
-        }).join('');
-
-        note.textContent = maquinas + ' máquina(s) × ' + horasPorMaquina + 'h cada = ' + totalHoras + 'h total de trabalho';
-    }
-
-    function syncMaquinas(source) {
-        var predVal = document.getElementById('predMaquinas').value;
-        var formVal = document.getElementById('formMaquinas').value;
-        if (source === 'pred') {
-            document.getElementById('formMaquinas').value = predVal;
-        } else {
-            document.getElementById('predMaquinas').value = formVal;
-        }
-    }
-
-    function updatePredictor() {
-        syncMaquinas('form');
-        calcPredictor();
-    }
-
-    // Init
-    calcPredictor();
+    // Orçamento acabado de criar: leva o utilizador até à linha na lista
+    document.addEventListener('DOMContentLoaded', function() {
+        var novo = document.querySelector('tr.orc-novo');
+        if (novo) novo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
 
     function showToast(msg, type) {
         const c = document.getElementById('toast-container');
@@ -517,7 +347,7 @@
     }
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
-    showToast("{{ message }}", "{{ category }}");
+    document.addEventListener('DOMContentLoaded', function() { showToast({{ message|tojson }}, {{ category|tojson }}); });
     {% endfor %}
     {% endwith %}
 </script>

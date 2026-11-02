@@ -924,7 +924,7 @@
     }
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
-    document.addEventListener('DOMContentLoaded', function(){ showToast("{{ message }}", "{{ category }}"); });
+    document.addEventListener('DOMContentLoaded', function(){ showToast({{ message|tojson }}, {{ category|tojson }}); });
     {% endfor %}
     {% endwith %}
 </script>

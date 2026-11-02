@@ -74,7 +74,7 @@ def create_app():
 
     @login_manager.user_loader
     def user_loader(user_id):
-        return db.session.query(Usuario).filter_by(id=user_id).first()
+        return db.session.query(Usuario).filter_by(id=int(user_id)).first()
 
     # Inject org context into all templates
     from flask import g

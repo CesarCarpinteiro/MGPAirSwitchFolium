@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ org_nome }} — Catálogo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .page-header a {
+            padding: 9px 20px; background: white; color: #2d3a6e;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em;
+            font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+
+        .content { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 22px 24px; margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1em; font-weight: bold; color: #2d3a6e;
+            margin-bottom: 16px; padding-bottom: 8px;
+            border-bottom: 2px solid #e8f0e8;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .help { font-size: 0.84em; color: #666; line-height: 1.5; margin-bottom: 14px; }
+        .help code { background: #f2f3f8; padding: 1px 5px; border-radius: 4px; font-size: 0.95em; }
+        .help a { color: #2d3a6e; font-weight: bold; }
+
+        .row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 0.83em; font-weight: bold; color: #555; }
+        input[type=text], input[type=number], input[type=search], input[type=file] {
+            padding: 9px 11px; border: 1px solid #ddd; border-radius: 7px;
+            font-size: 0.92em; font-family: Arial; color: #333; background: #fafafa; outline: none;
+        }
+        input:focus { border-color: #4a5fa8; box-shadow: 0 0 0 3px rgba(74,95,168,0.1); background: white; }
+        .check { font-size: 0.85em; color: #555; display: flex; gap: 6px; align-items: center; }
+
+        .btn-submit {
+            padding: 10px 22px;
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            color: white; border: none; border-radius: 7px;
+            font-size: 0.9em; font-weight: bold; cursor: pointer;
+        }
+        .btn-submit:hover { opacity: 0.9; }
+
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .add-grid input { width: 100%; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+        th {
+            background: #f8faf8; color: #2d3a6e; padding: 9px 8px;
+            text-align: left; font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        td { padding: 5px 4px; border-bottom: 1px solid #f0f0f0; }
+        td input { width: 100%; padding: 6px 8px !important; font-size: 0.95em !important; background: transparent !important; border-color: transparent !important; }
+        td input:hover { border-color: #ddd !important; }
+        td input:focus { border-color: #4a5fa8 !important; background: white !important; }
+        td input.preco { text-align: right; font-weight: bold; color: #2d3a6e; }
+        .icon-btn { background: none; border: none; cursor: pointer; font-size: 1em; padding: 4px 6px; color: #aaa; }
+        .icon-btn.save { color: #2d3a6e; display: none; }
+        tr.dirty .icon-btn.save { display: inline; }
+        .icon-btn.del:hover { color: #e53935; }
+        .count { font-size: 0.82em; color: #999; font-weight: normal; margin-left: auto; }
+        .empty-state { text-align: center; padding: 30px; color: #aaa; font-size: 0.9em; }
+
+        footer {
+            text-align: center; padding: 10px; background: #2d3a6e;
+            color: rgba(255,255,255,0.8); font-size: 12px;
+            position: fixed; bottom: 0; width: 100%;
+        }
+        @media (max-width: 800px) {
+            .content { padding: 0 10px; margin-top: 16px; }
+            .two-col, .add-grid { grid-template-columns: 1fr; }
+            .table-scroll { overflow-x: auto; }
+            table { min-width: 720px; }
+            .page-header { padding: 10px 12px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+        <div>
+            <div class="subtitle">{{ org_nome }}</div>
+            <h1>Catálogo de produtos</h1>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="/orcamentos">← Orçamentos</a>
+        <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
+    </div>
+</div>
+
+<div class="content">
+    <div class="two-col">
+        <div class="card">
+            <div class="section-title">📥 Importar lista de preços</div>
+            <p class="help">
+                Ficheiro <strong>CSV ou Excel</strong> com as colunas <code>marca</code>, <code>modelo</code>,
+                <code>descricao</code>, <code>categoria</code> e <code>preco</code> (<strong>sem IVA</strong>).
+                Só <code>modelo</code> e <code>preco</code> são obrigatórias, e os nomes das colunas não precisam de ser exatos.
+                <a href="/orcamentos/catalogo/modelo.csv">Descarregar ficheiro de exemplo</a><br>A margem de venda é aplicada em <a href="/orcamentos/definicoes">Definições</a>.
+            </p>
+            <form method="POST" action="/orcamentos/catalogo/importar" enctype="multipart/form-data">
+                <div class="row">
+                    <input type="file" name="ficheiro" accept=".csv,.xlsx,.txt" required style="flex:1;min-width:200px;">
+                    <button type="submit" class="btn-submit">Importar</button>
+                </div>
+                <label class="check" style="margin-top:10px;">
+                    <input type="checkbox" name="substituir" value="1"> Substituir o catálogo atual (apaga os {{ produtos|length }} produtos existentes)
+                </label>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="section-title">➕ Adicionar produto ou serviço</div>
+            <form method="POST" action="/orcamentos/catalogo">
+                <div class="add-grid">
+                    <input type="text" name="marca" placeholder="Marca">
+                    <input type="text" name="modelo" placeholder="Modelo / nome *" required>
+                    <input type="text" name="descricao" placeholder="Descrição (ex: 3,5 kW)">
+                    <input type="text" name="categoria" placeholder="Categoria (ex: Serviço)">
+                    <input type="text" name="preco" inputmode="decimal" placeholder="Preço s/ IVA (€) *" required>
+                    <button type="submit" class="btn-submit">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">📦 Produtos <span class="count" id="count">{{ produtos|length }} produtos</span></div>
+        {% if produtos %}
+        <input type="search" id="filtro" placeholder="Filtrar por marca, modelo, categoria…" style="width:100%;margin-bottom:12px;">
+        <div class="table-scroll">
+        <table>
+            <thead>
+                <tr><th>Marca</th><th>Modelo</th><th>Descrição</th><th>Categoria</th><th style="text-align:right;width:120px;">Preço catálogo</th><th style="width:70px;"></th></tr>
+            </thead>
+            <tbody>
+                {% for p in produtos %}
+                <tr data-busca="{{ [p.marca, p.modelo, p.descricao, p.categoria]|select|join(' ')|lower }}">
+                    <td><input type="text" name="marca" value="{{ p.marca or '' }}" form="ed-{{ p.id }}"></td>
+                    <td><input type="text" name="modelo" value="{{ p.modelo }}" form="ed-{{ p.id }}" required></td>
+                    <td><input type="text" name="descricao" value="{{ p.descricao or '' }}" form="ed-{{ p.id }}"></td>
+                    <td><input type="text" name="categoria" value="{{ p.categoria or '' }}" form="ed-{{ p.id }}"></td>
+                    <td><input type="text" name="preco" class="preco" inputmode="decimal" value="{{ '%.2f' % p.preco }}" form="ed-{{ p.id }}"></td>
+                    <td style="white-space:nowrap;">
+                        <form method="POST" action="/orcamentos/catalogo/editar/{{ p.id }}" id="ed-{{ p.id }}" style="display:inline;">
+                            <button type="submit" class="icon-btn save" title="Guardar">💾</button>
+                        </form>
+                        <form method="POST" action="/orcamentos/catalogo/delete/{{ p.id }}" style="display:inline;"
+                              data-nome="{{ p.modelo }}" onsubmit="return confirm('Remover ' + this.dataset.nome + ' do catálogo?');">
+                            <button type="submit" class="icon-btn del" title="Remover">&#128465;</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="empty-state">Ainda não há produtos. Importe a lista de preços ou adicione produtos acima.</div>
+        {% endif %}
+    </div>
+</div>
+
+<footer>&copy; GestãoPro</footer>
+
+<div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
+
+<script>
+    var filtro = document.getElementById('filtro');
+    if (filtro) {
+        filtro.addEventListener('input', function() {
+            var termos = this.value.toLowerCase().split(/\s+/).filter(Boolean), n = 0;
+            document.querySelectorAll('tbody tr').forEach(function(tr) {
+                var ok = termos.every(function(t) { return tr.dataset.busca.indexOf(t) !== -1; });
+                tr.style.display = ok ? '' : 'none';
+                if (ok) n++;
+            });
+            document.getElementById('count').textContent = n + ' produtos';
+        });
+    }
+    // Mostra o botão guardar quando uma linha é alterada; Enter guarda
+    document.querySelectorAll('tbody input').forEach(function(inp) {
+        inp.addEventListener('input', function() { inp.closest('tr').classList.add('dirty'); });
+    });
+
+    function showToast(msg, type) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:Arial,sans-serif;max-width:90vw;opacity:1;transition:opacity 0.4s;';
+        t.style.background = type === 'error' ? '#e53935' : '#2d3a6e';
+        t.style.color = 'white';
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 5000);
+    }
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    showToast({{ message|tojson }}, {{ category|tojson }});
+    {% endfor %}
+    {% endwith %}
+</script>
+</body>
+</html>

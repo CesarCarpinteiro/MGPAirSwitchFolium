@@ -11,4 +11,7 @@ gunicorn==21.2.0
 python-dotenv
 pywebpush
 psycopg2-binary
+psycopg[binary]
 redis
+reportlab
+openpyxl

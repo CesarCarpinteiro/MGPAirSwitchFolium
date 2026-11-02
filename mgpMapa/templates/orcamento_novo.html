@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ org_nome }} — Orçamento automático</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .page-header a {
+            padding: 9px 20px; background: white; color: #2d3a6e;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em;
+            font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: background 0.2s;
+        }
+        .page-header a:hover { background: #f0f0f0; }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+
+        .content { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        .card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 22px 24px; margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1em; font-weight: bold; color: #2d3a6e;
+            margin-bottom: 16px; padding-bottom: 8px;
+            border-bottom: 2px solid #e8f0e8;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-grid .span2 { grid-column: span 2; }
+        .form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label, .linhas-head { font-size: 0.83em; font-weight: bold; color: #555; }
+        input, textarea {
+            padding: 9px 11px; border: 1px solid #ddd; border-radius: 7px;
+            font-size: 0.92em; font-family: Arial; color: #333;
+            background: #fafafa; outline: none; width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, textarea:focus { border-color: #4a5fa8; box-shadow: 0 0 0 3px rgba(74,95,168,0.1); background: white; }
+        textarea { resize: vertical; min-height: 70px; line-height: 1.45; }
+        .ajuda { font-size: 0.82em; color: #888; margin: -6px 0 14px; }
+        .ajuda a { color: #2d3a6e; font-weight: bold; }
+        .label-nota { font-weight: normal; color: #999; }
+        input.num { text-align: right; }
+
+        .aviso {
+            background: #fff8e1; border: 1px solid #ffe082; color: #8d6e00;
+            border-radius: 8px; padding: 12px 16px; font-size: 0.88em; margin-bottom: 20px;
+        }
+        .aviso a { color: #2d3a6e; font-weight: bold; }
+
+        /* Linhas */
+        .linha, .linhas-head {
+            display: grid; grid-template-columns: 1fr 80px 120px 110px 34px;
+            gap: 10px; align-items: center;
+        }
+        .linhas-head { padding: 0 0 6px; }
+        .linhas-head .r { text-align: right; }
+        .linha { padding: 8px 0; border-top: 1px solid #f0f0f0; }
+        .linha-total { text-align: right; font-weight: bold; color: #2d3a6e; font-size: 0.92em; }
+        .linha.catalogo .ac-input { border-color: #9fa8da; background: #f5f6fc; }
+        .remove-btn {
+            background: none; border: none; color: #bbb; cursor: pointer;
+            font-size: 1.2em; line-height: 1; padding: 4px;
+        }
+        .remove-btn:hover { color: #e53935; }
+        .btn-add {
+            margin-top: 12px; padding: 8px 16px; background: white; color: #2d3a6e;
+            border: 1.5px dashed #9fa8da; border-radius: 7px; font-weight: bold;
+            font-size: 0.88em; cursor: pointer;
+        }
+        .btn-add:hover { background: #f5f6fc; }
+
+        /* Autocomplete */
+        .ac-wrap { position: relative; }
+        .ac-list {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
+            background: white; border: 1px solid #ddd; border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.14); max-height: 320px; overflow-y: auto; display: none;
+        }
+        .ac-item {
+            display: flex; justify-content: space-between; align-items: center; gap: 12px;
+            padding: 9px 12px; cursor: pointer; border-bottom: 1px solid #f3f3f3;
+        }
+        .ac-item:last-child { border-bottom: none; }
+        .ac-item.active, .ac-item:hover { background: #eef0fa; }
+        .ac-nome { font-size: 0.88em; color: #222; }
+        .ac-cat { font-size: 0.74em; color: #999; margin-top: 2px; }
+        .ac-preco { font-weight: bold; color: #2d3a6e; font-size: 0.9em; white-space: nowrap; }
+        .ac-vazio { padding: 10px 12px; font-size: 0.82em; color: #999; }
+
+        /* Totais */
+        .totais-grid { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
+        .resumo { background: #f8f9fd; border-radius: 10px; padding: 16px 18px; }
+        .resumo-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.9em; color: #555; }
+        .resumo-row.total { border-top: 2px solid #2d3a6e; margin-top: 6px; padding-top: 10px; font-size: 1.2em; font-weight: bold; color: #2d3a6e; }
+        .resumo-nota { font-size: 0.75em; color: #999; margin-top: 8px; }
+
+        .btn-submit {
+            padding: 11px 30px; margin-top: 16px; width: 100%;
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            color: white; border: none; border-radius: 7px;
+            font-size: 0.95em; font-weight: bold; cursor: pointer;
+        }
+        .btn-submit:hover { opacity: 0.9; }
+
+        footer {
+            text-align: center; padding: 10px; background: #2d3a6e;
+            color: rgba(255,255,255,0.8); font-size: 12px;
+            position: fixed; bottom: 0; width: 100%;
+        }
+
+        @media (max-width: 700px) {
+            .content { padding: 0 10px; margin-top: 16px; }
+            .card { padding: 18px 14px; }
+            .form-grid, .form-grid.cols-2, .totais-grid { grid-template-columns: 1fr; }
+            .form-grid .span2, .form-grid .full { grid-column: 1; }
+            .linhas-head { display: none; }
+            .linha { grid-template-columns: 1fr 1fr 34px; padding: 12px 0; }
+            .linha .ac-wrap { grid-column: 1 / 3; }
+            .linha .linha-total { grid-column: 1 / 3; }
+            .linha .remove-btn { grid-row: 1; grid-column: 3; }
+            .page-header { padding: 10px 12px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2d3a6e">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-180.png?v=2">
+</head>
+<body>
+
+<div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+        <div>
+            <div class="subtitle">{{ org_nome }}</div>
+            <h1>Orçamento automático</h1>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="/orcamentos">← Orçamentos</a>
+        <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
+    </div>
+</div>
+
+<div class="content">
+
+    {% if not tem_catalogo %}
+    <div class="aviso">
+        O catálogo de produtos está vazio, por isso não há sugestões. Pode escrever as linhas à mão.
+        {% if is_admin %}<a href="/orcamentos/catalogo">Importar catálogo →</a>{% else %}Peça a um administrador para importar o catálogo.{% endif %}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/orcamentos/novo" id="orcForm" autocomplete="off">
+
+        <div class="card">
+            <div class="section-title">👤 Cliente</div>
+            <div class="form-grid">
+                <div class="form-group span2">
+                    <label>Nome *</label>
+                    <input type="text" name="cliente" placeholder="Nome do cliente ou empresa" required>
+                </div>
+                <div class="form-group">
+                    <label>NIF</label>
+                    <input type="text" name="cliente_nif" inputmode="numeric" placeholder="Opcional">
+                </div>
+                <div class="form-group">
+                    <label>Contacto</label>
+                    <input type="tel" name="cliente_contacto">
+                </div>
+                <div class="form-group span2">
+                    <label>Email</label>
+                    <input type="email" name="cliente_email">
+                </div>
+                <div class="form-group full">
+                    <label>Morada</label>
+                    <input type="text" name="cliente_morada">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">🧾 Produtos e serviços</div>
+            <div class="linhas-head">
+                <div>Produto / descrição</div><div class="r">Qtd.</div><div class="r">Preço s/ IVA</div><div class="r">Total</div><div></div>
+            </div>
+            <div id="linhas"></div>
+            <button type="button" class="btn-add" onclick="addLinha().querySelector('.ac-input').focus()">+ Adicionar linha</button>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📝 Termos e condições de pagamento</div>
+            <p class="ajuda">Textos por omissão definidos{% if is_admin %} em <a href="/orcamentos/definicoes">Definições</a>{% else %} pelo administrador{% endif %}. Pode ajustá-los só para este orçamento.</p>
+            <div class="form-grid cols-2">
+                <div class="form-group">
+                    <label>Termos e condições</label>
+                    <textarea name="termos" rows="7">{{ termos }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Condições de pagamento <span class="label-nota">(uma por linha)</span></label>
+                    <textarea name="condicoes_pagamento" rows="7">{{ pagamento }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">💶 Totais</div>
+            <div class="totais-grid">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Desconto (%)</label>
+                        <input type="number" name="desconto" id="desconto" class="num" min="0" max="100" step="0.5" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>IVA (%)</label>
+                        <input type="number" name="iva_taxa" id="ivaTaxa" class="num" min="0" step="1" value="{{ '%g' % iva_padrao }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Nº de máquinas</label>
+                        <input type="number" name="num_maquinas" id="numMaquinas" class="num" min="0">
+                    </div>
+                </div>
+                <div>
+                    <div class="resumo">
+                        <div class="resumo-row"><span>Subtotal</span><span id="rSubtotal">0,00 €</span></div>
+                        <div class="resumo-row" id="rDescontoRow" style="display:none;"><span id="rDescontoLabel">Desconto</span><span id="rDesconto"></span></div>
+                        <div class="resumo-row"><span id="rIvaLabel">IVA</span><span id="rIva">0,00 €</span></div>
+                        <div class="resumo-row total"><span>Total</span><span id="rTotal">0,00 €</span></div>
+                        <div class="resumo-nota">Preços sem IVA, já com a margem de {{ '%g' % margem }}% sobre o catálogo. O IVA é somado no fim.</div>
+                    </div>
+                    <button type="submit" class="btn-submit">Criar orçamento</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<template id="linhaTpl">
+    <div class="linha">
+        <div class="ac-wrap">
+            <input type="hidden" name="linha_produto_id" class="f-pid">
+            <input type="text" name="linha_descricao" class="ac-input f-desc" placeholder="Escreva marca ou modelo… ex: daikin 3,5">
+            <div class="ac-list"></div>
+        </div>
+        <input type="number" name="linha_qtd" class="num f-qtd" min="0" step="any" value="1" aria-label="Quantidade">
+        <input type="number" name="linha_preco" class="num f-preco" min="0" step="0.01" placeholder="0,00" aria-label="Preço unitário sem IVA">
+        <div class="linha-total">0,00 €</div>
+        <button type="button" class="remove-btn" title="Remover linha" aria-label="Remover linha">×</button>
+    </div>
+</template>
+
+<footer>&copy; GestãoPro</footer>
+
+<div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
+
+<script>
+    // Categorias que não contam como máquinas no "Nº de máquinas"
+    var NAO_MAQUINA = /servi|instala|m[aã]o.de.obra|material|acess|desloca|tubagem|unidade exterior|dep[oó]sito|comando/i;
+    var maquinasEditado = false;
+
+    var fmt = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function eur(v) { return fmt.format(v || 0) + ' €'; }
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function num(el) { return parseFloat(String(el.value).replace(',', '.')) || 0; }
+
+    function recalc() {
+        var subtotal = 0, maquinas = 0;
+        document.querySelectorAll('#linhas .linha').forEach(function(l) {
+            var q = num(l.querySelector('.f-qtd')), p = num(l.querySelector('.f-preco'));
+            subtotal += q * p;
+            l.querySelector('.linha-total').textContent = eur(q * p);
+            if (l.querySelector('.f-pid').value && !NAO_MAQUINA.test((l.dataset.categoria || '') + ' ' + (l.dataset.descricao || ''))) maquinas += q;
+        });
+        var descPct = Math.min(Math.max(num(document.getElementById('desconto')), 0), 100);
+        var ivaPct = num(document.getElementById('ivaTaxa'));
+        var descVal = subtotal * descPct / 100;
+        var base = subtotal - descVal;
+        var iva = base * ivaPct / 100;
+
+        document.getElementById('rSubtotal').textContent = eur(subtotal);
+        document.getElementById('rDescontoRow').style.display = descPct ? 'flex' : 'none';
+        document.getElementById('rDescontoLabel').textContent = 'Desconto (' + descPct + '%)';
+        document.getElementById('rDesconto').textContent = '−' + eur(descVal);
+        document.getElementById('rIvaLabel').textContent = 'IVA (' + ivaPct + '%)';
+        document.getElementById('rIva').textContent = eur(iva);
+        document.getElementById('rTotal').textContent = eur(base + iva);
+        if (!maquinasEditado) document.getElementById('numMaquinas').value = maquinas || '';
+    }
+
+    function addLinha() {
+        var linha = document.getElementById('linhaTpl').content.firstElementChild.cloneNode(true);
+        document.getElementById('linhas').appendChild(linha);
+        ligarAutocomplete(linha);
+        linha.querySelector('.f-qtd').addEventListener('input', recalc);
+        linha.querySelector('.f-preco').addEventListener('input', recalc);
+        linha.querySelector('.remove-btn').addEventListener('click', function() {
+            linha.remove();
+            if (!document.querySelector('#linhas .linha')) addLinha();
+            recalc();
+        });
+        return linha;
+    }
+
+    function ligarAutocomplete(linha) {
+        var input = linha.querySelector('.ac-input');
+        var lista = linha.querySelector('.ac-list');
+        var resultados = [], ativo = -1, timer = null, pedido = 0;
+
+        function fechar() { lista.style.display = 'none'; ativo = -1; }
+
+        function render() {
+            if (!resultados.length) {
+                lista.innerHTML = input.value.trim()
+                    ? '<div class="ac-vazio">Sem resultados no catálogo. Fica como linha livre, por isso indique o preço.</div>'
+                    : '<div class="ac-vazio">Catálogo vazio.</div>';
+            } else {
+                lista.innerHTML = resultados.map(function(p, i) {
+                    return '<div class="ac-item' + (i === ativo ? ' active' : '') + '" data-i="' + i + '">' +
+                        '<div><div class="ac-nome">' + esc(p.label) + '</div>' +
+                        (p.categoria ? '<div class="ac-cat">' + esc(p.categoria) + '</div>' : '') + '</div>' +
+                        '<div class="ac-preco">' + eur(p.preco) + '</div></div>';
+                }).join('');
+            }
+            lista.style.display = 'block';
+            var el = lista.querySelector('.ac-item.active');
+            if (el) el.scrollIntoView({ block: 'nearest' });
+        }
+
+        function procurar() {
+            var n = ++pedido;
+            fetch('/api/produtos?q=' + encodeURIComponent(input.value.trim()))
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (n !== pedido || document.activeElement !== input) return;
+                    resultados = d; ativo = d.length ? 0 : -1; render();
+                }).catch(function() {});
+        }
+
+        function escolher(p) {
+            input.value = p.label;
+            linha.querySelector('.f-pid').value = p.id;
+            linha.querySelector('.f-preco').value = p.preco.toFixed(2);
+            linha.dataset.categoria = p.categoria || '';
+            linha.dataset.descricao = p.descricao || '';
+            linha.classList.add('catalogo');
+            fechar();
+            recalc();
+            // Ao preencher a última linha, abre logo uma nova
+            if (linha === document.querySelector('#linhas .linha:last-child')) addLinha();
+            var qtd = linha.querySelector('.f-qtd');
+            qtd.focus(); qtd.select();
+        }
+
+        input.addEventListener('input', function() {
+            // Texto alterado à mão: deixa de estar ligado ao produto do catálogo
+            linha.querySelector('.f-pid').value = '';
+            linha.dataset.categoria = '';
+            linha.dataset.descricao = '';
+            linha.classList.remove('catalogo');
+            recalc();
+            clearTimeout(timer);
+            timer = setTimeout(procurar, 180);
+        });
+        input.addEventListener('focus', function() { if (!linha.querySelector('.f-pid').value) procurar(); });
+        input.addEventListener('blur', function() { setTimeout(fechar, 150); });
+        input.addEventListener('keydown', function(e) {
+            if (lista.style.display !== 'block' || !resultados.length) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); ativo = (ativo + 1) % resultados.length; render(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); ativo = (ativo - 1 + resultados.length) % resultados.length; render(); }
+            else if (e.key === 'Enter' && ativo >= 0) { e.preventDefault(); escolher(resultados[ativo]); }
+            else if (e.key === 'Escape') { fechar(); }
+        });
+        // mousedown (não click) para disparar antes do blur do input
+        lista.addEventListener('mousedown', function(e) {
+            var item = e.target.closest('.ac-item');
+            if (item) { e.preventDefault(); escolher(resultados[+item.dataset.i]); }
+        });
+    }
+
+    document.getElementById('desconto').addEventListener('input', recalc);
+    document.getElementById('ivaTaxa').addEventListener('input', recalc);
+    document.getElementById('numMaquinas').addEventListener('input', function() { maquinasEditado = true; });
+
+    document.getElementById('orcForm').addEventListener('submit', function(e) {
+        var preenchidas = Array.prototype.filter.call(document.querySelectorAll('#linhas .f-desc'), function(i) { return i.value.trim(); });
+        if (!preenchidas.length) { e.preventDefault(); showToast('Adicione pelo menos uma linha.', 'error'); }
+    });
+
+    addLinha();
+    recalc();
+
+    function showToast(msg, type) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:Arial,sans-serif;white-space:nowrap;opacity:1;transition:opacity 0.4s;';
+        t.style.background = type === 'error' ? '#e53935' : '#2d3a6e';
+        t.style.color = 'white';
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+    }
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    showToast({{ message|tojson }}, {{ category|tojson }});
+    {% endfor %}
+    {% endwith %}
+</script>
+</body>
+</html>
