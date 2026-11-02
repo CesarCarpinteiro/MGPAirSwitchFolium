@@ -1,3 +1,4 @@
+import csv
 import io
 import os
 import re
@@ -230,6 +231,29 @@ def _mapear_colunas(colunas):
     return mapa
 
 
+def _ler_tabela(ficheiro):
+    """Lê um CSV (separador detetado) ou .xlsx; devolve (colunas, linhas)."""
+    if ficheiro.filename.lower().endswith('.xlsx'):
+        from openpyxl import load_workbook
+        ws = load_workbook(ficheiro, read_only=True, data_only=True).active
+        linhas = [list(r) for r in ws.iter_rows(values_only=True) if any(c not in (None, '') for c in r)]
+    else:
+        raw = ficheiro.read()
+        try:
+            texto = raw.decode('utf-8-sig')
+        except UnicodeDecodeError:
+            texto = raw.decode('latin-1')
+        try:
+            dialeto = csv.Sniffer().sniff(texto[:4096], delimiters=';,\t|')
+        except csv.Error:
+            dialeto = csv.excel
+        linhas = [r for r in csv.reader(io.StringIO(texto), dialeto) if any(c.strip() for c in r)]
+    if not linhas:
+        raise ValueError('ficheiro vazio')
+    colunas = [str(c).strip() if c is not None else '' for c in linhas[0]]
+    return colunas, linhas[1:]
+
+
 def _admin_required():
     if not current_user.is_admin:
         flash('Apenas administradores podem gerir o catálogo.', 'error')
@@ -269,37 +293,29 @@ def importar_catalogo():
         flash('Escolha um ficheiro CSV ou Excel.', 'error')
         return redirect(url_for('orcamentos.catalogo'))
 
-    import pandas as pd
     try:
-        if ficheiro.filename.lower().endswith('.xlsx'):
-            df = pd.read_excel(ficheiro, dtype=object)
-        else:
-            raw = ficheiro.read()
-            try:
-                texto = raw.decode('utf-8-sig')
-            except UnicodeDecodeError:
-                texto = raw.decode('latin-1')
-            df = pd.read_csv(io.StringIO(texto), sep=None, engine='python', dtype=object)
+        colunas, linhas = _ler_tabela(ficheiro)
     except Exception as e:
         flash(f'Não foi possível ler o ficheiro: {e}', 'error')
         return redirect(url_for('orcamentos.catalogo'))
 
-    mapa = _mapear_colunas(df.columns)
+    mapa = _mapear_colunas(colunas)
     if 'preco' not in mapa or not ({'modelo', 'descricao'} & mapa.keys()):
         flash('O ficheiro precisa de uma coluna de preço e de uma coluna modelo (ou descrição). '
-              f'Colunas encontradas: {", ".join(map(str, df.columns))}', 'error')
+              f'Colunas encontradas: {", ".join(colunas)}', 'error')
         return redirect(url_for('orcamentos.catalogo'))
+    indice = {campo: colunas.index(col) for campo, col in mapa.items()}
 
     def valor(row, campo):
-        col = mapa.get(campo)
-        if col is None or pd.isna(row[col]):
+        i = indice.get(campo)
+        if i is None or i >= len(row) or row[i] is None:
             return ''
-        return str(row[col]).strip()
+        return str(row[i]).strip()
 
     novos, ignorados = [], 0
-    for _, row in df.iterrows():
+    for row in linhas:
         modelo = valor(row, 'modelo') or valor(row, 'descricao')
-        preco = _num(row[mapa['preco']], None) if not pd.isna(row[mapa['preco']]) else None
+        preco = _num(row[indice['preco']], None) if valor(row, 'preco') else None
         if not modelo or preco is None:
             ignorados += 1
             continue
