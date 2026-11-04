@@ -166,6 +166,21 @@
             </div>
         </div>
 
+        <div class="card">
+            <div class="section-title">📱 SMS automáticos de manutenção</div>
+            <p class="ajuda">
+                Os clientes com telemóvel recebem um SMS quando passam <strong>8 meses</strong> desde o último serviço
+                (para marcarem a manutenção anual) e outro aos <strong>10 meses</strong> (faltam 2 meses), exceto se já tiverem
+                manutenção agendada. Na véspera recebe uma notificação com os SMS do dia seguinte e pode cancelá-los em
+                <a href="/lembretes">SMS de manutenção</a>. O SMS termina com o telefone acima.
+            </p>
+            {% if sms_configurado %}
+            <label class="check"><input type="checkbox" name="sms_lembretes" value="1" {{ 'checked' if o.sms_lembretes }}> Enviar lembretes de manutenção por SMS</label>
+            {% else %}
+            <p class="ajuda" style="color:#c47c2b;">O envio de SMS não está configurado neste servidor (Twilio).</p>
+            {% endif %}
+        </div>
+
         <button type="submit" class="btn-submit">Guardar definições</button>
     </form>
 </div>

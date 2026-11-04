@@ -1,7 +1,14 @@
+import base64
 import hashlib
+import json
 import os
+import re
 import smtplib
 import threading
+import unicodedata
+import urllib.error
+import urllib.parse
+import urllib.request
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -11,6 +18,12 @@ from werkzeug.security import generate_password_hash
 
 GMAIL_USER = os.getenv('GMAIL_USER', '')
 GMAIL_PASS = os.getenv('GMAIL_PASS', '')
+
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID') or os.getenv('TWILIO_SID', '')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN') or os.getenv('TWILIO_TOKEN', '')
+TWILIO_SENDER = os.getenv('TWILIO_SENDER', '')
+TWILIO_MESSAGING_SERVICE_SID = os.getenv('TWILIO_MESSAGING_SERVICE_SID', '')
+SMS_EMPRESA = os.getenv('SMS_EMPRESA', '')  # nome que assina os SMS (por omissão, o nome da organização)
 
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'docx', 'xlsx'}
@@ -156,3 +169,58 @@ def bg_push(app, user_id, title, body, url='/'):
         args=(app, user_id, title, body, url),
         daemon=True
     ).start()
+
+
+def normalizar_telemovel(numero):
+    """'912 345 678', '00351912345678' ou '+351 912…' -> '+351912345678'; None se inválido."""
+    n = re.sub(r'[^\d+]', '', numero or '')
+    if n.startswith('00'):
+        n = '+' + n[2:]
+    if re.fullmatch(r'9\d{8}', n):
+        n = '+351' + n
+    return n if re.fullmatch(r'\+\d{8,15}', n) else None
+
+
+def send_sms(numero, texto, remetente=None):
+    """Envia um SMS pela Twilio com remetente alfanumérico. Devolve (ok, erro)."""
+    if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN):
+        return False, 'SMS não configurado'
+    para = normalizar_telemovel(numero)
+    if not para:
+        return False, f'número inválido: {numero}'
+    # Remetente: até 11 letras/números, sem acentos
+    remetente = re.sub(r'[^A-Za-z0-9]', '', _sem_acentos(TWILIO_SENDER or remetente or 'GestaoPro'))[:11]
+    campos = {'To': para, 'Body': texto}
+    if TWILIO_MESSAGING_SERVICE_SID:
+        campos['MessagingServiceSid'] = TWILIO_MESSAGING_SERVICE_SID  # remetente definido no serviço
+    else:
+        campos['From'] = remetente
+    dados = urllib.parse.urlencode(campos).encode()
+    pedido = urllib.request.Request(
+        f'https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json', data=dados)
+    cred = base64.b64encode(f'{TWILIO_ACCOUNT_SID}:{TWILIO_AUTH_TOKEN}'.encode()).decode()
+    pedido.add_header('Authorization', f'Basic {cred}')
+    try:
+        with urllib.request.urlopen(pedido, timeout=10):
+            return True, None
+    except urllib.error.HTTPError as e:
+        try:
+            erro = json.loads(e.read()).get('message', str(e))
+        except ValueError:
+            erro = str(e)
+        print(f"Erro SMS: {erro}")
+        return False, erro
+    except Exception as e:
+        print(f"Erro SMS: {e}")
+        return False, str(e)
+
+
+def texto_sms(org, mensagem, convite='Para qualquer questão contacte-nos:'):
+    """'<Empresa>: <mensagem> <convite> <telefone>' (sem o convite se a organização não tiver telefone)."""
+    empresa = SMS_EMPRESA or (org.nome if org else '') or 'GestãoPro'
+    contacto = f' {convite} {org.telefone}' if org and org.telefone else ''
+    return f'{empresa}: {mensagem}{contacto}'
+
+
+def _sem_acentos(texto):
+    return unicodedata.normalize('NFKD', texto).encode('ascii', 'ignore').decode()

@@ -1,3 +1,4 @@
+import re
 import hashlib
 
 from flask import Blueprint, jsonify, render_template_string, request, send_from_directory
@@ -85,10 +86,31 @@ def api_notificacoes():
     notifs = db.session.query(Notificacao).filter_by(
         user_id=current_user.id, lida=False
     ).order_by(Notificacao.id.desc()).limit(20).all()
-    return jsonify([{
+    return jsonify([dict({
         'id': n.id, 'titulo': n.titulo, 'corpo': n.corpo,
         'url': n.url, 'criada_em': n.criada_em
-    } for n in notifs])
+    }, **_acoes_notificacao(n)) for n in notifs])
+
+
+_ESTADO_LEMBRETE = {'enviado': '✓ SMS enviado', 'cancelado': 'Não vai ser enviado', 'falhou': 'O envio falhou'}
+
+
+def _acoes_notificacao(n):
+    """Botões dentro da notificação: SMS de manutenção preparado (url /lembretes#l<id>) -> Não enviar / Enviar já."""
+    m = re.fullmatch(r'/lembretes#l(\d+)', n.url or '')
+    if not m or not current_user.is_admin:
+        return {}
+    from models import LembreteSMS
+    from utils import TWILIO_ACCOUNT_SID
+    lem = db.session.query(LembreteSMS).filter_by(id=int(m.group(1)), org_id=current_user.org_id).first()
+    if not lem:
+        return {}
+    if lem.estado != 'pendente':
+        return {'estado_acao': _ESTADO_LEMBRETE.get(lem.estado, lem.estado)}
+    acoes = [{'label': 'Não enviar', 'url': f'/lembretes/{lem.id}/cancelar'}]
+    if TWILIO_ACCOUNT_SID:
+        acoes.append({'label': 'Enviar já', 'url': f'/lembretes/{lem.id}/enviar', 'principal': True})
+    return {'acoes': acoes}
 
 
 @push_bp.route('/api/notificacoes/lida/<int:nid>', methods=['POST'])

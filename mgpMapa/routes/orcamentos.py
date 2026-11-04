@@ -11,6 +11,7 @@ from sqlalchemy import or_
 
 from db import db
 from models import Orcamento, OrcamentoLinha, Organizacao, Produto, Usuario
+from utils import TWILIO_ACCOUNT_SID, send_sms, texto_sms
 
 orcamentos_bp = Blueprint('orcamentos', __name__)
 
@@ -78,10 +79,33 @@ def update_estado_orcamento(id):
     if not current_user.is_admin:
         return redirect(url_for('orcamentos.orcamentos'))
     o = db.session.query(Orcamento).filter_by(id=id, org_id=current_user.org_id).first()
-    if o:
-        o.estado = request.form.get('estado')
+    novo = request.form.get('estado')
+    if o and novo in ESTADOS and novo != o.estado:
+        o.estado = novo
         db.session.commit()
+        _sms_estado(o)
     return redirect(url_for('orcamentos.orcamentos'))
+
+
+ESTADOS = ('Pendente', 'Aprovado', 'Rejeitado', 'Concluído')
+SMS_ESTADO = {
+    'Aprovado': 'o seu orçamento nº {id} foi aprovado. Vamos contactá-lo para agendar.',
+    'Concluído': 'a sua instalação está concluída. Obrigado pela preferência e confiança!',
+}
+
+
+def _sms_estado(o):
+    """Avisa o cliente por SMS quando o orçamento é aprovado ou concluído (se houver telemóvel)."""
+    modelo = SMS_ESTADO.get(o.estado)
+    if not modelo or not o.cliente_contacto or not TWILIO_ACCOUNT_SID:
+        return
+    org = _org()
+    ok, erro = send_sms(o.cliente_contacto, texto_sms(org, modelo.format(id=o.id)),
+                        remetente=org.nome if org else None)
+    if ok:
+        flash(f'SMS enviado ao cliente ({o.cliente_contacto}).', 'success')
+    else:
+        flash(f'Estado atualizado, mas o SMS falhou: {erro}', 'error')
 
 
 # ── Orçamento automático ──────────────────────────────────────────────
@@ -395,6 +419,7 @@ def definicoes():
         org.orc_margem = min(max(_num(request.form.get('orc_margem'), MARGEM_PADRAO), 0), 1000)
         org.orc_termos = request.form.get('orc_termos', '').strip()
         org.orc_pagamento = request.form.get('orc_pagamento', '').strip()
+        org.sms_lembretes = request.form.get('sms_lembretes') == '1'
 
         logo = request.files.get('logo')
         if logo and logo.filename:
@@ -416,4 +441,4 @@ def definicoes():
     return render_template('orcamento_definicoes.html', o=org, margem=_margem(org),
                            termos=_texto(org.orc_termos if org else None, TERMOS_PADRAO),
                            pagamento=_texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO),
-                           is_admin=True)
+                           sms_configurado=bool(TWILIO_ACCOUNT_SID), is_admin=True)

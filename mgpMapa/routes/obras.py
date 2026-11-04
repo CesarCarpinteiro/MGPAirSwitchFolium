@@ -5,7 +5,8 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from flask_login import current_user, login_required
 
 from db import db
-from models import Ferias, Obra, ObraFuncionario, Organizacao, Usuario
+from models import Ferias, Obra, ObraFuncionario, Organizacao, Registo, Servico, Usuario
+from lembretes import definir_agendamento
 from utils import bg_push
 
 obras_bp = Blueprint('obras', __name__)
@@ -120,8 +121,30 @@ def editar_obra(id):
     db.session.query(ObraFuncionario).filter_by(obra_id=id).delete()
     for uid in data.get('funcionarios', []):
         db.session.add(ObraFuncionario(obra_id=id, usuario_id=int(uid), org_id=current_user.org_id))
+    _sincronizar_agendamento(obra)
     db.session.commit()
     return jsonify({'ok': True})
+
+
+def _sincronizar_agendamento(obra, apagada=False):
+    """Marcação vinda de um agendamento no mapa: mudar a data ou cancelar/apagar atualiza o cliente."""
+    if not obra.registo_id or obra.servico_id:
+        return
+    r = db.session.query(Registo).filter_by(id=obra.registo_id, org_id=current_user.org_id).first()
+    if not r:
+        return
+    if apagada or obra.estado == 'cancelada':
+        definir_agendamento(r, None)
+    elif obra.estado == 'concluida':
+        # Manutenção feita: fica registada no cliente e passa a ser o último serviço (recomeça a contagem)
+        servico = Servico(org_id=r.org_id, tipo_servico='Manutenção', data_servico=obra.data_fim,
+                          notas=(obra.notas or '')[:500] or None)
+        r.servicos.append(servico)
+        db.session.flush()
+        obra.servico_id = servico.id
+        definir_agendamento(r, None)  # próxima manutenção: um ano depois desta
+    else:
+        definir_agendamento(r, obra.data_inicio)
 
 
 @obras_bp.route('/marcacoes/apagar/<int:id>', methods=['POST'])
@@ -132,6 +155,7 @@ def apagar_obra(id):
     obra = db.session.query(Obra).filter_by(id=id, org_id=current_user.org_id).first()
     if not obra:
         return jsonify({'ok': False}), 404
+    _sincronizar_agendamento(obra, apagada=True)
     db.session.query(ObraFuncionario).filter_by(obra_id=id).delete()
     db.session.delete(obra)
     db.session.commit()

@@ -9,8 +9,12 @@ from sqlalchemy.orm import joinedload
 
 from db import db
 from models import Organizacao, Registo
+from lembretes import situacao
+from utils import TWILIO_ACCOUNT_SID, normalizar_telemovel
 
 home_bp = Blueprint('home', __name__)
+
+CORES_ESTADO = {'Em dia': '#4a6fa5', 'Atenção': '#c47c2b', 'Urgente': '#a33b3b', 'Agendada': '#2e7d4f'}
 
 MAPBOX_TOKEN = os.getenv('MAPBOX_TOKEN', '')
 
@@ -34,7 +38,7 @@ def home():
 
     Fullscreen(position='bottomright').add_to(m)
     Geocoder(position='topright').add_to(m)
-    TagFilterButton(['Em dia', 'Atenção', 'Urgente'], name='Filtrar').add_to(m)
+    TagFilterButton(['Em dia', 'Atenção', 'Urgente', 'Agendada'], name='Filtrar').add_to(m)
 
     registos = db.session.query(Registo).filter(
         Registo.org_id == current_user.org_id,
@@ -44,6 +48,7 @@ def home():
 
     sidebar_items = []
     current_date = datetime.now().date()
+    sms_ativo = bool(TWILIO_ACCOUNT_SID) and current_user.is_admin
 
     for r in registos:
         def parse_date(d):
@@ -65,20 +70,26 @@ def home():
         marca_display = (ultimo.marca if ultimo else r.marca) or 'N/A'
         num_maq_display = (ultimo.num_maquinas if ultimo else r.num_maquinas) or 'N/A'
 
-        months_passed = 0
-        if data_ref:
-            try:
-                ref_date = datetime.strptime(data_ref, '%d/%m/%Y').date()
-                months_passed = (current_date.year - ref_date.year) * 12 + (current_date.month - ref_date.month)
-            except Exception:
-                pass
-
-        if months_passed <= 8:
-            color = '#4a6fa5'; filter_value = 'Em dia'; status_label = 'Em dia'
-        elif 8 < months_passed <= 10:
-            color = '#c47c2b'; filter_value = 'Atenção'; status_label = 'Atenção'
-        else:
-            color = '#a33b3b'; filter_value = 'Urgente'; status_label = 'Urgente'
+        # Mesma regra dos lembretes por SMS: Atenção aos 8 meses, Urgente aos 10, Agendada se houver data marcada
+        sit = situacao(r, current_date)
+        status_label = filter_value = sit['estado']
+        color = CORES_ESTADO[status_label]
+        next_maintenance_display = sit['proxima'] or 'N/A'
+        months_passed = (current_date - sit['ref']).days / 30.4 if sit['ref'] else 0
+        agendada_iso = sit['agendada'].strftime('%Y-%m-%d') if sit['agendada'] else ''
+        # O campo para agendar só aparece quando o cliente entra em Atenção (ou já tem data agendada)
+        agendar_html = '' if status_label == 'Em dia' else f'''
+                <form method="POST" action="/registos/agendar/{r.id}" onsubmit="return (event.submitter && event.submitter.name === 'remover') || confirmarPassada(this.data)" style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;">
+                    <div style="font-size:10px;color:#aaa;text-transform:uppercase;margin-bottom:6px;">Manutenção agendada</div>
+                    <div style="display:flex;gap:6px;">
+                        <input type="date" name="data" value="{agendada_iso}" required min="{sit['ref'].strftime('%Y-%m-%d') if sit['ref'] else ''}"
+                               style="flex:1;min-width:0;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+                        <button type="submit" style="background:#2e7d4f;color:white;border:none;border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">Guardar</button>
+                        {'<button type="submit" name="remover" value="1" formnovalidate title="Remover agendamento" style="background:white;color:#a33b3b;border:1px solid #eee;border-radius:6px;padding:6px 8px;font-size:12px;cursor:pointer;">✕</button>' if agendada_iso else ''}
+                    </div>
+                    {'<label style="display:flex;align-items:center;gap:6px;margin-top:7px;font-size:11px;color:#2e7d4f;font-weight:600;cursor:pointer;"><input type="checkbox" name="avisar_cliente" value="1" style="margin:0;"> Avisar o cliente por SMS com a data</label>' if sms_ativo and normalizar_telemovel(r.contacto) else ''}
+                    <div style="font-size:10px;color:#999;margin-top:5px;">Com data agendada não são enviados lembretes por SMS.</div>
+                </form>'''
 
         num_servicos = len(r.servicos)
         historico_html = ''
@@ -107,6 +118,7 @@ def home():
                     <tr><td style="color:#888;padding:4px 0;">Próx. manutenção</td><td style="color:{color};font-weight:600;">{next_maintenance_display}</td></tr>
                 </table>
                 {f'<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;margin-bottom:6px;">Histórico ({num_servicos} serviços)</div>{historico_html}</div>' if num_servicos > 0 else ''}
+                {agendar_html}
                 <div style="margin-top:12px;">
                     <a href="tel:{r.contacto}" style="display:block;text-align:center;background:{color};color:white;padding:9px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">Ligar</a>
                 </div>
@@ -168,14 +180,24 @@ def home():
                     div.innerHTML =
                         '<div style="font-weight:600;margin-bottom:8px;font-size:12px;color:#333;text-transform:uppercase;">Estado</div>' +
                         '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#4a6fa5;"></div><span style="color:#555;">Em dia (&lt; 8 meses)</span></div>' +
-                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#c47c2b;"></div><span style="color:#555;">Atenção (8–10 meses)</span></div>' +
-                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#a33b3b;"></div><span style="color:#555;">Urgente (&gt; 10 meses)</span></div>';
+                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#c47c2b;"></div><span style="color:#555;">Atenção (8 a 10 meses)</span></div>' +
+                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#a33b3b;"></div><span style="color:#555;">Urgente (faltam 2 meses ou menos)</span></div>' +
+                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#2e7d4f;"></div><span style="color:#555;">Manutenção agendada</span></div>';
                     return div;
                 };
                 legend.addTo(map);
             }
         }
     });
+    function confirmarPassada(campo) {
+        // Próxima manutenção com data já passada = manutenção feita: pedir confirmação antes de guardar
+        if (!campo || !campo.value || campo.value === campo.defaultValue) return true;
+        var t = new Date(), p = function(n) { return (n < 10 ? '0' : '') + n; };
+        var hoje = t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate());
+        if (campo.value >= hoje) return true;
+        return confirm('A data ' + campo.value.split('-').reverse().join('/') + ' já passou: esta manutenção já foi feita?\\n\\n'
+                       + 'Se confirmar, fica registada como último serviço.');
+    }
     function flyTo(lat, lng) {
         var mapEl = document.querySelector('.folium-map');
         if (mapEl) {
@@ -246,8 +268,20 @@ def home():
                     <div class="map-container">{{ body_html|safe }}</div>
                 </div>
                 <footer>&copy; GestãoPro</footer>
+                <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
                 <script>
                     {{ script|safe }}
+                    function showToast(msg, type) {
+                        var t = document.createElement('div');
+                        t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:Arial,sans-serif;max-width:90vw;opacity:1;transition:opacity 0.4s;color:white;';
+                        t.style.background = type === 'error' ? '#e53935' : '#2d3a6e';
+                        t.textContent = msg;
+                        document.getElementById('toast-container').appendChild(t);
+                        setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 400); }, 4000);
+                    }
+                    {% for category, message in get_flashed_messages(with_categories=true) %}
+                    document.addEventListener('DOMContentLoaded', function() { showToast({{ message|tojson }}, {{ category|tojson }}); });
+                    {% endfor %}
                     function filterSidebar(query) {
                         var items = document.querySelectorAll('.sidebar-item');
                         query = query.toLowerCase();

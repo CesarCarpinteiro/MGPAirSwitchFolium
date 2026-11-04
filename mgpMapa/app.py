@@ -103,4 +103,13 @@ def create_app():
         except Exception:
             return dict(org_nome='A minha Organização', org=None, tem_mapa=True, app_version=APP_VERSION)
 
+    import click
+
+    @app.cli.command('enviar-lembretes')
+    @click.option('--simular', is_flag=True, help='Mostra o que seria enviado, sem enviar nem marcar.')
+    def enviar_lembretes_cmd(simular):
+        """SMS de manutenção aos clientes com 8 e 10 meses desde o último serviço (correr 1x por dia)."""
+        from lembretes import enviar_lembretes
+        enviar_lembretes(simular=simular)
+
     return app

@@ -30,6 +30,7 @@ class Registo(db.Model):
     longitude = db.Column(db.Float, nullable=True)
     valor_pago = db.Column(db.Float, nullable=True)
     org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=True)
+    manutencao_agendada = db.Column(db.String(20), nullable=True)  # dd/mm/aaaa; suspende os lembretes
     servicos = db.relationship('Servico', backref='registo', lazy=True, cascade='all, delete-orphan')
 
 class Servico(db.Model):
@@ -170,6 +171,9 @@ class Obra(db.Model):
     estado = db.Column(db.String(30), default='agendada')
     notas = db.Column(db.String(500), default='')
     created_at = db.Column(db.String(20), default=lambda: datetime.now().strftime('%d/%m/%Y'))
+    # Marcação criada a partir de um cliente (agendamento no mapa) ou de um serviço registado
+    registo_id = db.Column(db.Integer, db.ForeignKey('registos.id', ondelete='SET NULL'), nullable=True)
+    servico_id = db.Column(db.Integer, db.ForeignKey('servicos.id', ondelete='SET NULL'), nullable=True)
 
 class ObraFuncionario(db.Model):
     __tablename__ = 'obra_funcionario'
@@ -215,3 +219,22 @@ class Organizacao(db.Model):
     orc_margem = db.Column(db.Float, default=35)  # % sobre o preço de catálogo
     orc_termos = db.Column(db.Text)
     orc_pagamento = db.Column(db.Text)
+    sms_lembretes = db.Column(db.Boolean, default=False)  # SMS automáticos de manutenção (8 e 10 meses)
+
+
+class LembreteSMS(db.Model):
+    """SMS de manutenção preparado na véspera; sai no dia `enviar_em` se ninguém o cancelar."""
+    __tablename__ = 'lembretes_sms'
+    __table_args__ = (db.UniqueConstraint('registo_id', 'tipo', 'referencia', name='uq_lembrete_registo_tipo_ref'),)
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=False)
+    registo_id = db.Column(db.Integer, db.ForeignKey('registos.id', ondelete='CASCADE'), nullable=False)
+    tipo = db.Column(db.String(5), nullable=False)  # '8m' ou '10m'
+    referencia = db.Column(db.String(20), nullable=False)  # data do serviço a partir do qual se contam os meses
+    texto = db.Column(db.String(400), nullable=False)
+    enviar_em = db.Column(db.Date, nullable=False)
+    estado = db.Column(db.String(20), default='pendente')  # pendente, enviado, cancelado, falhou
+    motivo = db.Column(db.String(200))
+    criado_em = db.Column(db.DateTime, default=datetime.now)
+    enviado_em = db.Column(db.DateTime)
+    registo = db.relationship('Registo', backref=db.backref('lembretes', cascade='all, delete-orphan', passive_deletes=True))
