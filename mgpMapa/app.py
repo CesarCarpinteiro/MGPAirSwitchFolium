@@ -2,9 +2,10 @@ import os
 from datetime import timedelta
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, flash, jsonify, redirect, request
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFError, CSRFProtect, generate_csrf
 
 from db import db
 
@@ -12,6 +13,7 @@ load_dotenv()
 
 login_manager = LoginManager()
 migrate = Migrate()
+csrf = CSRFProtect()
 
 
 APP_VERSION = os.getenv('APP_VERSION', '1.0')
@@ -44,6 +46,28 @@ def create_app():
     except Exception as e:
         print(f'Redis not available, using filesystem sessions: {e}')
         app.config['SESSION_TYPE'] = 'filesystem'
+
+    # CSRF: todos os POST precisam do token (static/csrf.js junta-o a formulários e fetch); válido enquanto durar a sessão
+    app.config['WTF_CSRF_TIME_LIMIT'] = None
+    csrf.init_app(app)
+
+    @app.after_request
+    def injetar_csrf(resposta):
+        """Põe o token e o csrf.js no <head> de todas as páginas HTML (as páginas não partilham um template base)."""
+        if resposta.mimetype == 'text/html' and not resposta.direct_passthrough and resposta.status_code < 400:
+            html = resposta.get_data(as_text=True)
+            if '</head>' in html:
+                extra = f'<meta name="csrf-token" content="{generate_csrf()}"><script src="/static/csrf.js"></script>'
+                resposta.set_data(html.replace('</head>', extra + '</head>', 1))
+        return resposta
+
+    @app.errorhandler(CSRFError)
+    def csrf_invalido(e):
+        mensagem = 'A sessão expirou ou o pedido não é válido. Recarregue a página e tente outra vez.'
+        if 'application/json' in request.headers.get('Accept', '') or request.is_json:
+            return jsonify({'ok': False, 'mensagem': mensagem}), 400
+        flash(mensagem, 'error')
+        return redirect(request.referrer or '/')
 
     db.init_app(app)
     migrate.init_app(app, db)
