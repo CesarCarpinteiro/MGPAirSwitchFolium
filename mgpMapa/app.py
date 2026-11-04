@@ -15,11 +15,17 @@ migrate = Migrate()
 
 
 APP_VERSION = os.getenv('APP_VERSION', '1.0')
+CHAVES_EXPOSTAS = {'lancode', 'fallback-secret-key'}  # já estiveram no repositório público
 
 def create_app():
     app = Flask(__name__)
 
-    app.secret_key = os.getenv('SECRET_KEY', 'fallback-secret-key')
+    # A SECRET_KEY assina as sessões e os cookies "lembrar-me": tem de ser longa, aleatória e secreta
+    secret_key = os.getenv('SECRET_KEY', '')
+    if len(secret_key) < 32 or secret_key in CHAVES_EXPOSTAS:
+        raise RuntimeError('SECRET_KEY em falta ou insegura no .env. Gere uma nova com: '
+                           'python -c "import secrets; print(secrets.token_hex(32))"')
+    app.secret_key = secret_key
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///database.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)

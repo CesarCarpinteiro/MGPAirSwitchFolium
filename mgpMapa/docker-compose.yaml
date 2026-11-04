@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   flask-app:
     build:
@@ -23,7 +21,7 @@ services:
     environment:
       POSTGRES_DB: gestaopro
       POSTGRES_USER: gestaopro
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gestaopro_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
