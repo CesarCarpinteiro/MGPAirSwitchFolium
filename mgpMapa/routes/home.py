@@ -119,8 +119,9 @@ def home():
                 </table>
                 {f'<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;margin-bottom:6px;">Histórico ({num_servicos} serviços)</div>{historico_html}</div>' if num_servicos > 0 else ''}
                 {agendar_html}
-                <div style="margin-top:12px;">
-                    <a href="tel:{r.contacto}" style="display:block;text-align:center;background:{color};color:white;padding:9px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">Ligar</a>
+                <div style="margin-top:12px;display:flex;gap:8px;">
+                    <a href="/registos?ver={r.id}" style="flex:1;text-align:center;background:white;color:{color};border:1.5px solid {color};padding:8px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">Ver registo</a>
+                    <a href="tel:{r.contacto}" style="flex:1;text-align:center;background:{color};color:white;border:1.5px solid {color};padding:8px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">Ligar</a>
                 </div>
             </div>
         </div>"""

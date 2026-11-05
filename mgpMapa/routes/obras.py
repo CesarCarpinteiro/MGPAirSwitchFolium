@@ -6,7 +6,7 @@ from flask_login import current_user, login_required
 
 from db import db
 from models import Ferias, Obra, ObraFuncionario, Organizacao, Registo, Servico, Usuario
-from lembretes import definir_agendamento
+from lembretes import TIPO_MANUTENCAO, definir_agendamento
 from utils import bg_push
 
 obras_bp = Blueprint('obras', __name__)
@@ -137,7 +137,7 @@ def _sincronizar_agendamento(obra, apagada=False):
         definir_agendamento(r, None)
     elif obra.estado == 'concluida':
         # Manutenção feita: fica registada no cliente e passa a ser o último serviço (recomeça a contagem)
-        servico = Servico(org_id=r.org_id, tipo_servico='Manutenção', data_servico=obra.data_fim,
+        servico = Servico(org_id=r.org_id, tipo_servico=TIPO_MANUTENCAO, data_servico=obra.data_fim,
                           notas=(obra.notas or '')[:500] or None)
         r.servicos.append(servico)
         db.session.flush()

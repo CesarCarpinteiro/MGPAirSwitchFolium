@@ -22,6 +22,9 @@ from models import LembreteSMS, Obra, Organizacao, Registo, Servico, Usuario
 from utils import TWILIO_ACCOUNT_SID, normalizar_telemovel, send_push_to_user, send_sms, texto_sms
 
 
+TIPO_MANUTENCAO = 'Manutenção AC'  # tipo dos serviços criados quando uma manutenção agendada é feita
+
+
 def _data(texto):
     try:
         return datetime.strptime(texto, '%d/%m/%Y').date()
@@ -72,7 +75,7 @@ def definir_agendamento(registo, data):
 
 def registar_manutencao_feita(registo, data):
     """Manutenção de `data` (passada) feita: novo último serviço (próxima a +1 ano) e marcação concluída."""
-    servico = Servico(org_id=registo.org_id, tipo_servico='Manutenção', data_servico=data)
+    servico = Servico(org_id=registo.org_id, tipo_servico=TIPO_MANUTENCAO, data_servico=data)
     servico.proxima_manutencao = proxima_por_omissao(servico)
     registo.servicos.append(servico)
     registo.manutencao_agendada = None
@@ -83,7 +86,7 @@ def registar_manutencao_feita(registo, data):
         obra = Obra(org_id=registo.org_id, registo_id=registo.id, local=(registo.morada or '')[:300],
                     notas=f'Contacto: {registo.contacto}' if registo.contacto else '')
         db.session.add(obra)
-    obra.nome = f'Manutenção — {registo.nome}'[:200]
+    obra.nome = f'{TIPO_MANUTENCAO} — {registo.nome}'[:200]
     obra.servico_id = servico.id
     obra.data_inicio = obra.data_fim = data
     obra.estado = 'concluida'

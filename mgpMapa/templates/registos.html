@@ -122,6 +122,7 @@
             box-shadow: 0 1px 6px rgba(0,0,0,0.07); border-left: 3px solid #2d3a6e; transition: box-shadow 0.2s;
         }
         .registo-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
+        .registo-card.destaque { box-shadow: 0 0 0 3px rgba(74,95,168,0.35); scroll-margin-top: 20px; }
         .registo-card.hidden { display: none; }
         .registo-header {
             padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
@@ -450,7 +451,7 @@
         {% for r in registos %}
         {% set ultimo = ultimo_map.get(r.id) %}
         {% set s_info = status_map.get(r.id, ('', '#888', '#f5f5f5')) %}
-        <div class="registo-card" data-search="{{ r.nome }} {{ r.contacto }} {{ r.morada }}" style="border-left-color: {{ s_info[1] }};">
+        <div class="registo-card" id="r{{ r.id }}" data-search="{{ r.nome }} {{ r.contacto }} {{ r.morada }}" style="border-left-color: {{ s_info[1] }};">
             <div class="registo-header">
                 <div>
                     <div class="client-name">
@@ -706,6 +707,17 @@
             c.appendChild(t);
             setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
         }
+        {% if ver %}
+        // Vindo do mapa: mostra o cliente aberto e em destaque
+        document.addEventListener('DOMContentLoaded', function() {
+            const card = document.getElementById('r{{ ver }}');
+            if (!card) return;
+            card.classList.add('destaque');
+            const btn = card.querySelector('.toggle-btn');
+            if (btn) toggleDetail(btn);
+            card.scrollIntoView({ block: 'start' });
+        });
+        {% endif %}
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
         showToast("{{ message }}", "{{ category }}");

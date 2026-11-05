@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from db import db
 from models import LembreteSMS, Obra, ObraFuncionario, Organizacao, Registo, Servico, TipoServico
-from lembretes import definir_agendamento, proxima_por_omissao, situacao, ultimo_servico
+from lembretes import TIPO_MANUTENCAO, definir_agendamento, proxima_por_omissao, situacao, ultimo_servico
 from utils import TWILIO_ACCOUNT_SID, converter_data, send_sms, texto_sms
 
 registos_bp = Blueprint('registos', __name__)
@@ -97,7 +97,7 @@ def _marcar_agendamento(r):
     if not obra:
         obra = Obra(org_id=r.org_id, created_by=current_user.id, registo_id=r.id, estado='agendada')
         db.session.add(obra)
-    obra.nome = f'Manutenção — {r.nome}'[:200]
+    obra.nome = f'{TIPO_MANUTENCAO} — {r.nome}'[:200]
     obra.local = (r.morada or '')[:300]
     obra.data_inicio = obra.data_fim = r.manutencao_agendada
     obra.notas = _notas_cliente(r)
@@ -177,6 +177,12 @@ def nova_pagina():
     page = request.args.get('page', 1, type=int)
     per_page = 25
     base_query = db.session.query(Registo).filter_by(org_id=current_user.org_id)
+    # ?ver=<id> (botão "Ver registo" do mapa): abre a página onde está o cliente
+    ver = request.args.get('ver', type=int)
+    if ver and base_query.filter(Registo.id == ver).count():
+        page = base_query.filter(Registo.id > ver).count() // per_page + 1
+    else:
+        ver = None
     total_registos = base_query.count()
     total_pages = (total_registos + per_page - 1) // per_page
     registos = base_query.order_by(Registo.id.desc()).offset((page - 1) * per_page).limit(per_page).options(joinedload(Registo.servicos)).all()
@@ -192,7 +198,7 @@ def nova_pagina():
         ultimo_map[r.id] = ultimo_servico(r)
 
     return render_template('registos.html', registos=registos, current_user=current_user, is_admin=is_admin,
-                           page=page, total_pages=total_pages, total_registos=total_registos,
+                           page=page, ver=ver, total_pages=total_pages, total_registos=total_registos,
                            tipos_servico=tipos_servico, status_map=status_map, ultimo_map=ultimo_map, sms_ativo=bool(TWILIO_ACCOUNT_SID) and is_admin)
 
 
