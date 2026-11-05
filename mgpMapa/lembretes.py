@@ -174,7 +174,7 @@ def enviar_lembretes(simular=False, hoje=None):
     for org in db.session.query(Organizacao).all():
         # 0. Manutenções agendadas que já passaram passam a último serviço
         feitas = [] if simular else _registar_agendadas_passadas(org, hoje)
-        desligado = 'lembretes desligados nas Definições' if not org.sms_lembretes else \
+        desligado = 'lembretes desligados no Dashboard' if not org.sms_lembretes else \
             'Twilio não configurado' if not TWILIO_ACCOUNT_SID else None
         # A simulação mostra o que aconteceria mesmo com os lembretes ainda desligados (para testar antes de ligar)
         if desligado and not simular:

@@ -461,7 +461,6 @@ def definicoes():
         org.orc_margem = min(max(_num(request.form.get('orc_margem'), MARGEM_PADRAO), 0), 1000)
         org.orc_termos = request.form.get('orc_termos', '').strip()
         org.orc_pagamento = request.form.get('orc_pagamento', '').strip()
-        org.sms_lembretes = request.form.get('sms_lembretes') == '1'
 
         logo = request.files.get('logo')
         if logo and logo.filename:
@@ -482,5 +481,4 @@ def definicoes():
         return redirect(url_for('orcamentos.definicoes'))
     return render_template('orcamento_definicoes.html', o=org, margem=_margem(org),
                            termos=_texto(org.orc_termos if org else None, TERMOS_PADRAO),
-                           pagamento=_texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO),
-                           sms_configurado=bool(TWILIO_ACCOUNT_SID), is_admin=True)
+                           pagamento=_texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO), is_admin=True)

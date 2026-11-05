@@ -1,11 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
 from db import db
-from models import (Fatura, Ferias, HorasTrabalhadas, Obra, ObraFuncionario,
+from models import (Fatura, Ferias, HorasTrabalhadas, LembreteSMS, Obra, ObraFuncionario,
                     Orcamento, Organizacao, Usuario)
+from utils import TWILIO_ACCOUNT_SID
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -46,10 +47,15 @@ def dashboard():
 
     num_funcionarios = db.session.query(Usuario).filter_by(org_id=org_id).count()
 
+    sms = {'ativo': bool(org and org.sms_lembretes), 'configurado': bool(TWILIO_ACCOUNT_SID),
+           'pendentes': db.session.query(LembreteSMS).filter_by(org_id=org_id, estado='pendente').count(),
+           'enviados': db.session.query(LembreteSMS).filter(LembreteSMS.org_id == org_id, LembreteSMS.estado == 'enviado',
+                                                            LembreteSMS.enviado_em >= now - timedelta(days=30)).count()}
+
     return render_template('dashboard.html',
         org_nome=org_nome, tem_mapa=tem_mapa,
         pendentes=pendentes, total_horas=total_horas, horas_por_func=horas_por_func,
         total_faturas=total_faturas, orcamentos_pendentes=orcamentos_pendentes,
         obras_ativas=obras_ativas, obra_funcs=obra_funcs,
-        num_funcionarios=num_funcionarios,
+        num_funcionarios=num_funcionarios, sms=sms,
         mes_nome=now.strftime('%B %Y').capitalize(), now=now)
