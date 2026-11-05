@@ -175,14 +175,21 @@ def home():
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
                 var legend = L.control({ position: 'bottomleft' });
                 legend.onAdd = function() {
-                    var div = L.DomUtil.create('div');
-                    div.style.cssText = 'background:white;padding:12px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);font-size:12px;';
+                    // Recolhível; no telemóvel começa fechada para não tapar o mapa
+                    var div = L.DomUtil.create('div', 'legenda' + (window.innerWidth <= 767 ? ' fechada' : ''));
+                    var item = function(cor, texto) {
+                        return '<div class="legenda-item"><span style="background:' + cor + ';"></span>' + texto + '</div>';
+                    };
                     div.innerHTML =
-                        '<div style="font-weight:600;margin-bottom:8px;font-size:12px;color:#333;text-transform:uppercase;">Estado</div>' +
-                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#4a6fa5;"></div><span style="color:#555;">Em dia (&lt; 8 meses)</span></div>' +
-                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#c47c2b;"></div><span style="color:#555;">Atenção (8 a 10 meses)</span></div>' +
-                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#a33b3b;"></div><span style="color:#555;">Urgente (faltam 2 meses ou menos)</span></div>' +
-                        '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;"><div style="width:10px;height:10px;border-radius:50%;background:#2e7d4f;"></div><span style="color:#555;">Manutenção agendada</span></div>';
+                        '<button type="button" class="legenda-titulo">Estado <span class="legenda-seta">▾</span></button>' +
+                        '<div class="legenda-itens">' +
+                        item('#4a6fa5', 'Em dia (&lt; 8 meses)') +
+                        item('#c47c2b', 'Atenção (8 a 10 meses)') +
+                        item('#a33b3b', 'Urgente (faltam 2 meses ou menos)') +
+                        item('#2e7d4f', 'Manutenção agendada') +
+                        '</div>';
+                    L.DomEvent.disableClickPropagation(div);
+                    div.querySelector('.legenda-titulo').addEventListener('click', function() { div.classList.toggle('fechada'); });
                     return div;
                 };
                 legend.addTo(map);
@@ -240,6 +247,14 @@ def home():
                     .map-container > div { position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; }
                     .folium-map { width: 100% !important; height: 100% !important; }
                     footer { flex-shrink: 0; text-align: center; padding: 7px; background: #2d3a6e; color: rgba(255,255,255,0.8); font-size: 12px; }
+                    .legenda { background: white; padding: 10px 14px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); font-size: 12px; }
+                    .legenda-titulo { background: none; border: none; padding: 0; cursor: pointer; font: 600 12px Arial, sans-serif; color: #333; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+                    .legenda-seta { transition: transform 0.2s; }
+                    .legenda-itens { margin-top: 6px; }
+                    .legenda-item { display: flex; align-items: center; gap: 8px; margin: 5px 0; color: #555; }
+                    .legenda-item span { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+                    .legenda.fechada .legenda-itens { display: none; }
+                    .legenda.fechada .legenda-seta { transform: rotate(-90deg); }
                     @media only screen and (max-width: 767px) { .sidebar { display: none; } .main-content { padding: 6px; } .page-header h1 { font-size: 1em !important; } }
                 </style>
             </head>

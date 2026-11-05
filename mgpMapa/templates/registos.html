@@ -293,6 +293,9 @@
         @media (max-width: 767px) {
             .form-container, .registos-container, .toolbar, .pagination, .page-info { width: 92%; }
             .form-row, .edit-row { flex-direction: column; gap: 0; }
+            .toolbar { flex-wrap: wrap; }
+            .search-box { flex-basis: 100%; }
+            .btn-new { flex: 1; justify-content: center; }
             .modal { width: 90%; }
             .page-header { padding: 10px 12px; }
             .page-header h1 { font-size: 1.1em; }
@@ -349,7 +352,7 @@
         {% if registos %}
         <div class="search-box">
             <span class="search-icon">&#128269;</span>
-            <input type="text" id="searchInput" placeholder="Pesquisar por nome, contacto ou morada..." oninput="pesquisar()">
+            <input type="text" id="searchInput" placeholder="Pesquisar nome, contacto, morada…" oninput="pesquisar()">
         </div>
         {% endif %}
         <button class="btn-new" onclick="{% if not tipos_servico %}openSemTiposModal(){% else %}toggleForm(){% endif %}">
