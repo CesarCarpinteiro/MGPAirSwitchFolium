@@ -143,7 +143,8 @@ def home():
 
         sidebar_items.append({
             'cliente': r.nome, 'status': status_label, 'dot_color': color,
-            'next_maintenance': next_maintenance_display,
+            'ultimo': f"{tipo_display}: {data_ref}" if data_ref else 'Sem serviços registados',
+            'agendada': sit['agendada'].strftime('%d/%m/%Y') if sit['agendada'] else '',
             'lat': r.latitude, 'lng': r.longitude, 'months': months_passed
         })
 
@@ -158,7 +159,8 @@ def home():
                 <strong style="font-size:13px;">{item['cliente']}</strong>
                 <span style="font-size:11px;color:{item['dot_color']};font-weight:600;">{item['status']}</span>
             </div>
-            <div style="font-size:12px;color:#666;margin-top:3px;">Próx. manutenção: {item['next_maintenance']}</div>
+            <div style="font-size:12px;color:#666;margin-top:3px;">{item['ultimo']}</div>
+            {f'<div style="font-size:12px;color:#2e7d4f;margin-top:2px;">Agendada: {item["agendada"]}</div>' if item['agendada'] else ''}
         </div>"""
 
     custom_js = """
