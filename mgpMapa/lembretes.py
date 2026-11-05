@@ -174,10 +174,16 @@ def enviar_lembretes(simular=False, hoje=None):
     for org in db.session.query(Organizacao).all():
         # 0. Manutenções agendadas que já passaram passam a último serviço
         feitas = [] if simular else _registar_agendadas_passadas(org, hoje)
-        if not (org.sms_lembretes and (TWILIO_ACCOUNT_SID or simular)):
+        desligado = 'lembretes desligados nas Definições' if not org.sms_lembretes else \
+            'Twilio não configurado' if not TWILIO_ACCOUNT_SID else None
+        # A simulação mostra o que aconteceria mesmo com os lembretes ainda desligados (para testar antes de ligar)
+        if desligado and not simular:
             if feitas:
                 _notificar_admins(org, [], [], [], feitas)
+            print(f'{org.nome}: sem SMS ({desligado}), {len(feitas)} manutenções agendadas registadas como feitas.')
             continue
+        if desligado:
+            print(f'[simular] {org.nome}: {desligado}; mostra o que seria enviado se estivessem ligados.')
         # 1. Enviar os de hoje (se ainda fizerem sentido: entretanto pode ter sido agendada ou feita a manutenção)
         enviados, falhados = [], []
         pendentes = db.session.query(LembreteSMS).filter(LembreteSMS.org_id == org.id, LembreteSMS.estado == 'pendente',
@@ -191,6 +197,7 @@ def enviar_lembretes(simular=False, hoje=None):
                 continue
             if simular:
                 print(f'[simular] hoje   | {lem.registo.nome} ({lem.registo.contacto}): {lem.texto}')
+                enviados.append(lem.registo.nome)
                 continue
             ok, erro = enviar_lembrete(lem)
             (enviados if ok else falhados).append(lem.registo.nome)
@@ -211,6 +218,7 @@ def enviar_lembretes(simular=False, hoje=None):
             texto = _texto(org, tipo, situacao(r, amanha)['tipo'])
             if simular:
                 print(f'[simular] amanhã | {r.nome} ({r.contacto}): {texto}')
+                preparados.append(r)  # só para a contagem do resumo
                 continue
             lem = LembreteSMS(org_id=org.id, registo_id=r.id, tipo=tipo, referencia=ref_txt, texto=texto, enviar_em=amanha)
             db.session.add(lem)
