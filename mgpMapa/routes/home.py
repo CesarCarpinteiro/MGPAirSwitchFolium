@@ -173,6 +173,10 @@ def home():
             var map = window[mapEl.id];
             if (map) {
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
+                // Ao abrir, o popup fica abaixo da barra de pesquisa e dos filtros
+                map.eachLayer(function(l) {
+                    if (l.getPopup && l.getPopup()) l.getPopup().options.autoPanPaddingTopLeft = L.point(10, 75);
+                });
                 var legend = L.control({ position: 'bottomleft' });
                 legend.onAdd = function() {
                     // Recolhível; no telemóvel começa fechada para não tapar o mapa
