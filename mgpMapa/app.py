@@ -53,13 +53,20 @@ def create_app():
 
     @app.after_request
     def injetar_csrf(resposta):
-        """Põe o token e o csrf.js no <head> de todas as páginas HTML (as páginas não partilham um template base)."""
+        """Põe o token, o csrf.js e o ícone da aba no <head> de todas as páginas HTML (as páginas não partilham um template base)."""
         if resposta.mimetype == 'text/html' and not resposta.direct_passthrough and resposta.status_code < 400:
             html = resposta.get_data(as_text=True)
             if '</head>' in html:
                 extra = f'<meta name="csrf-token" content="{generate_csrf()}"><script src="/static/csrf.js"></script>'
+                if 'rel="icon"' not in html:
+                    extra += '<link rel="icon" type="image/png" href="/static/icons/icon-64.png?v=2">'
                 resposta.set_data(html.replace('</head>', extra + '</head>', 1))
         return resposta
+
+    @app.route('/favicon.ico')
+    def favicon():
+        # Para os pedidos diretos do browser (ex.: ao abrir um PDF)
+        return app.send_static_file('icons/icon-64.png')
 
     @app.errorhandler(CSRFError)
     def csrf_invalido(e):

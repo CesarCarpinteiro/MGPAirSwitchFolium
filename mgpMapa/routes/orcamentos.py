@@ -135,58 +135,100 @@ def calcular_totais(linhas, desconto, iva_taxa):
     return dict(subtotal=subtotal, desconto_valor=desconto_valor, base=base, iva=iva, total=base + iva)
 
 
+def _ler_formulario():
+    """Lê o formulário do orçamento (novo ou editado). Devolve (campos, linhas) ou (None, None) se faltar algo."""
+    cliente = request.form.get('cliente', '').strip()
+    produto_ids = request.form.getlist('linha_produto_id')
+    descricoes = request.form.getlist('linha_descricao')
+    quantidades = request.form.getlist('linha_qtd')
+    precos = request.form.getlist('linha_preco')
+
+    # Só aceita produtos do catálogo da própria organização
+    ids_validos = {p.id for p in db.session.query(Produto.id).filter_by(org_id=current_user.org_id)}
+    linhas = []
+    for pid, desc, qtd, preco in zip(produto_ids, descricoes, quantidades, precos):
+        desc = desc.strip()
+        if not desc:
+            continue
+        pid = int(pid) if pid.isdigit() and int(pid) in ids_validos else None
+        linhas.append(OrcamentoLinha(produto_id=pid, descricao=desc[:300],
+                                     quantidade=_num(qtd, 1), preco_unitario=_num(preco)))
+
+    if not cliente or not linhas:
+        return None, None
+
+    desconto = min(max(_num(request.form.get('desconto')), 0), 100)
+    iva_taxa = _num(request.form.get('iva_taxa'), IVA_PADRAO)
+    totais = calcular_totais(linhas, desconto, iva_taxa)
+    campos = dict(cliente=cliente,
+                  cliente_nif=request.form.get('cliente_nif', '').strip(),
+                  cliente_contacto=request.form.get('cliente_contacto', '').strip(),
+                  cliente_email=request.form.get('cliente_email', '').strip(),
+                  cliente_morada=request.form.get('cliente_morada', '').strip(),
+                  descricao='; '.join(l.descricao for l in linhas)[:500],
+                  termos=request.form.get('termos', '').strip(),
+                  condicoes_pagamento=request.form.get('condicoes_pagamento', '').strip(),
+                  num_maquinas=request.form.get('num_maquinas', type=int),
+                  desconto=desconto, iva_taxa=iva_taxa, valor=round(totais['total'], 2))
+    return campos, linhas
+
+
+def _form_orcamento(o=None):
+    org = _org()
+    tem_catalogo = db.session.query(Produto.id).filter_by(org_id=current_user.org_id).first() is not None
+    if o is None:
+        linhas = []
+        termos = _texto(org.orc_termos if org else None, TERMOS_PADRAO)
+        pagamento = _texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO)
+    else:
+        linhas = [{'produto_id': l.produto_id or '', 'descricao': l.descricao,
+                   'quantidade': l.quantidade, 'preco': l.preco_unitario} for l in o.linhas]
+        if not linhas and o.valor:
+            # Orçamento antigo sem linhas: uma linha com a descrição e o valor sem IVA (o total mantém-se)
+            iva = o.iva_taxa if o.iva_taxa is not None else IVA_PADRAO
+            linhas = [{'produto_id': '', 'descricao': o.descricao or 'Orçamento',
+                       'quantidade': 1, 'preco': round(o.valor / (1 + iva / 100), 2)}]
+        termos, pagamento = o.termos or '', o.condicoes_pagamento or ''
+    return render_template('orcamento_novo.html', o=o, linhas=linhas, iva_padrao=IVA_PADRAO,
+                           tem_catalogo=tem_catalogo, is_admin=current_user.is_admin, margem=_margem(org),
+                           termos=termos, pagamento=pagamento)
+
+
 @orcamentos_bp.route('/orcamentos/novo', methods=['GET', 'POST'])
 @login_required
 def novo_orcamento():
     if request.method == 'POST':
-        cliente = request.form.get('cliente', '').strip()
-        produto_ids = request.form.getlist('linha_produto_id')
-        descricoes = request.form.getlist('linha_descricao')
-        quantidades = request.form.getlist('linha_qtd')
-        precos = request.form.getlist('linha_preco')
-
-        # Só aceita produtos do catálogo da própria organização
-        ids_validos = {p.id for p in db.session.query(Produto.id).filter_by(org_id=current_user.org_id)}
-        linhas = []
-        for pid, desc, qtd, preco in zip(produto_ids, descricoes, quantidades, precos):
-            desc = desc.strip()
-            if not desc:
-                continue
-            pid = int(pid) if pid.isdigit() and int(pid) in ids_validos else None
-            linhas.append(OrcamentoLinha(produto_id=pid, descricao=desc[:300],
-                                         quantidade=_num(qtd, 1), preco_unitario=_num(preco)))
-
-        if not cliente or not linhas:
+        campos, linhas = _ler_formulario()
+        if campos is None:
             flash('Indique o cliente e pelo menos uma linha.', 'error')
             return redirect(url_for('orcamentos.novo_orcamento'))
-
-        desconto = min(max(_num(request.form.get('desconto')), 0), 100)
-        iva_taxa = _num(request.form.get('iva_taxa'), IVA_PADRAO)
-        totais = calcular_totais(linhas, desconto, iva_taxa)
-        num_maquinas = request.form.get('num_maquinas', type=int)
-
-        o = Orcamento(org_id=current_user.org_id, user_id=current_user.id, cliente=cliente,
-                      cliente_nif=request.form.get('cliente_nif', '').strip(),
-                      cliente_contacto=request.form.get('cliente_contacto', '').strip(),
-                      cliente_email=request.form.get('cliente_email', '').strip(),
-                      cliente_morada=request.form.get('cliente_morada', '').strip(),
-                      descricao='; '.join(l.descricao for l in linhas)[:500],
-                      termos=request.form.get('termos', '').strip(),
-                      condicoes_pagamento=request.form.get('condicoes_pagamento', '').strip(),
-                      num_maquinas=num_maquinas, desconto=desconto, iva_taxa=iva_taxa,
-                      valor=round(totais['total'], 2), estado='Pendente',
-                      created_at=datetime.now().strftime('%d/%m/%Y'), linhas=linhas)
+        o = Orcamento(org_id=current_user.org_id, user_id=current_user.id, estado='Pendente',
+                      created_at=datetime.now().strftime('%d/%m/%Y'), linhas=linhas, **campos)
         db.session.add(o)
         db.session.commit()
         flash(f'Orçamento #{o.id} criado.', 'success')
         return redirect(url_for('orcamentos.orcamentos', novo=o.id))
+    return _form_orcamento()
 
-    org = _org()
-    tem_catalogo = db.session.query(Produto.id).filter_by(org_id=current_user.org_id).first() is not None
-    return render_template('orcamento_novo.html', iva_padrao=IVA_PADRAO, tem_catalogo=tem_catalogo,
-                           is_admin=current_user.is_admin, margem=_margem(org),
-                           termos=_texto(org.orc_termos if org else None, TERMOS_PADRAO),
-                           pagamento=_texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO))
+
+@orcamentos_bp.route('/orcamentos/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_orcamento(id):
+    o = db.session.query(Orcamento).filter_by(id=id, org_id=current_user.org_id).first()
+    if not o or not (o.user_id == current_user.id or current_user.is_admin):
+        return redirect(url_for('orcamentos.orcamentos'))
+    if request.method == 'POST':
+        campos, linhas = _ler_formulario()
+        if campos is None:
+            flash('Indique o cliente e pelo menos uma linha.', 'error')
+            return redirect(url_for('orcamentos.editar_orcamento', id=id))
+        for campo, valor in campos.items():
+            setattr(o, campo, valor)
+        o.linhas = linhas  # as linhas antigas são apagadas (delete-orphan)
+        db.session.commit()
+        flash(f'Orçamento #{o.id} atualizado.', 'success')
+        return redirect(url_for('orcamentos.orcamentos', novo=o.id))
+    return _form_orcamento(o)
 
 
 @orcamentos_bp.route('/api/produtos')

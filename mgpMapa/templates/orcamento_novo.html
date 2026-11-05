@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ org_nome }} — Orçamento automático</title>
+    <title>{{ org_nome }} — {{ 'Editar orçamento #%d' % o.id if o else 'Orçamento automático' }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
@@ -150,7 +150,7 @@
         <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
         <div>
             <div class="subtitle">{{ org_nome }}</div>
-            <h1>Orçamento automático</h1>
+            <h1>{{ 'Editar orçamento #%d' % o.id if o else 'Orçamento automático' }}</h1>
         </div>
     </div>
     <div class="header-actions">
@@ -168,30 +168,30 @@
     </div>
     {% endif %}
 
-    <form method="POST" action="/orcamentos/novo" id="orcForm" autocomplete="off">
+    <form method="POST" action="{{ '/orcamentos/%d/editar' % o.id if o else '/orcamentos/novo' }}" id="orcForm" autocomplete="off">
 
         <div class="card">
             <div class="section-title">👤 Cliente</div>
             <div class="form-grid">
                 <div class="form-group span2">
                     <label>Nome *</label>
-                    <input type="text" name="cliente" placeholder="Nome do cliente ou empresa" required>
+                    <input type="text" name="cliente" placeholder="Nome do cliente ou empresa" value="{{ o.cliente or '' if o }}" required>
                 </div>
                 <div class="form-group">
                     <label>NIF</label>
-                    <input type="text" name="cliente_nif" inputmode="numeric" placeholder="Opcional">
+                    <input type="text" name="cliente_nif" inputmode="numeric" placeholder="Opcional" value="{{ o.cliente_nif or '' if o }}">
                 </div>
                 <div class="form-group">
                     <label>Contacto</label>
-                    <input type="tel" name="cliente_contacto">
+                    <input type="tel" name="cliente_contacto" value="{{ o.cliente_contacto or '' if o }}">
                 </div>
                 <div class="form-group span2">
                     <label>Email</label>
-                    <input type="email" name="cliente_email">
+                    <input type="email" name="cliente_email" value="{{ o.cliente_email or '' if o }}">
                 </div>
                 <div class="form-group full">
                     <label>Morada</label>
-                    <input type="text" name="cliente_morada">
+                    <input type="text" name="cliente_morada" value="{{ o.cliente_morada or '' if o }}">
                 </div>
             </div>
         </div>
@@ -226,15 +226,15 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Desconto (%)</label>
-                        <input type="number" name="desconto" id="desconto" class="num" min="0" max="100" step="0.5" value="0">
+                        <input type="number" name="desconto" id="desconto" class="num" min="0" max="100" step="0.5" value="{{ '%g' % (o.desconto or 0) if o else 0 }}">
                     </div>
                     <div class="form-group">
                         <label>IVA (%)</label>
-                        <input type="number" name="iva_taxa" id="ivaTaxa" class="num" min="0" step="1" value="{{ '%g' % iva_padrao }}">
+                        <input type="number" name="iva_taxa" id="ivaTaxa" class="num" min="0" step="1" value="{{ '%g' % (o.iva_taxa if o and o.iva_taxa is not none else iva_padrao) }}">
                     </div>
                     <div class="form-group">
                         <label>Nº de máquinas</label>
-                        <input type="number" name="num_maquinas" id="numMaquinas" class="num" min="0">
+                        <input type="number" name="num_maquinas" id="numMaquinas" class="num" min="0" value="{{ o.num_maquinas or '' if o }}">
                     </div>
                 </div>
                 <div>
@@ -245,7 +245,7 @@
                         <div class="resumo-row total"><span>Total</span><span id="rTotal">0,00 €</span></div>
                         <div class="resumo-nota">Preços sem IVA, já com a margem de {{ '%g' % margem }}% sobre o catálogo. O IVA é somado no fim.</div>
                     </div>
-                    <button type="submit" class="btn-submit">Criar orçamento</button>
+                    <button type="submit" class="btn-submit">{{ 'Guardar alterações' if o else 'Criar orçamento' }}</button>
                 </div>
             </div>
         </div>
@@ -273,7 +273,7 @@
 <script>
     // Categorias que não contam como máquinas no "Nº de máquinas"
     var NAO_MAQUINA = /servi|instala|m[aã]o.de.obra|material|acess|desloca|tubagem|unidade exterior|dep[oó]sito|comando/i;
-    var maquinasEditado = false;
+    var maquinasEditado = {{ 'true' if o else 'false' }};  // ao editar mantém o nº guardado
 
     var fmt = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     function eur(v) { return fmt.format(v || 0) + ' €'; }
@@ -308,8 +308,15 @@
         if (!maquinasEditado) document.getElementById('numMaquinas').value = maquinas || '';
     }
 
-    function addLinha() {
+    function addLinha(dados) {
         var linha = document.getElementById('linhaTpl').content.firstElementChild.cloneNode(true);
+        if (dados) {
+            linha.querySelector('.f-pid').value = dados.produto_id;
+            linha.querySelector('.f-desc').value = dados.descricao;
+            linha.querySelector('.f-qtd').value = dados.quantidade;
+            linha.querySelector('.f-preco').value = Number(dados.preco).toFixed(2);
+            if (dados.produto_id) linha.classList.add('catalogo');
+        }
         document.getElementById('linhas').appendChild(linha);
         ligarAutocomplete(linha);
         linha.querySelector('.f-qtd').addEventListener('input', recalc);
@@ -407,6 +414,7 @@
         if (!preenchidas.length) { e.preventDefault(); showToast('Adicione pelo menos uma linha.', 'error'); }
     });
 
+    {{ linhas|tojson }}.forEach(addLinha);
     addLinha();
     recalc();
 

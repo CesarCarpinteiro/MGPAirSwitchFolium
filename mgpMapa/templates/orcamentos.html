@@ -315,6 +315,7 @@
                     <td data-label="Criado por" style="font-size:0.85em; color:#888;">{{ u.nome }}</td>
                     {% endif %}
                     <td class="acoes" style="white-space:nowrap;">
+                        {% if o.user_id == current_user.id or is_admin %}<a href="/orcamentos/{{ o.id }}/editar" class="pdf-link" title="Editar orçamento">Editar</a>{% endif %}
                         {% if o.linhas %}<a href="/orcamentos/{{ o.id }}/pdf" target="_blank" class="pdf-link" title="Ver PDF">PDF</a>{% endif %}
                         <form method="POST" action="/orcamentos/delete/{{ o.id }}" id="odel-{{ o.id }}" style="margin:0;display:inline;">
                             <button type="button" class="delete-btn"
