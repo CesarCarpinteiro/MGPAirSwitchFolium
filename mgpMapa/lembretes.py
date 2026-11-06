@@ -149,12 +149,12 @@ def _lembrete_devido(registo, dia):
     return None, ref
 
 
-def _texto(org, tipo, tipo_servico):
+def _texto(org, tipo):
     if tipo == '10m':
-        return texto_sms(org, 'faltam 2 meses para a manutenção anual do seu ar condicionado.', 'Contacte-nos para marcar:')
-    t = (tipo_servico or '').lower()
-    desde = 'a sua instalação' if 'instala' in t else 'a última manutenção' if 'manuten' in t else 'o último serviço'
-    return texto_sms(org, f'já passaram 8 meses desde {desde}. Está na altura de marcar a manutenção anual.', 'Contacte-nos:')
+        texto = texto_sms(org, 'Olá! Ainda não marcou a manutenção anual do seu ar condicionado? Faltam 2 meses.', 'Ligue')
+    else:
+        texto = texto_sms(org, 'Olá! Lembramos que a manutenção anual do seu ar condicionado está a chegar.', 'Fale connosco:')
+    return texto + '.' if org and org.telefone else texto
 
 
 def enviar_lembrete(lembrete):
@@ -215,7 +215,7 @@ def enviar_lembretes(simular=False, hoje=None):
             ref_txt = ref.strftime('%d/%m/%Y')
             if any(lem.tipo == tipo and lem.referencia == ref_txt for lem in r.lembretes):
                 continue  # já foi preparado (enviado, cancelado ou pendente)
-            texto = _texto(org, tipo, situacao(r, amanha)['tipo'])
+            texto = _texto(org, tipo)
             if simular:
                 print(f'[simular] amanhã | {r.nome} ({r.contacto}): {texto}')
                 preparados.append(r)  # só para a contagem do resumo
