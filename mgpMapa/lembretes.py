@@ -157,6 +157,15 @@ def _texto(org, tipo):
     return texto + '.' if org and org.telefone else texto
 
 
+def resumo_sms(org):
+    """Estado dos SMS automáticos para o cartão do separador Admin."""
+    return {'ativo': bool(org and org.sms_lembretes), 'configurado': bool(TWILIO_ACCOUNT_SID),
+            'pendentes': db.session.query(LembreteSMS).filter_by(org_id=org.id, estado='pendente').count() if org else 0,
+            'enviados': db.session.query(LembreteSMS).filter(
+                LembreteSMS.org_id == org.id, LembreteSMS.estado == 'enviado',
+                LembreteSMS.enviado_em >= datetime.now() - timedelta(days=30)).count() if org else 0}
+
+
 def enviar_lembrete(lembrete):
     """Envia um lembrete já preparado e regista o resultado. Devolve (ok, erro)."""
     ok, erro = send_sms(lembrete.registo.contacto, lembrete.texto)
@@ -174,7 +183,7 @@ def enviar_lembretes(simular=False, hoje=None):
     for org in db.session.query(Organizacao).all():
         # 0. Manutenções agendadas que já passaram passam a último serviço
         feitas = [] if simular else _registar_agendadas_passadas(org, hoje)
-        desligado = 'lembretes desligados no Dashboard' if not org.sms_lembretes else \
+        desligado = 'lembretes desligados em Perfil > Admin' if not org.sms_lembretes else \
             'Twilio não configurado' if not TWILIO_ACCOUNT_SID else None
         # A simulação mostra o que aconteceria mesmo com os lembretes ainda desligados (para testar antes de ligar)
         if desligado and not simular:

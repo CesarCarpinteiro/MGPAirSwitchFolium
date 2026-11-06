@@ -84,6 +84,16 @@
             color: white; box-shadow: 0 2px 6px rgba(45,58,110,0.3);
         }
         .tab-panel { display: none; }
+        .sms-cfg { display: flex; align-items: center; gap: 16px; }
+        .sms-estado { font-weight: 700; font-size: 0.9em; margin-bottom: 4px; }
+        .sms-estado.on { color: #2e7d4f; }
+        .sms-estado.off { color: #888; }
+        .sms-ajuda { font-size: 0.83em; color: #777; line-height: 1.5; }
+        .sms-ajuda a { color: #2d3a6e; font-weight: 700; }
+        .sms-btn { padding: 9px 20px; border-radius: 7px; font-weight: 700; font-size: 0.85em; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+        .sms-btn.ligar { background: #2e7d4f; color: white; border: none; }
+        .sms-btn.desligar { background: white; color: #a33b3b; border: 1px solid #f0d0d0; }
+        @media (max-width: 700px) { .sms-cfg { flex-direction: column; align-items: stretch; } .sms-btn { width: 100%; } }
         .tab-panel.active { display: block; }
 
         .user-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
@@ -763,6 +773,29 @@
             </div>
             <p id="tipoMsg" style="font-size:0.8em;color:#e53935;margin-top:6px;display:none;"></p>
         </div>
+
+        {% if sms %}
+        <div class="card" id="sms-manutencao" style="margin-top:20px;">
+            <div class="section-title">SMS automáticos de manutenção</div>
+            <div class="sms-cfg">
+                <div style="flex:1;">
+                    <div class="sms-estado {{ 'on' if sms.ativo else 'off' }}">{{ '● Ligados' if sms.ativo else '○ Desligados' }}</div>
+                    <div class="sms-ajuda">
+                        Aos clientes com telemóvel: SMS aos <strong>8 meses</strong> desde o último serviço e aos <strong>10 meses</strong>
+                        (faltam 2), exceto se tiverem manutenção agendada. Na véspera recebe no 🔔 os SMS do dia seguinte e pode cancelá-los.
+                        {% if sms.ativo %}<br>{{ sms.pendentes }} por enviar · {{ sms.enviados }} enviado{{ 's' if sms.enviados != 1 }} nos últimos 30 dias · <a href="/lembretes">Ver SMS →</a>{% endif %}
+                    </div>
+                    {% if not sms.configurado %}<div class="sms-ajuda" style="color:#c47c2b;">O envio de SMS não está configurado neste servidor (Twilio).</div>{% endif %}
+                </div>
+                {% if sms.configurado or sms.ativo %}
+                <form method="POST" action="/lembretes/ativar" style="margin:0;">
+                    <input type="hidden" name="ativo" value="{{ '0' if sms.ativo else '1' }}">
+                    <button type="submit" class="sms-btn {{ 'desligar' if sms.ativo else 'ligar' }}">{{ 'Desligar' if sms.ativo else 'Ligar' }}</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     {% endif %}
@@ -1677,16 +1710,16 @@
         });
     }
 
-    if (window.location.hash === '#tipos-servico') {
+    if (window.location.hash === '#tipos-servico' || window.location.hash === '#sms-manutencao') {
         // Activate the Admin tab first
         document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
         document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
         var adminPanel = document.getElementById('tab-admin');
         if (adminPanel) adminPanel.classList.add('active');
-        var adminBtn = document.querySelector('.tab-btn[onclick*="tab-admin"]');
+        var adminBtn = document.querySelector('.tab-btn[onclick*="\'admin\'"]');
         if (adminBtn) adminBtn.classList.add('active');
 
-        var el = document.getElementById('tipos-servico');
+        var el = document.getElementById(window.location.hash.slice(1));
         if (el) {
             setTimeout(function() {
                 el.scrollIntoView({ behavior: 'smooth', block: 'start' });

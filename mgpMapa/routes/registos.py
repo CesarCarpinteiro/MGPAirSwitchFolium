@@ -287,13 +287,13 @@ def lembretes():
 @registos_bp.route('/lembretes/ativar', methods=['POST'])
 @login_required
 def ativar_lembretes():
-    """Liga/desliga os SMS automáticos de manutenção da organização (no Dashboard)."""
+    """Liga/desliga os SMS automáticos de manutenção da organização (Perfil > Admin)."""
     org = db.session.query(Organizacao).filter_by(id=current_user.org_id).first()
     if current_user.is_admin and org:
         org.sms_lembretes = request.form.get('ativo') == '1'
         db.session.commit()
         flash('SMS automáticos de manutenção ' + ('ligados.' if org.sms_lembretes else 'desligados.'), 'success')
-    return redirect(request.referrer or url_for('dashboard.dashboard'))
+    return redirect(url_for('users.perfil') + '#sms-manutencao')
 
 
 def _lembrete_da_org(id):

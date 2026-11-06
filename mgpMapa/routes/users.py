@@ -7,6 +7,7 @@ from flask_login import current_user, login_required
 from db import db
 from models import (Fatura, Ferias, HorasTrabalhadas, Organizacao, Registo,
                     Servico, TipoServico, Usuario)
+from lembretes import resumo_sms
 from utils import hash_password, send_welcome_email
 import threading
 
@@ -177,6 +178,7 @@ def perfil():
     return render_template('perfil.html', user=current_user, usuarios=todos_usuarios,
                            registos=registos, registos_json=registos_json, servicos_json=servicos_json,
                            is_admin=is_admin, org=org, tipos_servico=tipos_servico,
+                           sms=resumo_sms(org) if is_admin else None,
                            total_clientes=total_clientes, total_servicos=total_servicos,
                            receita_total=receita_total, media_maquinas=media_maquinas,
                            urgentes=urgentes, atencao=atencao, em_dia=em_dia,

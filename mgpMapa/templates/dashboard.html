@@ -54,15 +54,6 @@
         .section { background: white; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); margin-bottom: 20px; overflow: hidden; }
         .section-header { padding: 14px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
         .section-title { font-size: 0.9em; font-weight: 700; color: #333; }
-        .sms-cfg { display: flex; align-items: center; gap: 16px; padding: 14px 18px; }
-        .sms-estado { font-weight: 700; font-size: 0.9em; margin-bottom: 4px; }
-        .sms-estado.on { color: #2e7d4f; }
-        .sms-estado.off { color: #888; }
-        .sms-ajuda { font-size: 0.8em; color: #777; line-height: 1.5; }
-        .sms-btn { padding: 9px 20px; border-radius: 7px; font-weight: 700; font-size: 0.85em; cursor: pointer; white-space: nowrap; }
-        .sms-btn.ligar { background: #2e7d4f; color: white; border: none; }
-        .sms-btn.desligar { background: white; color: #a33b3b; border: 1px solid #f0d0d0; }
-        @media (max-width: 700px) { .sms-cfg { flex-direction: column; align-items: stretch; } .sms-btn { width: 100%; } }
         .section-link { font-size: 0.78em; color: #2d3a6e; text-decoration: none; font-weight: 600; }
         .section-link:hover { text-decoration: underline; }
 
@@ -235,33 +226,6 @@
         </div>
 
     </div>
-
-    <!-- SMS automáticos de manutenção -->
-    {% if tem_mapa %}
-    <div class="section">
-        <div class="section-header">
-            <span class="section-title">📱 SMS automáticos de manutenção</span>
-            <a href="/lembretes" class="section-link">Ver SMS →</a>
-        </div>
-        <div class="sms-cfg">
-            <div style="flex:1;">
-                <div class="sms-estado {{ 'on' if sms.ativo else 'off' }}">{{ '● Ligados' if sms.ativo else '○ Desligados' }}</div>
-                <div class="sms-ajuda">
-                    Aos clientes com telemóvel: SMS aos <strong>8 meses</strong> desde o último serviço e aos <strong>10 meses</strong>
-                    (faltam 2), exceto se tiverem manutenção agendada. Na véspera recebe no 🔔 os SMS do dia seguinte e pode cancelá-los.
-                    {% if sms.ativo %}<br>{{ sms.pendentes }} por enviar · {{ sms.enviados }} enviados nos últimos 30 dias.{% endif %}
-                </div>
-                {% if not sms.configurado %}<div class="sms-ajuda" style="color:#c47c2b;">O envio de SMS não está configurado neste servidor (Twilio).</div>{% endif %}
-            </div>
-            {% if sms.configurado or sms.ativo %}
-            <form method="POST" action="/lembretes/ativar" style="margin:0;">
-                <input type="hidden" name="ativo" value="{{ '0' if sms.ativo else '1' }}">
-                <button type="submit" class="sms-btn {{ 'desligar' if sms.ativo else 'ligar' }}">{{ 'Desligar' if sms.ativo else 'Ligar' }}</button>
-            </form>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Horas por funcionário -->
     {% if horas_por_func %}
