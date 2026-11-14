@@ -85,7 +85,11 @@
         .linha.sub { border-top: none; padding: 2px 0 4px; }
         .incl-desc { display: flex; align-items: center; gap: 6px; padding-left: 14px; min-width: 0; }
         .incl-desc .seta { color: #2e7d32; font-weight: bold; }
-        .incl-ac { position: relative; flex: 1; min-width: 0; }
+        .incl-campos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .incl-ac { position: relative; min-width: 0; }
+        .incl-campos .f-idesc { min-height: 32px; font-size: 0.8em; font-style: italic; resize: vertical; padding: 6px 10px; background: #fbfdfb; border: 1px dashed #c8e6c9; }
+        .incl-ac .ac-desc { font-size: 0.74em; color: #888; margin-top: 2px; }
+        .linha.sub { align-items: start; }
         .incl-ac .f-desc, .linha.sub .f-qtd { font-size: 0.88em; background: #f6fbf6; border-color: #c8e6c9; }
         .incl-ac .ac-item.novo { color: #2e7d32; font-weight: bold; }
         .incl-tag { text-align: right; font-size: 0.8em; font-style: italic; color: #2e7d32; }
@@ -329,12 +333,14 @@
             <span class="seta">↳</span>
             <input type="hidden" name="linha_produto_id" class="f-pid" value="">
             <input type="hidden" name="linha_preco" class="f-preco" value="0">
-            <input type="hidden" name="linha_nota" value="">
             <input type="hidden" name="linha_incluido" value="1">
             <input type="hidden" name="linha_pcat" value="">
-            <div class="incl-ac">
-                <input type="text" name="linha_descricao" class="f-desc" maxlength="300" placeholder="Material incluído… ex.: tubagem, drenagem" aria-label="Descrição do material incluído">
-                <div class="ac-list"></div>
+            <div class="incl-campos">
+                <div class="incl-ac">
+                    <input type="text" name="linha_descricao" class="f-desc" maxlength="300" placeholder="Material incluído… ex.: Tubagem, Drenagem" aria-label="Material incluído">
+                    <div class="ac-list"></div>
+                </div>
+                <textarea name="linha_nota" class="f-idesc" rows="1" maxlength="1000" placeholder="Descrição (opcional) — ex.: cobre isolado a poliuretano, 1/4 - 3/8" aria-label="Descrição do material incluído"></textarea>
             </div>
         </div>
         <input type="number" name="linha_qtd" class="num f-qtd" min="0" step="any" value="1" aria-label="Quantidade incluída">
@@ -462,6 +468,7 @@
         if (dados) {
             sub.querySelector('.f-desc').value = dados.descricao;
             sub.querySelector('.f-qtd').value = dados.quantidade;
+            sub.querySelector('.f-idesc').value = dados.nota || '';
         }
         sub.querySelector('.remove-btn').addEventListener('click', function() { sub.remove(); recalc(); });
         ligarIncluido(sub);
@@ -474,24 +481,28 @@
         function fechar() { lista.style.display = 'none'; }
         function render() {
             var q = input.value.trim(), termos = norm(q).split(/\s+/).filter(Boolean);
-            res = OPCOES_INCL.filter(function(t) {
-                var n = norm(t);
+            res = OPCOES_INCL.filter(function(o) {
+                var n = norm(o.nome + ' ' + o.descricao);
                 return termos.every(function(x) { return n.indexOf(x) >= 0; });
-            }).slice(0, 12).map(function(t) { return { texto: t }; });
-            if (q && !OPCOES_INCL.some(function(t) { return norm(t) === norm(q); })) res.push({ texto: q, novo: true });
+            }).slice(0, 12).map(function(o) { return { nome: o.nome, descricao: o.descricao }; });
+            if (q && !OPCOES_INCL.some(function(o) { return norm(o.nome) === norm(q); })) res.push({ nome: q, novo: true });
             if (!res.length) { fechar(); return; }
             if (ativo >= res.length) ativo = res.length - 1;
             lista.innerHTML = res.map(function(r, i) {
-                return '<div class="ac-item' + (r.novo ? ' novo' : '') + (i === ativo ? ' active' : '') + '" data-i="' + i + '"><div class="ac-nome">' +
-                    (r.novo ? '+ Adicionar às opções: «' + esc(r.texto) + '»' : esc(r.texto)) + '</div></div>';
+                return '<div class="ac-item' + (r.novo ? ' novo' : '') + (i === ativo ? ' active' : '') + '" data-i="' + i + '"><div><div class="ac-nome">' +
+                    (r.novo ? '+ Adicionar às opções: «' + esc(r.nome) + '»' : '<strong>' + esc(r.nome) + '</strong>') + '</div>' +
+                    (r.descricao ? '<div class="ac-desc">' + esc(r.descricao) + '</div>' : '') + '</div></div>';
             }).join('');
             lista.style.display = 'block';
         }
         function escolher(r) {
-            input.value = r.texto;
+            input.value = r.nome;
+            var campoDesc = sub.querySelector('.f-idesc');
+            if (!r.novo && r.descricao) campoDesc.value = r.descricao;  // preenche a descrição da opção (pode ser ajustada)
             fechar();
             if (r.novo) {
-                fetch('/api/incluidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: r.texto }) })
+                fetch('/api/incluidos', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ nome: r.nome, descricao: campoDesc.value }) })
                     .then(function(x) { return x.json(); })
                     .then(function(d) { if (!d.ok) throw new Error(d.mensagem); OPCOES_INCL = d.opcoes; showToast('Opção guardada para os próximos orçamentos.'); })
                     .catch(function(e) { showToast(e.message || 'Não foi possível guardar a opção.', 'error'); });

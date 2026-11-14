@@ -176,7 +176,8 @@ def _ler_formulario():
             continue
         if incl == '1':  # material incluído no artigo de cima: só quantidade e descrição
             if linhas:
-                linhas.append(OrcamentoLinha(descricao=desc[:300], quantidade=_num(qtd, 1), preco_unitario=0, incluido=True))
+                linhas.append(OrcamentoLinha(descricao=desc[:300], quantidade=_num(qtd, 1), preco_unitario=0, incluido=True,
+                                             nota=nota.strip()[:1000] or None))
             continue
         pid = int(pid) if pid.isdigit() and int(pid) in ids_validos else None
         linhas.append(OrcamentoLinha(produto_id=pid, descricao=desc[:300],
@@ -204,31 +205,37 @@ def _ler_formulario():
     return campos, linhas
 
 
+# Opções de material incluído: nome curto + descrição (que se pode ajustar em cada orçamento)
 INCLUIDOS_PADRAO = [
-    'Tubagem em cobre isolado a poliuretano alta densidade entre as unidades interiores e exteriores',
-    'Drenagem condensados em PVC 32mm DIN',
+    {'nome': 'Tubagem', 'descricao': 'Tubagem em cobre isolado a poliuretano alta densidade entre as unidades interiores e exteriores'},
+    {'nome': 'Drenagem', 'descricao': 'Drenagem condensados em PVC 32mm DIN'},
 ]
+
+
+def _opcao(o):
+    if isinstance(o, dict):
+        return {'nome': ' '.join(str(o.get('nome') or '').split())[:300], 'descricao': ' '.join(str(o.get('descricao') or '').split())[:1000]}
+    return {'nome': ' '.join(str(o).split())[:300], 'descricao': ''}  # formato antigo: só texto
 
 
 def _incluidos(org):
     """Opções de material incluído da organização (None = nunca definidas → as do modelo)."""
     if org is None or org.orc_incluidos is None:
-        return list(INCLUIDOS_PADRAO)
+        return [dict(o) for o in INCLUIDOS_PADRAO]
     try:
         lista = json.loads(org.orc_incluidos)
     except ValueError:
-        return list(INCLUIDOS_PADRAO)
-    return [str(t) for t in lista if str(t).strip()] if isinstance(lista, list) else []
+        return [dict(o) for o in INCLUIDOS_PADRAO]
+    return [o for o in map(_opcao, lista) if o['nome']] if isinstance(lista, list) else []
 
 
-def _juntar_incluidos(org, textos):
-    """Acrescenta textos novos às opções (sem repetir, ignorando maiúsculas)."""
+def _juntar_incluidos(org, opcoes):
+    """Acrescenta opções novas (pelo nome, sem repetir e ignorando maiúsculas)."""
     lista = _incluidos(org)
-    vistos = {t.strip().lower() for t in lista}
-    for t in textos:
-        t = ' '.join(str(t).split())[:300]
-        if t and t.lower() not in vistos:
-            lista.append(t); vistos.add(t.lower())
+    vistos = {o['nome'].lower() for o in lista}
+    for o in map(_opcao, opcoes):
+        if o['nome'] and o['nome'].lower() not in vistos:
+            lista.append(o); vistos.add(o['nome'].lower())
     org.orc_incluidos = json.dumps(lista[:300], ensure_ascii=False)
 
 
@@ -330,11 +337,12 @@ def editar_orcamento(id):
 @login_required
 def adicionar_incluido():
     """Guarda um texto novo nas opções de material incluído (botão "+ Adicionar às opções")."""
-    texto = ' '.join(str((request.get_json(silent=True) or {}).get('texto') or '').split())
+    dados = request.get_json(silent=True) or {}
+    opcao = _opcao({'nome': dados.get('nome'), 'descricao': dados.get('descricao')})
     org = _org()
-    if not texto or not org:
-        return jsonify({'ok': False, 'mensagem': 'Escreva o texto da opção.'}), 400
-    _juntar_incluidos(org, [texto])
+    if not opcao['nome'] or not org:
+        return jsonify({'ok': False, 'mensagem': 'Escreva o nome da opção.'}), 400
+    _juntar_incluidos(org, [opcao])
     db.session.commit()
     return jsonify({'ok': True, 'opcoes': _incluidos(org)})
 
@@ -585,7 +593,9 @@ def definicoes():
         org.orc_termos = request.form.get('orc_termos', '').strip()
         if 'orc_incluidos' in request.form:
             org.orc_incluidos = '[]'
-            _juntar_incluidos(org, request.form.get('orc_incluidos', '').splitlines())
+            # uma por linha: "Nome | descrição"
+            _juntar_incluidos(org, [{'nome': l.split('|', 1)[0], 'descricao': l.split('|', 1)[1] if '|' in l else ''}
+                                    for l in request.form.get('orc_incluidos', '').splitlines()])
         org.orc_pagamento = request.form.get('orc_pagamento', '').strip()
 
         logo = request.files.get('logo')

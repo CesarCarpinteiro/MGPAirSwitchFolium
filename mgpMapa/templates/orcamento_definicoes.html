@@ -177,9 +177,10 @@
 
         <div class="card">
             <div class="section-title">🔧 Material incluído</div>
-            <p class="ajuda">Opções que aparecem ao escrever em "+ Incluído" por baixo de cada artigo do orçamento (uma por linha). Também se acrescentam opções novas diretamente no orçamento.</p>
+            <p class="ajuda">Opções que aparecem ao escrever em "+ Incluído" por baixo de cada artigo do orçamento. Uma por linha, no formato <strong>Nome | descrição</strong> (ex.: <em>Tubagem | Tubagem em cobre isolado…</em>). A descrição vem preenchida no orçamento e pode ser ajustada. Também se acrescentam opções novas diretamente no orçamento.</p>
             <div class="form-group">
-                <textarea name="orc_incluidos" rows="6">{{ incluidos|join('\n') }}</textarea>
+                <textarea name="orc_incluidos" rows="6">{% for i in incluidos %}{{ i.nome }}{% if i.descricao %} | {{ i.descricao }}{% endif %}
+{% endfor %}</textarea>
             </div>
         </div>
 

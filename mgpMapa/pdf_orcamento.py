@@ -85,6 +85,7 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         'nota': ParagraphStyle('nota', parent=base, fontName='Helvetica-Oblique', fontSize=7.5, leading=10,
                                textColor=CINZA_AZUL, spaceBefore=2),
         'incl': ParagraphStyle('incl', parent=base, fontSize=8, leading=10.5, textColor=CINZA_AZUL, leftIndent=6),
+        'incl_desc': ParagraphStyle('incl_desc', parent=base, fontName='Helvetica-Oblique', fontSize=7.3, leading=9.5, textColor=CINZA_AZUL, leftIndent=14),
         'incl_r': ParagraphStyle('incl_r', parent=base, fontName='Helvetica-Oblique', fontSize=8, leading=10.5, textColor=CINZA_AZUL, alignment=TA_RIGHT),
         'pequeno': ParagraphStyle('pequeno', parent=base, fontSize=7.5, textColor=CINZA_AZUL),
     }
@@ -144,7 +145,8 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         if l.incluido:  # material incluído no artigo de cima (mesma cor de fundo do artigo)
             incluidas.append((len(dados), art))
             fundos.append((len(dados), art))
-            dados.append(['', p('– ' + l.descricao, 'incl'), '', p(qtd(l.quantidade or 0), 'td_r'), p('Incluído', 'incl_r'), '', ''])
+            designacao = [p('– ' + l.descricao, 'incl'), p(l.nota, 'incl_desc')] if l.nota else p('– ' + l.descricao, 'incl')
+            dados.append(['', designacao, '', p(qtd(l.quantidade or 0), 'td_r'), p('Incluído', 'incl_r'), '', ''])
             continue
         art += 1
         i = art
