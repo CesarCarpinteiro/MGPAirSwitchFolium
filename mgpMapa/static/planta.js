@@ -6,7 +6,8 @@
 //              {id, tipo: 'linha', categoria: 'cobre'|'dreno'|'eletrico', pontos: [[x, y], ...]},
 //              {id, tipo: 'linha', categoria: 'conduta_ins'|'conduta_ret', medida: '300x200', pontos: [...]},
 //              {id, tipo: 'nota', x, y, texto} ] }
-// Os símbolos e textos têm tamanho fixo no ecrã: são desenhados em unidades u = 1/zoom.
+// O desenho escala com a planta (unidade U0); só as pegas de edição têm tamanho fixo no ecrã (UE = 1/zoom).
+// desenho.bloqueado = true impede mexer no desenho (arrastar só desloca a planta).
 (function () {
     var dados = JSON.parse(document.getElementById('dadosPlanta').textContent);
     var W = dados.largura, H = dados.altura;
@@ -50,8 +51,11 @@
     var camada = document.getElementById('camada'), area = document.getElementById('area');
     var dica = document.getElementById('dica'), resumo = document.getElementById('resumo');
     var btnGuardar = document.getElementById('btnGuardar'), btnDesfazer = document.getElementById('btnDesfazer');
+    var btnBloquear = document.getElementById('btnBloquear');
     var campoNome = document.getElementById('nome'), campoMorada = document.getElementById('morada');
 
+    var U0 = Math.max(W, H) / 1100;  // o desenho escala com a planta (como no CAD): mesma unidade no ecrã e na imagem
+    var UE = 1;                      // pegas e áreas de toque: tamanho fixo no ecrã (1/zoom)
     var ferramenta = 'selecionar', selecionado = null, rascunho = null, cursor = null;
     var s = 1, tx = 0, ty = 0;           // zoom e deslocamento da vista
     var historico = [], alterado = false;
@@ -147,14 +151,14 @@
         if (camadaC === 1) return '<path' + base + ' stroke="white" stroke-width="' + n(Math.max(w - 2.6 * u, u)) + '"/>';  // interior
         if (camadaC === 2) return '<path' + base + ' stroke="' + cat.cor + '" stroke-width="' + n(1.1 * u) + '" stroke-dasharray="' +   // eixo traço-ponto
             [16, 5, 3, 5].map(function (v) { return n(v * u); }).join(' ') + '"/>';
-        if (ecra) h += '<path' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(Math.max(w, 18 * u)) + '" style="cursor:pointer"/>';
+        if (ecra) h += '<path' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(Math.max(w, 18 * UE)) + '" style="cursor:pointer"/>';
         var c = meio(it.pontos);
         // como no CAD: só a medida (os metros estão nos totais e aparecem ao selecionar)
         var rotulo = it.medida ? String(it.medida).replace(/x/i, '×') : metros(comprimento(it.pontos));
         if (rotulo) h += rotuloCad(c, w, rotulo, '#222', u);
         if (sel) it.pontos.forEach(function (p, i) {
-            h += '<circle data-id="' + it.id + '" data-vertice="' + i + '" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(7 * u) +
-                '" fill="white" stroke="' + cat.cor + '" stroke-width="' + n(2 * u) + '" style="cursor:move"/>';
+            h += '<circle data-id="' + it.id + '" data-vertice="' + i + '" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(7 * UE) +
+                '" fill="white" stroke="' + cat.cor + '" stroke-width="' + n(2 * UE) + '" style="cursor:move"/>';
         });
         return h;
     }
@@ -166,11 +170,11 @@
         var base = ' points="' + pts + '" fill="none" stroke-linecap="butt"';
         if (sel) h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-opacity="0.22" stroke-width="' + n(w + 12 * u) + '"/>';
         h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-width="' + n(w) + '"/>';
-        if (ecra) h += '<polyline' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(Math.max(w, 18 * u)) + '" style="cursor:pointer"/>';
+        if (ecra) h += '<polyline' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(Math.max(w, 18 * UE)) + '" style="cursor:pointer"/>';
         if (it.medida) h += rotuloCad(meio(it.pontos), w, it.medida, '#222', u);
         if (sel) it.pontos.forEach(function (p, i) {
-            h += '<circle data-id="' + it.id + '" data-vertice="' + i + '" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(7 * u) +
-                '" fill="white" stroke="' + cat.cor + '" stroke-width="' + n(2 * u) + '" style="cursor:move"/>';
+            h += '<circle data-id="' + it.id + '" data-vertice="' + i + '" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(7 * UE) +
+                '" fill="white" stroke="' + cat.cor + '" stroke-width="' + n(2 * UE) + '" style="cursor:move"/>';
         });
         return h;
     }
@@ -185,7 +189,7 @@
         if (sel) h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-opacity="0.25" stroke-width="' + n(14 * u) + '"/>';
         h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-width="' + n(3 * u) + '"' +
             (cat.traco ? ' stroke-dasharray="' + cat.traco.map(function (v) { return n(v * u); }).join(' ') + '"' : '') + '/>';
-        if (ecra) h += '<polyline' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(18 * u) + '" style="cursor:pointer"/>';
+        if (ecra) h += '<polyline' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(Math.max(18 * UE, 4 * u)) + '" style="cursor:pointer"/>';
         var m = metros(comprimento(it.pontos));
         if (m) {  // ao lado de um troço vertical, por cima de um horizontal
             var c = meio(it.pontos);
@@ -193,14 +197,14 @@
                 : texto(c[0], c[1] - 7 * u, m, cat.cor, 12 * u, u);
         }
         if (sel) it.pontos.forEach(function (p, i) {
-            h += '<circle data-id="' + it.id + '" data-vertice="' + i + '" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(7 * u) +
-                '" fill="white" stroke="' + cat.cor + '" stroke-width="' + n(2 * u) + '" style="cursor:move"/>';
+            h += '<circle data-id="' + it.id + '" data-vertice="' + i + '" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(7 * UE) +
+                '" fill="white" stroke="' + cat.cor + '" stroke-width="' + n(2 * UE) + '" style="cursor:move"/>';
         });
         return h;
     }
 
-    function svgUnidade(it, ue, ecra) {
-        var u = ue * (it.tam || 1);  // ue: unidade do ecrã (pegas e textos); u: tamanho do símbolo
+    function svgUnidade(it, ub, ecra) {
+        var u = ub * (it.tam || 1), ue = UE;  // u: tamanho do símbolo; ue: pegas (tamanho fixo no ecrã)
         var mod = MODELOS[it.modelo] || MODELOS.interior, interior = it.modelo !== 'exterior';
         var grelha = it.modelo === 'grelha_ins' || it.modelo === 'grelha_ret', conduta = it.modelo === 'conduta';
         var w = (grelha ? 18 : conduta ? 58 : interior ? 38 : 30) * u * (it.lx || 1), h = (grelha ? 18 : conduta ? 34 : interior ? 15 : 26) * u * (it.ly || 1);
@@ -254,7 +258,7 @@
                 '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ns-resize"/>';
         }
         r += '</g>';
-        if (it.nome && !conduta) r += texto(it.x, interior && !grelha ? y0 - 6 * u : y0 + h + 14 * u, it.nome, mod.cor, 11.5 * ue, ue);
+        if (it.nome && !conduta) r += texto(it.x, interior && !grelha ? y0 - 6 * u : y0 + h + 14 * u, it.nome, mod.cor, 11.5 * ub, ub);
         return r;
     }
 
@@ -279,7 +283,7 @@
         [a, b].forEach(function (p) {
             r += '<line x1="' + n(p[0] - px) + '" y1="' + n(p[1] - py) + '" x2="' + n(p[0] + px) + '" y2="' + n(p[1] + py) + '" stroke="' + cor + '" stroke-width="' + n(2 * u) + '"/>';
         });
-        if (ecra) r += '<line' + linha + ' data-id="escala" stroke="transparent" stroke-width="' + n(16 * u) + '" style="cursor:pointer"/>';
+        if (ecra) r += '<line' + linha + ' data-id="escala" stroke="transparent" stroke-width="' + n(16 * UE) + '" style="cursor:pointer"/>';
         var c = meio([a, b]);
         return r + texto(c[0], c[1] - 8 * u, 'Escala: ' + String(e.metros).replace('.', ',') + ' m', cor, 11 * u, u);
     }
@@ -320,11 +324,16 @@
 
     function render() {
         aplicarVista();
-        camada.innerHTML = marcacao(1 / s, true) + svgRascunho(1 / s);
+        UE = 1 / s;
+        camada.innerHTML = marcacao(U0, true) + svgRascunho(U0);
         area.className = 'area ' + (ferramenta === 'selecionar' ? 'mao' : 'desenhar');
         atualizarResumo();
         atualizarDica();
-        btnDesfazer.disabled = !historico.length;
+        var bloq = !!desenho.bloqueado;
+        btnDesfazer.disabled = bloq || !historico.length;
+        btnBloquear.classList.toggle('ativa', bloq);
+        btnBloquear.innerHTML = '<span class="ic">' + (bloq ? '🔒' : '🔓') + '</span>' + (bloq ? 'Bloqueado' : 'Bloquear');
+        document.querySelectorAll('.ferr[data-ferramenta]').forEach(function (b) { b.disabled = bloq && b.dataset.ferramenta !== 'selecionar'; });
     }
 
     function totais() {
@@ -355,6 +364,10 @@
 
     function atualizarDica() {
         var h = '';
+        if (desenho.bloqueado) {
+            dica.innerHTML = '<span>🔒 <strong>Desenho bloqueado</strong> · nada se mexe. Arraste para deslocar a planta.</span><button data-acao="desbloquear">Desbloquear para editar</button>';
+            return;
+        }
         if (rascunho) {
             var nome = rascunho.categoria === 'escala' ? 'Escala' : CATEGORIAS[rascunho.categoria].nome;
             if (rascunho.categoria === 'escala') {
@@ -499,7 +512,16 @@
         return p;
     }
 
+    function alternarBloqueio() {
+        if (rascunho && rascunho.categoria !== 'escala') terminarRascunho();
+        rascunho = null; selecionado = null;
+        desenho.bloqueado = !desenho.bloqueado;
+        if (desenho.bloqueado) escolherFerramenta('selecionar');
+        marcarAlterado(); render();
+    }
+
     function tocar(p, alvo) {
+        if (desenho.bloqueado) return;
         if (ferramenta === 'selecionar') {
             selecionado = alvo ? alvo.id : null;
             render();
@@ -597,7 +619,7 @@
             return;
         }
         if (ponteiros.size > 2) return;
-        var alvo = ferramenta === 'selecionar' ? alvoDe(e.target) : null;
+        var alvo = ferramenta === 'selecionar' && !desenho.bloqueado ? alvoDe(e.target) : null;
         toque = { x: e.clientX, y: e.clientY, img: ecraParaImagem(e.clientX, e.clientY), alvo: alvo, movido: false, tx: tx, ty: ty, original: null };
         if (alvo) {
             var it = alvo.id === 'escala' ? desenho.escala : item(alvo.id);
@@ -679,6 +701,7 @@
     svg.addEventListener('pointerleave', function () { if (rascunho && !toque) { cursor = null; render(); } });
 
     svg.addEventListener('dblclick', function (e) {
+        if (desenho.bloqueado) return;
         if (rascunho && rascunho.categoria !== 'escala') { terminarRascunho(); return; }
         // com a captura do ponteiro o alvo do duplo clique é o svg: usa-se o que ficou selecionado
         if (ferramenta === 'selecionar' && selecionado && selecionado !== 'escala') {
@@ -699,6 +722,7 @@
         b.addEventListener('click', function () { escolherFerramenta(b.dataset.ferramenta); });
     });
     btnDesfazer.addEventListener('click', desfazer);
+    btnBloquear.addEventListener('click', alternarBloqueio);
     document.getElementById('zoomMais').addEventListener('click', function () { zoomCentro(1.4); });
     document.getElementById('zoomMenos').addEventListener('click', function () { zoomCentro(1 / 1.4); });
     document.getElementById('zoomAjustar').addEventListener('click', ajustar);
@@ -710,6 +734,7 @@
         if (acao === 'terminar') terminarRascunho();
         else if (acao === 'cancelar') { rascunho = null; render(); }
         else if (acao === 'apagar') apagarSelecionado();
+        else if (acao === 'desbloquear') alternarBloqueio();
         else if (acao === 'texto') editarTexto();
         else if (acao === 'medida') mudarMedida();
         else if (acao === 'rodar' || acao === 'maior' || acao === 'menor') {
@@ -729,7 +754,7 @@
     document.addEventListener('keydown', function (e) {
         var aEscrever = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); guardar(); return; }
-        if (aEscrever) return;
+        if (aEscrever || desenho.bloqueado) return;
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); desfazer(); }
         else if (e.key === 'Escape') { rascunho = null; selecionado = null; render(); }
         else if (e.key === 'Enter') terminarRascunho();
