@@ -203,7 +203,7 @@
         var u = ue * (it.tam || 1);  // ue: unidade do ecrã (pegas e textos); u: tamanho do símbolo
         var mod = MODELOS[it.modelo] || MODELOS.interior, interior = it.modelo !== 'exterior';
         var grelha = it.modelo === 'grelha_ins' || it.modelo === 'grelha_ret', conduta = it.modelo === 'conduta';
-        var w = (grelha ? 18 : conduta ? 58 : interior ? 38 : 30) * u, h = (grelha ? 18 : conduta ? 34 : interior ? 15 : 26) * u;
+        var w = (grelha ? 18 : conduta ? 58 : interior ? 38 : 30) * u * (it.lx || 1), h = (grelha ? 18 : conduta ? 34 : interior ? 15 : 26) * u * (it.ly || 1);
         var x0 = it.x - w / 2, y0 = it.y - h / 2;
         var rot = it.rot ? ' transform="rotate(' + it.rot + ' ' + n(it.x) + ' ' + n(it.y) + ')"' : '';
         var r = '<g' + rot + (ecra ? ' data-id="' + it.id + '" style="cursor:' + (ferramenta === 'selecionar' ? 'move' : 'inherit') + '"' : '') + '>';
@@ -246,7 +246,12 @@
             r += '<line x1="' + n(it.x) + '" y1="' + n(y0 - 5 * ue) + '" x2="' + n(it.x) + '" y2="' + n(hy) + '" stroke="#4a5fa8" stroke-width="' + n(1.5 * ue) + '"/>' +
                 '<circle data-alca="rodar" cx="' + n(it.x) + '" cy="' + n(hy) + '" r="' + n(7 * ue) + '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:grab"/>' +
                 '<rect data-alca="tamanho" x="' + n(cx - 6 * ue) + '" y="' + n(cy - 6 * ue) + '" width="' + n(12 * ue) + '" height="' + n(12 * ue) +
-                '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:nwse-resize"/>';
+                '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:nwse-resize"/>' +
+                // só a largura (lado direito) e só a altura (em baixo)
+                '<rect data-alca="largura" x="' + n(cx - 4 * ue) + '" y="' + n(it.y - 9 * ue) + '" width="' + n(8 * ue) + '" height="' + n(18 * ue) + '" rx="' + n(3 * ue) +
+                '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ew-resize"/>' +
+                '<rect data-alca="altura" x="' + n(it.x - 9 * ue) + '" y="' + n(cy - 4 * ue) + '" width="' + n(18 * ue) + '" height="' + n(8 * ue) + '" rx="' + n(3 * ue) +
+                '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ns-resize"/>';
         }
         r += '</g>';
         if (it.nome && !conduta) r += texto(it.x, interior && !grelha ? y0 - 6 * u : y0 + h + 14 * u, it.nome, mod.cor, 11.5 * ue, ue);
@@ -364,7 +369,7 @@
             if (selecionado === 'escala') desc = '<strong>Escala</strong> · ' + String(desenho.escala.metros).replace('.', ',') + ' m';
             else if (it.tipo === 'linha') desc = '<strong>' + CATEGORIAS[it.categoria].nome + '</strong>' + (it.medida ? ' ' + esc(String(it.medida).replace(/x/i, '×')) : '') + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
             else if (it.tipo === 'unidade') desc = '<strong>' + MODELOS[it.modelo].nome + '</strong>' + (it.nome ? ' · ' + esc(it.nome) : '') +
-                '<br><small>Arraste a bolinha para rodar e o quadrado para aumentar ou diminuir.</small>';
+                '<br><small>Bolinha: rodar · quadrado: tamanho · barras azuis: só largura ou só altura.</small>';
             else desc = '<strong>Nota</strong>';
             h = '<span>' + desc + '</span>';
             if (selecionado === 'escala') h += '<button data-acao="metros">Mudar metros</button>';
@@ -633,6 +638,15 @@
                     ang = (ang % 360 + 360) % 360;
                     var perto = Math.round(ang / 15) * 15;  // encaixa de 15 em 15 graus
                     it.rot = Math.round(Math.abs(ang - perto) < 4 ? perto : ang) % 360;
+                } else if (toque.alvo.alca === 'largura' || toque.alvo.alca === 'altura') {
+                    // coordenadas no referencial da unidade (desfaz a rotação)
+                    var ar = -(o.rot || 0) * Math.PI / 180, local = function (q) {
+                        var qx = q[0] - o.x, qy = q[1] - o.y;
+                        return [qx * Math.cos(ar) - qy * Math.sin(ar), qx * Math.sin(ar) + qy * Math.cos(ar)];
+                    };
+                    var eixo = toque.alvo.alca === 'largura' ? 0 : 1, chave = eixo ? 'ly' : 'lx';
+                    var a0 = Math.abs(local(toque.img)[eixo]), a1 = Math.abs(local(cursor)[eixo]);
+                    if (a0 > 0) it[chave] = Math.round(Math.max(0.2, Math.min(8, (o[chave] || 1) * a1 / a0)) * 100) / 100;
                 } else if (toque.alvo.alca === 'tamanho') {
                     var d0 = dist(toque.img, [o.x, o.y]), d1 = dist(cursor, [o.x, o.y]);
                     if (d0 > 0) it.tam = Math.round(Math.max(0.3, Math.min(6, (o.tam || 1) * d1 / d0)) * 100) / 100;
