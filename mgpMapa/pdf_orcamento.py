@@ -82,6 +82,8 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
                                     textColor=AZUL, alignment=TA_RIGHT),
         'seccao': ParagraphStyle('seccao', parent=base, fontName='Helvetica-Bold', fontSize=12.5, leading=16,
                                  textColor=AZUL, spaceAfter=4),
+        'nota': ParagraphStyle('nota', parent=base, fontName='Helvetica-Oblique', fontSize=7.5, leading=10,
+                               textColor=CINZA_AZUL, spaceBefore=2),
         'pequeno': ParagraphStyle('pequeno', parent=base, fontSize=7.5, textColor=CINZA_AZUL),
     }
 
@@ -136,7 +138,8 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
               p('PVP Unit', 'th_r'), p('Imposto', 'th_r'), p('Total ilíquido', 'th_r')]]
     iva_txt = f'{qtd(o.iva_taxa or 0)}%'
     for i, l in enumerate(o.linhas, 1):
-        dados.append([p(i, 'td'), p(l.descricao, 'td'), p('UN', 'td'), p(qtd(l.quantidade or 0), 'td_r'),
+        designacao = [p(l.descricao, 'td'), p(l.nota, 'nota')] if l.nota else p(l.descricao, 'td')
+        dados.append([p(i, 'td'), designacao, p('UN', 'td'), p(qtd(l.quantidade or 0), 'td_r'),
                       p(eur(l.preco_unitario), 'td_r'), p(iva_txt, 'td_r'),
                       p(eur((l.quantidade or 0) * (l.preco_unitario or 0)), 'td_rb')])
     tabela = Table(dados, colWidths=[10 * mm, None, 10 * mm, 11 * mm, 25 * mm, 16 * mm, 27 * mm], repeatRows=1)

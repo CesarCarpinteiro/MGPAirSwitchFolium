@@ -161,17 +161,20 @@ def _ler_formulario():
     descricoes = request.form.getlist('linha_descricao')
     quantidades = request.form.getlist('linha_qtd')
     precos = request.form.getlist('linha_preco')
+    notas = request.form.getlist('linha_nota')
+    notas += [''] * (len(descricoes) - len(notas))
 
     # Só aceita produtos do catálogo da própria organização
     ids_validos = {p.id for p in db.session.query(Produto.id).filter_by(org_id=current_user.org_id)}
     linhas = []
-    for pid, desc, qtd, preco in zip(produto_ids, descricoes, quantidades, precos):
+    for pid, desc, qtd, preco, nota in zip(produto_ids, descricoes, quantidades, precos, notas):
         desc = desc.strip()
         if not desc:
             continue
         pid = int(pid) if pid.isdigit() and int(pid) in ids_validos else None
         linhas.append(OrcamentoLinha(produto_id=pid, descricao=desc[:300],
-                                     quantidade=_num(qtd, 1), preco_unitario=_num(preco)))
+                                     quantidade=_num(qtd, 1), preco_unitario=_num(preco),
+                                     nota=nota.strip()[:1000] or None))
 
     if not cliente or not linhas:
         return None, None
@@ -201,7 +204,7 @@ def _form_orcamento(o=None):
         pagamento = _texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO)
     else:
         linhas = [{'produto_id': l.produto_id or '', 'descricao': l.descricao,
-                   'quantidade': l.quantidade, 'preco': l.preco_unitario} for l in o.linhas]
+                   'quantidade': l.quantidade, 'preco': l.preco_unitario, 'nota': l.nota or ''} for l in o.linhas]
         if not linhas and o.valor:
             # Orçamento antigo sem linhas: uma linha com a descrição e o valor sem IVA (o total mantém-se)
             iva = o.iva_taxa if o.iva_taxa is not None else IVA_PADRAO

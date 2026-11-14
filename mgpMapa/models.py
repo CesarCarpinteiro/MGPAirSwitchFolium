@@ -138,6 +138,7 @@ class OrcamentoLinha(db.Model):
     descricao = db.Column(db.String(300), nullable=False)
     quantidade = db.Column(db.Float, default=1)
     preco_unitario = db.Column(db.Float, default=0)  # sem IVA
+    nota = db.Column(db.Text)  # observação por baixo do artigo (ex.: "Inclui 3 m de tubagem")
 
 class Produto(db.Model):
     __tablename__ = 'produtos'

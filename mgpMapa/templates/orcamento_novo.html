@@ -78,6 +78,13 @@
             font-size: 1.2em; line-height: 1; padding: 4px;
         }
         .remove-btn:hover { color: #e53935; }
+        .nota-wrap { grid-column: 1 / -1; margin-top: -2px; }
+        .nota-btn { background: none; border: none; color: #5c6bc0; font-size: 0.8em; font-weight: bold; cursor: pointer; padding: 2px 0; }
+        .nota-btn:hover { text-decoration: underline; }
+        .f-nota { display: none; width: 100%; resize: vertical; min-height: 36px; font-size: 0.85em; font-style: italic;
+                  background: #fafbff; border: 1px dashed #c5cae9 !important; }
+        .nota-wrap.aberta .f-nota { display: block; }
+        .nota-wrap.aberta .nota-btn { display: none; }
         .btn-add {
             margin-top: 12px; padding: 8px 16px; background: white; color: #2d3a6e;
             border: 1.5px dashed #9fa8da; border-radius: 7px; font-weight: bold;
@@ -269,6 +276,10 @@
         <input type="number" name="linha_preco" class="num f-preco" min="0" step="0.01" placeholder="0,00" aria-label="Preço unitário sem IVA">
         <div class="linha-total">0,00 €</div>
         <button type="button" class="remove-btn" title="Remover linha" aria-label="Remover linha">×</button>
+        <div class="nota-wrap">
+            <button type="button" class="nota-btn">+ Observação</button>
+            <textarea name="linha_nota" class="f-nota" rows="1" maxlength="1000" placeholder="Ex.: Inclui 3 m de tubagem de cobre e conduta (já incluído no preço)" aria-label="Observação do artigo"></textarea>
+        </div>
     </div>
 </template>
 
@@ -322,7 +333,18 @@
             linha.querySelector('.f-qtd').value = dados.quantidade;
             linha.querySelector('.f-preco').value = Number(dados.preco).toFixed(2);
             if (dados.produto_id) linha.classList.add('catalogo');
+            if (dados.nota) {
+                linha.querySelector('.f-nota').value = dados.nota;
+                linha.querySelector('.nota-wrap').classList.add('aberta');
+            }
         }
+        linha.querySelector('.nota-btn').addEventListener('click', function() {
+            linha.querySelector('.nota-wrap').classList.add('aberta');
+            linha.querySelector('.f-nota').focus();
+        });
+        linha.querySelector('.f-nota').addEventListener('blur', function() {
+            if (!this.value.trim()) linha.querySelector('.nota-wrap').classList.remove('aberta');
+        });
         document.getElementById('linhas').appendChild(linha);
         ligarAutocomplete(linha);
         linha.querySelector('.f-qtd').addEventListener('input', recalc);
@@ -339,6 +361,7 @@
         var input = linha.querySelector('.ac-input');
         var lista = linha.querySelector('.ac-list');
         var resultados = [], ativo = -1, timer = null, pedido = 0;
+        var atualizado = true, enterPendente = false;  // a lista corresponde ao texto escrito?
 
         function fechar() { lista.style.display = 'none'; ativo = -1; }
 
@@ -366,7 +389,9 @@
                 .then(function(r) { return r.json(); })
                 .then(function(d) {
                     if (n !== pedido || document.activeElement !== input) return;
-                    resultados = d; ativo = d.length ? 0 : -1; render();
+                    resultados = d; ativo = d.length ? 0 : -1; atualizado = true;
+                    if (enterPendente) { enterPendente = false; if (d.length) { escolher(d[0]); fechar(); return; } }
+                    render();
                 }).catch(function() {});
         }
 
@@ -392,12 +417,18 @@
             linha.dataset.descricao = '';
             linha.classList.remove('catalogo');
             recalc();
+            atualizado = false; enterPendente = false;
+            pedido++;  // respostas de pesquisas anteriores já não contam
             clearTimeout(timer);
             timer = setTimeout(procurar, 180);
         });
         input.addEventListener('focus', function() { if (!linha.querySelector('.f-pid').value) procurar(); });
         input.addEventListener('blur', function() { setTimeout(fechar, 150); });
         input.addEventListener('keydown', function(e) {
+            // Enter antes de chegarem os resultados do texto atual: espera por eles e escolhe o 1.º
+            if (e.key === 'Enter' && !atualizado) {
+                e.preventDefault(); enterPendente = true; clearTimeout(timer); procurar(); return;
+            }
             if (lista.style.display !== 'block' || !resultados.length) return;
             if (e.key === 'ArrowDown') { e.preventDefault(); ativo = (ativo + 1) % resultados.length; render(); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); ativo = (ativo - 1 + resultados.length) % resultados.length; render(); }
