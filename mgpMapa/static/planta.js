@@ -56,6 +56,7 @@
 
     var U0 = Math.max(W, H) / 1100;  // o desenho escala com a planta (como no CAD): mesma unidade no ecrã e na imagem
     var UE = 1;                      // pegas e áreas de toque: tamanho fixo no ecrã (1/zoom)
+    var TOQUE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;  // dedo: pegas maiores
     var ferramenta = 'selecionar', selecionado = null, rascunho = null, cursor = null;
     var s = 1, tx = 0, ty = 0;           // zoom e deslocamento da vista
     var historico = [], alterado = false;
@@ -220,6 +221,8 @@
                 '" stroke-dasharray="' + n(0.1 * u) + ' ' + n(2.6 * u) + '" stroke-linecap="round"/>';
         }
         var selU = ecra && selecionado === it.id;
+        if (ecra) r += '<rect x="' + n(x0 - 10 * ue) + '" y="' + n(y0 - 10 * ue) + '" width="' + n(w + 20 * ue) + '" height="' + n(h + 20 * ue) +
+            '" fill="transparent"/>';  // margem invisível para acertar com o dedo
         if (selU) {
             r += '<rect x="' + n(x0 - 5 * ue) + '" y="' + n(y0 - 5 * ue) + '" width="' + n(w + 10 * ue) + '" height="' + n(h + 10 * ue) +
                 '" rx="' + n(4 * ue) + '" fill="rgba(74,95,168,0.1)" stroke="#4a5fa8" stroke-width="' + n(1.5 * ue) + '" stroke-dasharray="' + n(4 * ue) + ' ' + n(3 * ue) + '"/>';
@@ -246,15 +249,15 @@
                 '" stroke="' + mod.cor + '" stroke-width="' + n(1.2 * u) + '"/>';
         }
         if (selU) {  // pegas: bolinha em cima para rodar, quadrado no canto para aumentar/diminuir
-            var hy = y0 - 5 * ue - 20 * ue, cx = x0 + w + 5 * ue, cy = y0 + h + 5 * ue;
+            var hy = y0 - 5 * ue - 20 * ue, cx = x0 + w + 16 * ue, cy = y0 + h + 16 * ue;  // afastadas para não se sobreporem
             r += '<line x1="' + n(it.x) + '" y1="' + n(y0 - 5 * ue) + '" x2="' + n(it.x) + '" y2="' + n(hy) + '" stroke="#4a5fa8" stroke-width="' + n(1.5 * ue) + '"/>' +
                 '<circle data-alca="rodar" cx="' + n(it.x) + '" cy="' + n(hy) + '" r="' + n(7 * ue) + '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:grab"/>' +
                 '<rect data-alca="tamanho" x="' + n(cx - 6 * ue) + '" y="' + n(cy - 6 * ue) + '" width="' + n(12 * ue) + '" height="' + n(12 * ue) +
                 '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:nwse-resize"/>' +
                 // só a largura (lado direito) e só a altura (em baixo)
-                '<rect data-alca="largura" x="' + n(cx - 4 * ue) + '" y="' + n(it.y - 9 * ue) + '" width="' + n(8 * ue) + '" height="' + n(18 * ue) + '" rx="' + n(3 * ue) +
+                '<rect data-alca="largura" x="' + n(x0 + w + 7 * ue) + '" y="' + n(it.y - 9 * ue) + '" width="' + n(8 * ue) + '" height="' + n(18 * ue) + '" rx="' + n(3 * ue) +
                 '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ew-resize"/>' +
-                '<rect data-alca="altura" x="' + n(it.x - 9 * ue) + '" y="' + n(cy - 4 * ue) + '" width="' + n(18 * ue) + '" height="' + n(8 * ue) + '" rx="' + n(3 * ue) +
+                '<rect data-alca="altura" x="' + n(it.x - 9 * ue) + '" y="' + n(y0 + h + 7 * ue) + '" width="' + n(18 * ue) + '" height="' + n(8 * ue) + '" rx="' + n(3 * ue) +
                 '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ns-resize"/>';
         }
         r += '</g>';
@@ -324,7 +327,7 @@
 
     function render() {
         aplicarVista();
-        UE = 1 / s;
+        UE = (TOQUE ? 1.7 : 1) / s;
         camada.innerHTML = marcacao(U0, true) + svgRascunho(U0);
         area.className = 'area ' + (ferramenta === 'selecionar' ? 'mao' : 'desenhar');
         atualizarResumo();
@@ -767,6 +770,11 @@
 
     function guardar() {
         if (rascunho && rascunho.categoria !== 'escala') terminarRascunho();
+        if (!campoNome.value.trim()) {
+            var nome = prompt('Dê um nome a esta planta (ex.: Moradia Sr. Silva — R/C)', '');
+            if (!nome || !nome.trim()) { showToast('A planta precisa de um nome para ser guardada.', 'error'); campoNome.focus(); return Promise.resolve(); }
+            campoNome.value = nome.trim().slice(0, 200);
+        }
         btnGuardar.disabled = true;
         return fetch('/plantas/' + dados.id + '/guardar', {
             method: 'POST',

@@ -69,7 +69,14 @@
             border: 1px solid #eceef5; border-radius: 10px; overflow: hidden; text-decoration: none;
             color: inherit; background: white; transition: box-shadow 0.15s, transform 0.15s;
         }
-        .planta-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .planta-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+        .planta-abrir { display: block; text-decoration: none; color: inherit; }
+        .planta-acoes { display: flex; border-top: 1px solid #eceef5; }
+        .planta-acoes form { flex: 1; display: flex; margin: 0; }
+        .planta-acoes .acao { flex: 1; background: none; border: none; padding: 9px 6px; font-size: 0.78em; font-weight: bold; color: #4a5fa8; cursor: pointer; font-family: Arial; }
+        .planta-acoes .acao:hover { background: #f5f6fc; }
+        .planta-acoes .acao.perigo { color: #c62828; border-left: 1px solid #eceef5; }
+        .planta-acoes .acao.perigo:hover { background: #ffebee; }
         .planta-card img { width: 100%; height: 150px; object-fit: cover; background: #f5f5f5; display: block; border-bottom: 1px solid #eceef5; }
         .planta-info { padding: 10px 12px; }
         .planta-nome { font-weight: bold; color: #222; font-size: 0.92em; }
@@ -146,13 +153,23 @@
         {% if plantas %}
         <div class="grelha">
             {% for p, u in plantas %}
-            <a class="planta-card" href="/plantas/{{ p.id }}">
-                <img src="/plantas/{{ p.id }}/imagem" alt="" loading="lazy">
-                <div class="planta-info">
-                    <div class="planta-nome">{{ p.nome }}</div>
-                    <div class="planta-meta">{% if p.morada %}{{ p.morada }} · {% endif %}{{ p.atualizado_em.strftime('%d/%m/%Y') if p.atualizado_em }}{% if u %} · {{ u.nome }}{% endif %}</div>
+            <div class="planta-card">
+                <a href="/plantas/{{ p.id }}" class="planta-abrir">
+                    <img src="/plantas/{{ p.id }}/imagem" alt="" loading="lazy">
+                    <div class="planta-info">
+                        <div class="planta-nome" id="nome-{{ p.id }}">{{ p.nome }}</div>
+                        <div class="planta-meta">{% if p.morada %}{{ p.morada }} · {% endif %}{{ p.atualizado_em.strftime('%d/%m/%Y') if p.atualizado_em }}{% if u %} · {{ u.nome }}{% endif %}</div>
+                    </div>
+                </a>
+                <div class="planta-acoes">
+                    <button type="button" class="acao" onclick="mudarNome({{ p.id }})">✏️ Nome</button>
+                    {% if is_admin or p.created_by == current_user.id %}
+                    <form method="POST" action="/plantas/{{ p.id }}/apagar" onsubmit="return confirm('Apagar a planta «' + document.getElementById('nome-{{ p.id }}').textContent + '» e o desenho? Não dá para desfazer.')">
+                        <button type="submit" class="acao perigo">🗑 Apagar</button>
+                    </form>
+                    {% endif %}
                 </div>
-            </a>
+            </div>
             {% endfor %}
         </div>
         {% else %}
@@ -166,6 +183,24 @@
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 
 <script>
+    function mudarNome(id) {
+        var el = document.getElementById('nome-' + id);
+        var nome = prompt('Nome da planta', el.textContent.trim());
+        if (nome === null || !nome.trim()) return;
+        fetch('/plantas/' + id + '/nome', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: nome.trim() }) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.ok) throw new Error(d.mensagem);
+                el.textContent = d.nome; showToast('Nome alterado.');
+            }).catch(function (e) { showToast(e.message || 'Não foi possível mudar o nome.', 'error'); });
+    }
+
+    // Nomes de ficheiro com acentos estragados ("chÃ£o" → "chão")
+    function corrigirAcentos(t) {
+        if (!/[ÃÂ]/.test(t)) return t;
+        try { return decodeURIComponent(escape(t)); } catch (e) { return t; }
+    }
+
     var MAX_LADO = 3500;  // o servidor reduz a 4000; aqui poupa-se o envio
     var input = document.getElementById('ficheiro'), zona = document.getElementById('zonaFicheiro');
     var escolhido = null;
@@ -174,7 +209,7 @@
         escolhido = f;
         document.getElementById('ficheiroTexto').textContent = f ? '📄 ' + f.name : '📎 Escolher planta';
         var nome = document.querySelector('[name=nome]');
-        if (f && !nome.value) nome.value = f.name.replace(/\.[^.]+$/, '');
+        if (f && !nome.value) nome.value = corrigirAcentos(f.name.replace(/\.[^.]+$/, ''));
     }
     input.addEventListener('change', function() { mostrarFicheiro(input.files[0] || null); });
     ['dragover', 'dragenter'].forEach(function(ev) {

@@ -118,6 +118,19 @@ def guardar(id):
     return jsonify({'ok': True, 'mensagem': 'Planta guardada.'})
 
 
+@plantas_bp.route('/plantas/<int:id>/nome', methods=['POST'])
+@login_required
+def mudar_nome(id):
+    p = _planta(id)
+    dados = request.get_json(silent=True) or {}
+    nome = str(dados.get('nome') or '').strip()
+    if not nome:
+        return jsonify({'ok': False, 'mensagem': 'Indique um nome.'}), 400
+    p.nome = nome[:200]
+    db.session.commit()
+    return jsonify({'ok': True, 'nome': p.nome})
+
+
 @plantas_bp.route('/plantas/<int:id>/apagar', methods=['POST'])
 @login_required
 def apagar(id):

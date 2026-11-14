@@ -22,7 +22,9 @@
             font-family: Arial; padding: 3px 6px; outline: none; width: 100%;
         }
         .topo input:hover, .topo input:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); }
-        .topo input.nome { font-size: 1.05em; font-weight: bold; }
+        .topo input.nome { font-size: 1.05em; font-weight: bold; padding-right: 26px; }
+        .nome-wrap { position: relative; display: block; }
+        .nome-wrap .lapis { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 0.75em; opacity: 0.7; pointer-events: none; }
         .topo input.morada { font-size: 0.78em; color: rgba(255,255,255,0.8); }
         .topo input::placeholder { color: rgba(255,255,255,0.5); }
         .topo .acoes { display: flex; gap: 8px; align-items: center; }
@@ -87,12 +89,23 @@
         }
 
         @media (max-width: 700px) {
-            .topo { padding: 6px 10px; gap: 6px; }
-            .topo .acoes { width: 100%; justify-content: flex-end; }
-            .topo button { padding: 7px 10px; font-size: 0.8em; }
-            .ferr { min-width: 56px; padding: 4px 6px; }
-            .resumo { padding: 5px 10px; font-size: 0.75em; }
-            .dica { bottom: 10px; font-size: 0.78em; }
+            /* Telemóvel: cabeçalho numa linha e o máximo de espaço para a planta */
+            .topo { padding: 6px 8px; gap: 6px; flex-wrap: nowrap; }
+            .topo .txt { display: none; }
+            .topo a.voltar { font-size: 1.2em; padding: 4px 4px; }
+            .topo .nomes { min-width: 0; }
+            .topo input.nome { font-size: 0.95em; }
+            .topo input.morada { font-size: 0.72em; }
+            .topo .acoes { gap: 5px; flex-shrink: 0; }
+            .topo button { padding: 8px 10px; font-size: 0.82em; }
+            .ferr { min-width: 54px; padding: 4px 5px; font-size: 0.66em; }
+            .resumo { padding: 5px 10px; font-size: 0.74em; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+            .resumo::-webkit-scrollbar { display: none; }
+            .dica { bottom: 8px; font-size: 0.78em; padding: 7px 10px; gap: 6px; }
+            .dica small { display: none; }
+            .dica button { padding: 8px 11px; }
+            .zoom { right: 8px; top: 8px; }
+            .zoom button { width: 40px; height: 40px; }
         }
     </style>
     <link rel="manifest" href="/manifest.json">
@@ -101,13 +114,13 @@
 <body>
 <div class="editor">
     <div class="topo">
-        <a href="/plantas" class="voltar" id="voltar">← Plantas</a>
+        <a href="/plantas" class="voltar" id="voltar">← <span class="txt">Plantas</span></a>
         <div class="nomes">
-            <input class="nome" id="nome" value="{{ p.nome }}" maxlength="200" aria-label="Nome da planta">
+            <label class="nome-wrap"><input class="nome" id="nome" value="{{ p.nome }}" maxlength="200" placeholder="Nome da planta" aria-label="Nome da planta"><span class="lapis" aria-hidden="true">✏️</span></label>
             <input class="morada" id="morada" value="{{ p.morada or '' }}" maxlength="300" placeholder="Morada" aria-label="Morada">
         </div>
         <div class="acoes">
-            <button type="button" id="btnImagem" title="Descarregar a planta com o desenho">⬇ Imagem</button>
+            <button type="button" id="btnImagem" title="Descarregar a planta com o desenho">⬇<span class="txt"> Imagem</span></button>
             {% if pode_apagar %}
             <form method="POST" action="/plantas/{{ p.id }}/apagar" onsubmit="return confirm('Apagar esta planta e o desenho? Não dá para desfazer.')">
                 <button type="submit" title="Apagar planta">🗑</button>
