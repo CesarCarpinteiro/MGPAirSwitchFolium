@@ -230,12 +230,13 @@ def _incluidos(org):
 
 
 def _juntar_incluidos(org, opcoes):
-    """Acrescenta opções novas (pelo nome, sem repetir e ignorando maiúsculas)."""
+    """Acrescenta opções novas (pode haver o mesmo nome com descrições diferentes; não repete iguais)."""
     lista = _incluidos(org)
-    vistos = {o['nome'].lower() for o in lista}
+    chave = lambda o: (o['nome'].lower(), o['descricao'].lower())
+    vistos = {chave(o) for o in lista}
     for o in map(_opcao, opcoes):
-        if o['nome'] and o['nome'].lower() not in vistos:
-            lista.append(o); vistos.add(o['nome'].lower())
+        if o['nome'] and chave(o) not in vistos:
+            lista.append(o); vistos.add(chave(o))
     org.orc_incluidos = json.dumps(lista[:300], ensure_ascii=False)
 
 

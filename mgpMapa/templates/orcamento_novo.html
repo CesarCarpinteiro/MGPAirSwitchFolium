@@ -84,10 +84,14 @@
         .incl-btn:hover { text-decoration: underline; }
         .linha.sub { border-top: none; padding: 2px 0 4px; }
         .incl-desc { display: flex; align-items: center; gap: 6px; padding-left: 14px; min-width: 0; }
-        .incl-desc .seta { color: #2e7d32; font-weight: bold; }
+        .incl-desc .seta { color: #2e7d32; font-weight: bold; align-self: flex-start; padding-top: 9px; }
         .incl-campos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
         .incl-ac { position: relative; min-width: 0; }
-        .incl-campos .f-idesc { min-height: 32px; font-size: 0.8em; font-style: italic; resize: vertical; padding: 6px 10px; background: #fbfdfb; border: 1px dashed #c8e6c9; }
+        .incl-campos .f-idesc { min-height: 32px; font-size: 0.8em; font-style: italic; padding: 6px 10px; background: #fbfdfb; border: 1px dashed #c8e6c9; line-height: 1.4; }
+        textarea.auto { resize: none; overflow: hidden; }  /* crescem com o texto: mostra-se tudo, sem scroll */
+        .guardar-opcao { align-self: flex-start; background: none; border: none; color: #2e7d32; font-size: 0.76em; font-weight: bold; cursor: pointer; padding: 0 2px; }
+        .guardar-opcao:hover { text-decoration: underline; }
+        .incl-ac .ac-item.mao { color: #555; font-style: italic; }
         .incl-ac .ac-desc { font-size: 0.74em; color: #888; margin-top: 2px; }
         .linha.sub { align-items: start; }
         .incl-ac .f-desc, .linha.sub .f-qtd { font-size: 0.88em; background: #f6fbf6; border-color: #c8e6c9; }
@@ -322,7 +326,7 @@
         <div class="nota-wrap">
             <button type="button" class="incl-btn">+ Incluído (tubagem, dreno…)</button>
             <button type="button" class="nota-btn">+ Observação</button>
-            <textarea name="linha_nota" class="f-nota" rows="1" maxlength="1000" placeholder="Ex.: Inclui 3 m de tubagem de cobre e conduta (já incluído no preço)" aria-label="Observação do artigo"></textarea>
+            <textarea name="linha_nota" class="f-nota auto" rows="1" maxlength="1000" placeholder="Ex.: Inclui 3 m de tubagem de cobre e conduta (já incluído no preço)" aria-label="Observação do artigo"></textarea>
         </div>
     </div>
 </template>
@@ -340,7 +344,8 @@
                     <input type="text" name="linha_descricao" class="f-desc" maxlength="300" placeholder="Material incluído… ex.: Tubagem, Drenagem" aria-label="Material incluído">
                     <div class="ac-list"></div>
                 </div>
-                <textarea name="linha_nota" class="f-idesc" rows="1" maxlength="1000" placeholder="Descrição (opcional) — ex.: cobre isolado a poliuretano, 1/4 - 3/8" aria-label="Descrição do material incluído"></textarea>
+                <textarea name="linha_nota" class="f-idesc auto" rows="1" maxlength="1000" placeholder="Descrição (opcional) — ex.: cobre isolado a poliuretano, 1/4 - 3/8" aria-label="Descrição do material incluído"></textarea>
+                <button type="button" class="guardar-opcao" hidden>☆ Guardar nas opções</button>
             </div>
         </div>
         <input type="number" name="linha_qtd" class="num f-qtd" min="0" step="any" value="1" aria-label="Quantidade incluída">
@@ -368,7 +373,12 @@
     }
     function num(el) { return parseFloat(String(el.value).replace(',', '.')) || 0; }
 
-    var OPCOES_INCL = {{ incluidos|tojson }};  // opções de material incluído (autocomplete)
+    var OPCOES_INCL = {{ incluidos|tojson }};
+
+    // Caixas de texto que crescem com o conteúdo (descrições e observações aparecem inteiras)
+    function ajustarAltura(t) { if (!t || !t.offsetParent) return; t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+    document.addEventListener('input', function(e) { if (e.target.matches && e.target.matches('textarea.auto')) ajustarAltura(e.target); });
+    window.addEventListener('resize', function() { document.querySelectorAll('textarea.auto').forEach(ajustarAltura); });  // opções de material incluído (autocomplete)
 
     // Margem do orçamento para uma marca (a da caixa da marca, ou a de "outras marcas")
     function caixaMarca(chave) {
@@ -434,6 +444,7 @@
             if (dados.nota) {
                 linha.querySelector('.f-nota').value = dados.nota;
                 linha.querySelector('.nota-wrap').classList.add('aberta');
+                setTimeout(function() { ajustarAltura(linha.querySelector('.f-nota')); });
             }
         }
         linha.querySelector('.incl-btn').addEventListener('click', function() {
@@ -441,6 +452,7 @@
         });
         linha.querySelector('.nota-btn').addEventListener('click', function() {
             linha.querySelector('.nota-wrap').classList.add('aberta');
+            ajustarAltura(linha.querySelector('.f-nota'));
             linha.querySelector('.f-nota').focus();
         });
         linha.querySelector('.f-nota').addEventListener('blur', function() {
@@ -472,44 +484,63 @@
         }
         sub.querySelector('.remove-btn').addEventListener('click', function() { sub.remove(); recalc(); });
         ligarIncluido(sub);
+        ajustarAltura(sub.querySelector('.f-idesc'));
         return sub;
     }
 
     function ligarIncluido(sub) {
-        var input = sub.querySelector('.f-desc'), lista = sub.querySelector('.ac-list'), res = [], ativo = -1;
-        function norm(t) { return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+        var input = sub.querySelector('.f-desc'), campoDesc = sub.querySelector('.f-idesc');
+        var btnGuardar = sub.querySelector('.guardar-opcao'), lista = sub.querySelector('.ac-list'), res = [], ativo = -1;
+        function norm(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
         function fechar() { lista.style.display = 'none'; }
+        // "☆ Guardar nas opções" aparece quando o nome + descrição ainda não são uma opção guardada
+        function verGuardar() {
+            var nome = input.value.trim(), desc = campoDesc.value.trim();
+            btnGuardar.hidden = !nome || OPCOES_INCL.some(function(o) { return norm(o.nome) === norm(nome) && norm(o.descricao) === norm(desc); });
+        }
         function render() {
             var q = input.value.trim(), termos = norm(q).split(/\s+/).filter(Boolean);
             res = OPCOES_INCL.filter(function(o) {
                 var n = norm(o.nome + ' ' + o.descricao);
                 return termos.every(function(x) { return n.indexOf(x) >= 0; });
             }).slice(0, 12).map(function(o) { return { nome: o.nome, descricao: o.descricao }; });
-            if (q && !OPCOES_INCL.some(function(o) { return norm(o.nome) === norm(q); })) res.push({ nome: q, novo: true });
-            if (!res.length) { fechar(); return; }
+            res.push({ nome: q, mao: true });  // opção em branco: escrever a minha
             if (ativo >= res.length) ativo = res.length - 1;
             lista.innerHTML = res.map(function(r, i) {
-                return '<div class="ac-item' + (r.novo ? ' novo' : '') + (i === ativo ? ' active' : '') + '" data-i="' + i + '"><div><div class="ac-nome">' +
-                    (r.novo ? '+ Adicionar às opções: «' + esc(r.nome) + '»' : '<strong>' + esc(r.nome) + '</strong>') + '</div>' +
-                    (r.descricao ? '<div class="ac-desc">' + esc(r.descricao) + '</div>' : '') + '</div></div>';
+                var cls = 'ac-item' + (r.mao ? ' mao' : '') + (i === ativo ? ' active' : '');
+                var txt = r.mao ? '✎ Escrever a minha' + (q ? ': «' + esc(q) + '» (descrição em branco)' : ' (em branco)')
+                                : '<strong>' + esc(r.nome) + '</strong>';
+                return '<div class="' + cls + '" data-i="' + i + '"><div><div class="ac-nome">' + txt + '</div>' +
+                    (!r.mao && r.descricao ? '<div class="ac-desc">' + esc(r.descricao) + '</div>' : '') + '</div></div>';
             }).join('');
             lista.style.display = 'block';
         }
         function escolher(r) {
-            input.value = r.nome;
-            var campoDesc = sub.querySelector('.f-idesc');
-            if (!r.novo && r.descricao) campoDesc.value = r.descricao;  // preenche a descrição da opção (pode ser ajustada)
             fechar();
-            if (r.novo) {
-                fetch('/api/incluidos', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ nome: r.nome, descricao: campoDesc.value }) })
-                    .then(function(x) { return x.json(); })
-                    .then(function(d) { if (!d.ok) throw new Error(d.mensagem); OPCOES_INCL = d.opcoes; showToast('Opção guardada para os próximos orçamentos.'); })
-                    .catch(function(e) { showToast(e.message || 'Não foi possível guardar a opção.', 'error'); });
+            if (r.mao) {  // fica o nome escrito e a descrição em branco para escrever
+                campoDesc.value = '';
+                ajustarAltura(campoDesc); verGuardar();
+                (input.value.trim() ? campoDesc : input).focus();
+                return;
             }
+            input.value = r.nome;
+            campoDesc.value = r.descricao || '';  // a descrição da opção (pode ser ajustada)
+            ajustarAltura(campoDesc); verGuardar();
             var q = sub.querySelector('.f-qtd'); q.focus(); q.select();
         }
-        input.addEventListener('input', function() { ativo = 0; render(); });
+        btnGuardar.addEventListener('click', function() {
+            fetch('/api/incluidos', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ nome: input.value.trim(), descricao: campoDesc.value.trim() }) })
+                .then(function(x) { return x.json(); })
+                .then(function(d) {
+                    if (!d.ok) throw new Error(d.mensagem);
+                    OPCOES_INCL = d.opcoes; verGuardar();
+                    showToast('Opção guardada para os próximos orçamentos.');
+                })
+                .catch(function(e) { showToast(e.message || 'Não foi possível guardar a opção.', 'error'); });
+        });
+        input.addEventListener('input', function() { ativo = 0; render(); verGuardar(); });
+        campoDesc.addEventListener('input', verGuardar);
         input.addEventListener('focus', function() { ativo = -1; render(); });
         input.addEventListener('blur', function() { setTimeout(fechar, 150); });
         input.addEventListener('keydown', function(e) {
@@ -523,6 +554,7 @@
             var it = e.target.closest('.ac-item');
             if (it) { e.preventDefault(); escolher(res[+it.dataset.i]); }
         });
+        verGuardar();
     }
 
     function ligarAutocomplete(linha) {
