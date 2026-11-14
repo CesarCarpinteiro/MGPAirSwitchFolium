@@ -238,3 +238,19 @@ class LembreteSMS(db.Model):
     criado_em = db.Column(db.DateTime, default=datetime.now)
     enviado_em = db.Column(db.DateTime)
     registo = db.relationship('Registo', backref=db.backref('lembretes', cascade='all, delete-orphan', passive_deletes=True))
+
+
+class Planta(db.Model):
+    """Planta de uma casa (imagem) com o desenho da instalação de AC por cima, em JSON."""
+    __tablename__ = 'plantas'
+    id = db.Column(db.Integer, primary_key=True)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizacao.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('usuario.id', ondelete='SET NULL'), nullable=True)
+    nome = db.Column(db.String(200), nullable=False)
+    morada = db.Column(db.String(300), default='')
+    imagem = db.Column(db.String(100), nullable=False)  # ficheiro em static/uploads/plantas
+    largura = db.Column(db.Integer, nullable=False)
+    altura = db.Column(db.Integer, nullable=False)
+    desenho = db.Column(db.Text)  # unidades, linhas, notas e escala (ver static/planta.js)
+    criado_em = db.Column(db.DateTime, default=datetime.now)
+    atualizado_em = db.Column(db.DateTime, default=datetime.now)

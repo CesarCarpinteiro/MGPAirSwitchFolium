@@ -100,10 +100,11 @@ def create_app():
     from routes.mensagens import mensagens_bp
     from routes.obras import obras_bp
     from routes.push import push_bp
+    from routes.plantas import plantas_bp
 
     for bp in [auth_bp, dashboard_bp, home_bp, users_bp, registos_bp,
                faturas_bp, ferias_bp, orcamentos_bp, horas_bp,
-               mensagens_bp, obras_bp, push_bp]:
+               mensagens_bp, obras_bp, push_bp, plantas_bp]:
         app.register_blueprint(bp)
 
     # User loader

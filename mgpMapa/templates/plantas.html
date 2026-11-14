@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ org_nome }} — Plantas</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; padding-bottom: 60px; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .page-header h1 { font-size: 1.4em; color: white; font-weight: 700; }
+        .page-header .subtitle { font-size: 0.8em; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .page-header a {
+            padding: 9px 20px; background: white; color: #2d3a6e;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em;
+            font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .header-actions a.user-pill { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+
+        .content { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        .card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 22px 24px; margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1em; font-weight: bold; color: #2d3a6e;
+            margin-bottom: 14px; padding-bottom: 8px;
+            border-bottom: 2px solid #e8f0e8;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .count { font-size: 0.82em; color: #999; font-weight: normal; margin-left: auto; }
+        .ajuda { font-size: 0.84em; color: #666; line-height: 1.5; margin-bottom: 14px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 0.83em; font-weight: bold; color: #555; }
+        .form-group.full { grid-column: 1 / -1; }
+        input[type=text] {
+            padding: 9px 11px; border: 1px solid #ddd; border-radius: 7px;
+            font-size: 0.92em; font-family: Arial; color: #333; background: #fafafa; outline: none; width: 100%;
+        }
+        input[type=text]:focus { border-color: #4a5fa8; box-shadow: 0 0 0 3px rgba(74,95,168,0.1); background: white; }
+        .ficheiro {
+            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px;
+            border: 2px dashed #c5cae9; border-radius: 10px; padding: 22px; cursor: pointer;
+            color: #2d3a6e; font-weight: bold; font-size: 0.9em; text-align: center; background: #f8f9fd;
+        }
+        .ficheiro:hover, .ficheiro.arrastar { background: #eef0fa; border-color: #4a5fa8; }
+        .ficheiro small { font-weight: normal; color: #888; }
+        .ficheiro input { display: none; }
+        .btn-submit {
+            margin-top: 16px; padding: 11px 30px; width: 100%;
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8);
+            color: white; border: none; border-radius: 7px;
+            font-size: 0.95em; font-weight: bold; cursor: pointer;
+        }
+        .btn-submit:disabled { opacity: 0.6; cursor: wait; }
+
+        .grelha { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        .planta-card {
+            border: 1px solid #eceef5; border-radius: 10px; overflow: hidden; text-decoration: none;
+            color: inherit; background: white; transition: box-shadow 0.15s, transform 0.15s;
+        }
+        .planta-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .planta-card img { width: 100%; height: 150px; object-fit: cover; background: #f5f5f5; display: block; border-bottom: 1px solid #eceef5; }
+        .planta-info { padding: 10px 12px; }
+        .planta-nome { font-weight: bold; color: #222; font-size: 0.92em; }
+        .planta-meta { font-size: 0.78em; color: #888; margin-top: 3px; }
+        .empty-state { text-align: center; padding: 24px; color: #aaa; font-size: 0.9em; }
+
+        footer {
+            text-align: center; padding: 10px; background: #2d3a6e;
+            color: rgba(255,255,255,0.8); font-size: 12px;
+            position: fixed; bottom: 0; width: 100%;
+        }
+        @media (max-width: 700px) {
+            .content { padding: 0 10px; margin-top: 16px; }
+            .card { padding: 18px 14px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .grelha { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .planta-card img { height: 110px; }
+            .page-header { padding: 10px 12px; flex-wrap: wrap; row-gap: 8px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions { flex-wrap: wrap; justify-content: flex-end; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+            .header-actions a.user-pill { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2d3a6e">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-180.png?v=2">
+</head>
+<body>
+
+<div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <img src="/static/icons/logo-dark.png" alt="Logo" style="height:40px;width:40px;object-fit:contain;filter:brightness(0) invert(1);">
+        <div>
+            <div class="subtitle">{{ org_nome }}</div>
+            <h1>Plantas</h1>
+        </div>
+    </div>
+    <div class="header-actions">
+        {% if tem_mapa %}<a href="/">Mapa</a>{% endif %}
+        <a href="/registos">Registos</a>
+        <a href="/perfil" class="user-pill">{{ current_user.nome }}</a>
+    </div>
+</div>
+
+<div class="content">
+    <div class="card">
+        <div class="section-title">📐 Nova planta</div>
+        <p class="ajuda">Carregue a planta da casa (PDF, JPG ou PNG, ou uma fotografia) e desenhe por cima as unidades, a tubagem, o dreno e o cabo elétrico.</p>
+        <form id="novaForm" autocomplete="off">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nome *</label>
+                    <input type="text" name="nome" placeholder="Ex: Moradia Sr. Silva" required maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label>Morada</label>
+                    <input type="text" name="morada" placeholder="Opcional" maxlength="300">
+                </div>
+                <div class="form-group full">
+                    <label class="ficheiro" id="zonaFicheiro">
+                        <span id="ficheiroTexto">📎 Escolher planta</span>
+                        <small>PDF (1.ª página), JPG ou PNG</small>
+                        <input type="file" id="ficheiro" accept="application/pdf,image/jpeg,image/png,image/webp">
+                    </label>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit" id="btnCriar">Carregar e abrir</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="section-title">🏠 Plantas <span class="count">{{ plantas|length }}</span></div>
+        {% if plantas %}
+        <div class="grelha">
+            {% for p, u in plantas %}
+            <a class="planta-card" href="/plantas/{{ p.id }}">
+                <img src="/plantas/{{ p.id }}/imagem" alt="" loading="lazy">
+                <div class="planta-info">
+                    <div class="planta-nome">{{ p.nome }}</div>
+                    <div class="planta-meta">{% if p.morada %}{{ p.morada }} · {% endif %}{{ p.atualizado_em.strftime('%d/%m/%Y') if p.atualizado_em }}{% if u %} · {{ u.nome }}{% endif %}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">Ainda não há plantas.</div>
+        {% endif %}
+    </div>
+</div>
+
+<footer>&copy; GestãoPro</footer>
+
+<div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
+
+<script>
+    var MAX_LADO = 3500;  // o servidor reduz a 4000; aqui poupa-se o envio
+    var input = document.getElementById('ficheiro'), zona = document.getElementById('zonaFicheiro');
+    var escolhido = null;
+
+    function mostrarFicheiro(f) {
+        escolhido = f;
+        document.getElementById('ficheiroTexto').textContent = f ? '📄 ' + f.name : '📎 Escolher planta';
+        var nome = document.querySelector('[name=nome]');
+        if (f && !nome.value) nome.value = f.name.replace(/\.[^.]+$/, '');
+    }
+    input.addEventListener('change', function() { mostrarFicheiro(input.files[0] || null); });
+    ['dragover', 'dragenter'].forEach(function(ev) {
+        zona.addEventListener(ev, function(e) { e.preventDefault(); zona.classList.add('arrastar'); });
+    });
+    ['dragleave', 'drop'].forEach(function(ev) {
+        zona.addEventListener(ev, function(e) { e.preventDefault(); zona.classList.remove('arrastar'); });
+    });
+    zona.addEventListener('drop', function(e) { if (e.dataTransfer.files[0]) mostrarFicheiro(e.dataTransfer.files[0]); });
+
+    function carregarScript(src) {
+        return new Promise(function(ok, falha) {
+            var s = document.createElement('script');
+            s.src = src; s.onload = ok; s.onerror = falha;
+            document.head.appendChild(s);
+        });
+    }
+
+    // Converte PDF (1.ª página) ou imagem num canvas reduzido a MAX_LADO
+    function paraCanvas(f) {
+        if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+            var base = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+            return (window.pdfjsLib ? Promise.resolve() : carregarScript(base + 'pdf.min.js')).then(function() {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
+                return f.arrayBuffer();
+            }).then(function(buf) {
+                return pdfjsLib.getDocument({ data: buf }).promise;
+            }).then(function(pdf) {
+                return pdf.getPage(1);
+            }).then(function(pagina) {
+                var v1 = pagina.getViewport({ scale: 1 });
+                var escala = Math.min(MAX_LADO / Math.max(v1.width, v1.height), 5);
+                var vp = pagina.getViewport({ scale: escala });
+                var c = document.createElement('canvas');
+                c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+                var ctx = c.getContext('2d');
+                ctx.fillStyle = 'white'; ctx.fillRect(0, 0, c.width, c.height);
+                return pagina.render({ canvasContext: ctx, viewport: vp }).promise.then(function() { return c; });
+            });
+        }
+        return new Promise(function(ok, falha) {
+            var img = new Image(), url = URL.createObjectURL(f);
+            img.onload = function() {
+                var r = Math.min(1, MAX_LADO / Math.max(img.naturalWidth, img.naturalHeight));
+                var c = document.createElement('canvas');
+                c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+                var ctx = c.getContext('2d');
+                ctx.fillStyle = 'white'; ctx.fillRect(0, 0, c.width, c.height);
+                ctx.drawImage(img, 0, 0, c.width, c.height);
+                URL.revokeObjectURL(url); ok(c);
+            };
+            img.onerror = function() { URL.revokeObjectURL(url); falha(new Error('imagem')); };
+            img.src = url;
+        });
+    }
+
+    document.getElementById('novaForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var form = this, btn = document.getElementById('btnCriar');
+        if (!escolhido) { showToast('Escolha o ficheiro da planta.', 'error'); return; }
+        btn.disabled = true; btn.textContent = 'A preparar a planta…';
+        paraCanvas(escolhido).then(function(c) {
+            return new Promise(function(ok) { c.toBlob(ok, 'image/jpeg', 0.92); });
+        }, function() {
+            throw new Error('Não foi possível ler o ficheiro. Use PDF, JPG ou PNG.');
+        }).then(function(blob) {
+            btn.textContent = 'A carregar…';
+            var dados = new FormData();
+            dados.append('nome', form.nome.value.trim());
+            dados.append('morada', form.morada.value.trim());
+            dados.append('imagem', blob, 'planta.jpg');
+            return fetch('/plantas/nova', { method: 'POST', body: dados, headers: { 'Accept': 'application/json' } });
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            if (!d.ok) throw new Error(d.mensagem);
+            location.href = d.url;
+        }).catch(function(err) {
+            btn.disabled = false; btn.textContent = 'Carregar e abrir';
+            // TypeError/SyntaxError = sem ligação ou resposta inesperada do servidor
+            var tecnico = err instanceof TypeError || err instanceof SyntaxError;
+            showToast(!tecnico && err.message ? err.message : 'Não foi possível carregar a planta. Tente outra vez.', 'error');
+        });
+    });
+
+    function showToast(msg, type) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:Arial,sans-serif;max-width:90vw;opacity:1;transition:opacity 0.4s;';
+        t.style.background = type === 'error' ? '#e53935' : '#2d3a6e';
+        t.style.color = 'white';
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 4000);
+    }
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    showToast({{ message|tojson }}, {{ category|tojson }});
+    {% endfor %}
+    {% endwith %}
+</script>
+</body>
+</html>

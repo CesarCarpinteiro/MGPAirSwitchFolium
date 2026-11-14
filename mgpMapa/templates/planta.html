@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ org_nome }} — {{ p.nome }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Arial', sans-serif; background: #f0f2f5; }
+        .editor { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+        .topo {
+            background: linear-gradient(135deg, #2d3a6e, #4a5fa8); color: white;
+            padding: 8px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 2;
+        }
+        .topo a.voltar { color: white; text-decoration: none; font-weight: bold; font-size: 0.9em; white-space: nowrap; }
+        .topo .nomes { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 2px; }
+        .topo input {
+            background: transparent; border: 1px solid transparent; border-radius: 6px; color: white;
+            font-family: Arial; padding: 3px 6px; outline: none; width: 100%;
+        }
+        .topo input:hover, .topo input:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); }
+        .topo input.nome { font-size: 1.05em; font-weight: bold; }
+        .topo input.morada { font-size: 0.78em; color: rgba(255,255,255,0.8); }
+        .topo input::placeholder { color: rgba(255,255,255,0.5); }
+        .topo .acoes { display: flex; gap: 8px; align-items: center; }
+        .topo button, .topo .acoes form button {
+            padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12); color: white; white-space: nowrap;
+        }
+        .topo button.guardar { background: white; color: #2d3a6e; border-color: white; }
+        .topo button.guardar.alterado::after { content: ' •'; color: #e65100; }
+        .topo form { margin: 0; }
+
+        .barra {
+            display: flex; gap: 4px; padding: 6px 10px; background: white; border-bottom: 1px solid #e3e6ef;
+            overflow-x: auto; align-items: stretch; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+        }
+        .barra .sep { width: 1px; background: #e3e6ef; margin: 4px 4px; flex-shrink: 0; }
+        .ferr {
+            flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+            min-width: 62px; padding: 5px 8px; border: 1px solid transparent; border-radius: 8px; background: none;
+            cursor: pointer; font-size: 0.7em; color: #555; font-family: Arial;
+        }
+        .ferr .ic { font-size: 1.45em; line-height: 1; height: 22px; display: flex; align-items: center; }
+        .ferr:hover { background: #f3f5fb; }
+        .ferr.ativa { background: #eef0fa; border-color: #c5cae9; color: #2d3a6e; font-weight: bold; }
+        .ferr:disabled { opacity: 0.35; cursor: default; }
+        .traco { display: inline-block; width: 24px; height: 0; border-top: 4px solid; border-radius: 2px; }
+
+        .resumo {
+            display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; padding: 6px 14px;
+            background: #f8f9fd; border-bottom: 1px solid #e3e6ef; font-size: 0.8em; color: #444;
+        }
+        .resumo .item { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .resumo .item strong { color: #222; }
+        .resumo .aviso { color: #c47c2b; }
+
+        .area { flex: 1; position: relative; overflow: hidden; background: #dfe3ea; }
+        .area svg { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
+        .area.mao svg { cursor: grab; }
+        .area.desenhar svg { cursor: crosshair; }
+        .carregar { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #777; font-size: 0.9em; }
+
+        .dica {
+            position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 1;
+            background: rgba(33,38,61,0.92); color: white; border-radius: 10px; padding: 9px 14px;
+            font-size: 0.82em; line-height: 1.4; max-width: calc(100% - 24px); width: max-content;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+        .dica button {
+            padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 0.95em; cursor: pointer;
+            background: white; color: #2d3a6e;
+        }
+        .dica button.perigo { background: #ffebee; color: #a33b3b; }
+        .dica button.sec { background: rgba(255,255,255,0.15); color: white; }
+
+        .zoom { position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 1; }
+        .zoom button {
+            width: 38px; height: 38px; border-radius: 8px; border: 1px solid #d5d9e4; background: white;
+            font-size: 1.15em; cursor: pointer; color: #2d3a6e; box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }
+
+        @media (max-width: 700px) {
+            .topo { padding: 6px 10px; gap: 6px; }
+            .topo .acoes { width: 100%; justify-content: flex-end; }
+            .topo button { padding: 7px 10px; font-size: 0.8em; }
+            .ferr { min-width: 56px; padding: 4px 6px; }
+            .resumo { padding: 5px 10px; font-size: 0.75em; }
+            .dica { bottom: 10px; font-size: 0.78em; }
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2d3a6e">
+</head>
+<body>
+<div class="editor">
+    <div class="topo">
+        <a href="/plantas" class="voltar" id="voltar">← Plantas</a>
+        <div class="nomes">
+            <input class="nome" id="nome" value="{{ p.nome }}" maxlength="200" aria-label="Nome da planta">
+            <input class="morada" id="morada" value="{{ p.morada or '' }}" maxlength="300" placeholder="Morada" aria-label="Morada">
+        </div>
+        <div class="acoes">
+            <button type="button" id="btnImagem" title="Descarregar a planta com o desenho">⬇ Imagem</button>
+            {% if pode_apagar %}
+            <form method="POST" action="/plantas/{{ p.id }}/apagar" onsubmit="return confirm('Apagar esta planta e o desenho? Não dá para desfazer.')">
+                <button type="submit" title="Apagar planta">🗑</button>
+            </form>
+            {% endif %}
+            <button type="button" class="guardar" id="btnGuardar">Guardar</button>
+        </div>
+    </div>
+
+    <div class="barra" id="barra">
+        <button class="ferr ativa" data-ferramenta="selecionar"><span class="ic">✋</span>Selecionar</button>
+        <span class="sep"></span>
+        <button class="ferr" data-ferramenta="interior"><span class="ic">▭</span>Unid. interior</button>
+        <button class="ferr" data-ferramenta="exterior"><span class="ic">⊡</span>Unid. exterior</button>
+        <span class="sep"></span>
+        <button class="ferr" data-ferramenta="cobre"><span class="ic"><span class="traco" style="border-color:#c47c2b;"></span></span>Tubagem cobre</button>
+        <button class="ferr" data-ferramenta="dreno"><span class="ic"><span class="traco" style="border-color:#1e88e5;border-top-style:dashed;"></span></span>Dreno</button>
+        <button class="ferr" data-ferramenta="eletrico"><span class="ic"><span class="traco" style="border-color:#e53935;"></span></span>Cabo elétrico</button>
+        <span class="sep"></span>
+        <button class="ferr" data-ferramenta="nota"><span class="ic">𝐓</span>Nota</button>
+        <button class="ferr" data-ferramenta="escala"><span class="ic">📏</span>Escala</button>
+        <span class="sep"></span>
+        <button class="ferr" id="btnDesfazer" disabled><span class="ic">↶</span>Desfazer</button>
+    </div>
+
+    <div class="resumo" id="resumo"></div>
+
+    <div class="area" id="area">
+        <div class="carregar" id="aCarregar">A carregar a planta…</div>
+        <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+            <g id="vista">
+                <image id="imagem" href="/plantas/{{ p.id }}/imagem" x="0" y="0" width="{{ p.largura }}" height="{{ p.altura }}"/>
+                <g id="camada"></g>
+            </g>
+        </svg>
+        <div class="zoom">
+            <button type="button" id="zoomMais" title="Aproximar">+</button>
+            <button type="button" id="zoomMenos" title="Afastar">−</button>
+            <button type="button" id="zoomAjustar" title="Ver a planta toda">⤢</button>
+        </div>
+        <div class="dica" id="dica"></div>
+    </div>
+</div>
+
+<div id="toast-container" style="position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
+
+<script id="dadosPlanta" type="application/json">{{ {'id': p.id, 'largura': p.largura, 'altura': p.altura, 'desenho': desenho}|tojson }}</script>
+<script>
+    function showToast(msg, type) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.style.cssText = 'padding:11px 20px;border-radius:8px;font-size:0.88em;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.18);font-family:Arial,sans-serif;max-width:90vw;opacity:1;transition:opacity 0.4s;';
+        t.style.background = type === 'error' ? '#e53935' : '#2d3a6e';
+        t.style.color = 'white';
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+    }
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    showToast({{ message|tojson }}, {{ category|tojson }});
+    {% endfor %}
+    {% endwith %}
+</script>
+<script src="/static/planta.js"></script>
+</body>
+</html>
