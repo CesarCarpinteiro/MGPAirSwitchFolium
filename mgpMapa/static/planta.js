@@ -199,7 +199,8 @@
         return h;
     }
 
-    function svgUnidade(it, u, ecra) {
+    function svgUnidade(it, ue, ecra) {
+        var u = ue * (it.tam || 1);  // ue: unidade do ecrã (pegas e textos); u: tamanho do símbolo
         var mod = MODELOS[it.modelo] || MODELOS.interior, interior = it.modelo !== 'exterior';
         var grelha = it.modelo === 'grelha_ins' || it.modelo === 'grelha_ret', conduta = it.modelo === 'conduta';
         var w = (grelha ? 18 : conduta ? 58 : interior ? 38 : 30) * u, h = (grelha ? 18 : conduta ? 34 : interior ? 15 : 26) * u;
@@ -214,9 +215,10 @@
                 '<line x1="' + n(px + 3.5 * u) + '" y1="' + n(y0 + 3 * u) + '" x2="' + n(px + 3.5 * u) + '" y2="' + n(y0 + h - 3 * u) + '" stroke="white" stroke-width="' + n(1.4 * u) +
                 '" stroke-dasharray="' + n(0.1 * u) + ' ' + n(2.6 * u) + '" stroke-linecap="round"/>';
         }
-        if (ecra && selecionado === it.id) {
-            r += '<rect x="' + n(x0 - 5 * u) + '" y="' + n(y0 - 5 * u) + '" width="' + n(w + 10 * u) + '" height="' + n(h + 10 * u) +
-                '" rx="' + n(4 * u) + '" fill="rgba(74,95,168,0.1)" stroke="#4a5fa8" stroke-width="' + n(1.5 * u) + '" stroke-dasharray="' + n(4 * u) + ' ' + n(3 * u) + '"/>';
+        var selU = ecra && selecionado === it.id;
+        if (selU) {
+            r += '<rect x="' + n(x0 - 5 * ue) + '" y="' + n(y0 - 5 * ue) + '" width="' + n(w + 10 * ue) + '" height="' + n(h + 10 * ue) +
+                '" rx="' + n(4 * ue) + '" fill="rgba(74,95,168,0.1)" stroke="#4a5fa8" stroke-width="' + n(1.5 * ue) + '" stroke-dasharray="' + n(4 * ue) + ' ' + n(3 * ue) + '"/>';
         }
         r += '<rect x="' + n(x0) + '" y="' + n(y0) + '" width="' + n(w) + '" height="' + n(h) + '" rx="' + n(conduta ? 0 : 3 * u) +
             '" fill="white" stroke="' + (conduta ? '#111' : mod.cor) + '" stroke-width="' + n((conduta ? 2.6 : 2.2) * u) + '"/>';
@@ -229,7 +231,8 @@
         } else if (conduta) {  // unidade de conduta: o modelo escrito dentro (ex.: FDXM35)
             var rotuloUC = it.nome || 'UC', fs = Math.min(12 * u, (w - 6 * u) / (String(rotuloUC).length * 0.62));
             r += '<text x="' + n(it.x) + '" y="' + n(it.y + fs * 0.36) + '" font-size="' + n(fs) + '" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" fill="#111"' +
-                (it.rot === 180 ? ' transform="rotate(180 ' + n(it.x) + ' ' + n(it.y) + ')"' : '') + ' pointer-events="none">' + esc(rotuloUC) + '</text>';
+                ((it.rot || 0) > 90 && (it.rot || 0) < 270 ? ' transform="rotate(180 ' + n(it.x) + ' ' + n(it.y) + ')"' : '') +  // texto nunca de pernas para o ar
+                ' pointer-events="none">' + esc(rotuloUC) + '</text>';
         } else if (interior) {
             r += '<line x1="' + n(x0 + 5 * u) + '" y1="' + n(y0 + h - 4.5 * u) + '" x2="' + n(x0 + w - 5 * u) + '" y2="' + n(y0 + h - 4.5 * u) +
                 '" stroke="' + mod.cor + '" stroke-width="' + n(1.5 * u) + '"/>';
@@ -238,8 +241,15 @@
                 '<path d="M' + n(it.x - 6 * u) + ' ' + n(it.y) + 'H' + n(it.x + 6 * u) + 'M' + n(it.x) + ' ' + n(it.y - 6 * u) + 'V' + n(it.y + 6 * u) +
                 '" stroke="' + mod.cor + '" stroke-width="' + n(1.2 * u) + '"/>';
         }
+        if (selU) {  // pegas: bolinha em cima para rodar, quadrado no canto para aumentar/diminuir
+            var hy = y0 - 5 * ue - 20 * ue, cx = x0 + w + 5 * ue, cy = y0 + h + 5 * ue;
+            r += '<line x1="' + n(it.x) + '" y1="' + n(y0 - 5 * ue) + '" x2="' + n(it.x) + '" y2="' + n(hy) + '" stroke="#4a5fa8" stroke-width="' + n(1.5 * ue) + '"/>' +
+                '<circle data-alca="rodar" cx="' + n(it.x) + '" cy="' + n(hy) + '" r="' + n(7 * ue) + '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:grab"/>' +
+                '<rect data-alca="tamanho" x="' + n(cx - 6 * ue) + '" y="' + n(cy - 6 * ue) + '" width="' + n(12 * ue) + '" height="' + n(12 * ue) +
+                '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:nwse-resize"/>';
+        }
         r += '</g>';
-        if (it.nome && !conduta) r += texto(it.x, interior && !grelha ? y0 - 6 * u : y0 + h + 14 * u, it.nome, mod.cor, 11.5 * u, u);
+        if (it.nome && !conduta) r += texto(it.x, interior && !grelha ? y0 - 6 * u : y0 + h + 14 * u, it.nome, mod.cor, 11.5 * ue, ue);
         return r;
     }
 
@@ -353,12 +363,14 @@
             var it = selecionado === 'escala' ? null : item(selecionado), desc = '';
             if (selecionado === 'escala') desc = '<strong>Escala</strong> · ' + String(desenho.escala.metros).replace('.', ',') + ' m';
             else if (it.tipo === 'linha') desc = '<strong>' + CATEGORIAS[it.categoria].nome + '</strong>' + (it.medida ? ' ' + esc(String(it.medida).replace(/x/i, '×')) : '') + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
-            else if (it.tipo === 'unidade') desc = '<strong>' + MODELOS[it.modelo].nome + '</strong>' + (it.nome ? ' · ' + esc(it.nome) : '');
+            else if (it.tipo === 'unidade') desc = '<strong>' + MODELOS[it.modelo].nome + '</strong>' + (it.nome ? ' · ' + esc(it.nome) : '') +
+                '<br><small>Arraste a bolinha para rodar e o quadrado para aumentar ou diminuir.</small>';
             else desc = '<strong>Nota</strong>';
             h = '<span>' + desc + '</span>';
             if (selecionado === 'escala') h += '<button data-acao="metros">Mudar metros</button>';
             else if (it.tipo !== 'linha') h += '<button data-acao="texto">' + (it.tipo === 'nota' ? 'Editar texto' : /^grelha/.test(it.modelo) ? 'Mudar medida' : it.modelo === 'conduta' ? 'Mudar modelo' : 'Mudar nome') + '</button>';
-            if (it && it.tipo === 'unidade' && it.modelo === 'conduta') h += '<button data-acao="rodar">↻ Rodar</button>';
+            if (it && it.tipo === 'unidade') h += '<button class="sec" data-acao="rodar" title="Rodar 90°">↻ 90°</button>' +
+                '<button class="sec" data-acao="menor" title="Diminuir">−</button><button class="sec" data-acao="maior" title="Aumentar">+</button>';
             else if (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra) h += '<button data-acao="medida">Mudar medida</button>';
             h += '<button class="perigo" data-acao="apagar">Apagar</button>';
         } else {
@@ -566,7 +578,8 @@
 
     function alvoDe(el) {
         var g = el && el.closest && el.closest('[data-id]');
-        return g ? { id: g.dataset.id, vertice: g.dataset.vertice != null ? +g.dataset.vertice : null } : null;
+        var a = el && el.closest && el.closest('[data-alca]');
+        return g ? { id: g.dataset.id, vertice: g.dataset.vertice != null ? +g.dataset.vertice : null, alca: a ? a.dataset.alca : null } : null;
     }
 
     svg.addEventListener('pointerdown', function (e) {
@@ -615,7 +628,15 @@
                 desenho.escala = { x1: n(o.x1 + dx), y1: n(o.y1 + dy), x2: n(o.x2 + dx), y2: n(o.y2 + dy), metros: o.metros };
             } else {
                 var it = item(toque.alvo.id);
-                if (it.tipo === 'linha') {
+                if (toque.alvo.alca === 'rodar') {
+                    var ang = Math.atan2(cursor[1] - it.y, cursor[0] - it.x) * 180 / Math.PI + 90;
+                    ang = (ang % 360 + 360) % 360;
+                    var perto = Math.round(ang / 15) * 15;  // encaixa de 15 em 15 graus
+                    it.rot = Math.round(Math.abs(ang - perto) < 4 ? perto : ang) % 360;
+                } else if (toque.alvo.alca === 'tamanho') {
+                    var d0 = dist(toque.img, [o.x, o.y]), d1 = dist(cursor, [o.x, o.y]);
+                    if (d0 > 0) it.tam = Math.round(Math.max(0.3, Math.min(6, (o.tam || 1) * d1 / d0)) * 100) / 100;
+                } else if (it.tipo === 'linha') {
                     if (toque.alvo.vertice != null) {
                         var p = encaixar(cursor, null);
                         it.pontos[toque.alvo.vertice] = [n(p[0]), n(p[1])];
@@ -677,9 +698,13 @@
         else if (acao === 'apagar') apagarSelecionado();
         else if (acao === 'texto') editarTexto();
         else if (acao === 'medida') mudarMedida();
-        else if (acao === 'rodar') {
+        else if (acao === 'rodar' || acao === 'maior' || acao === 'menor') {
             var ur = item(selecionado);
-            if (ur) { guardarHistorico(); ur.rot = ((ur.rot || 0) + 90) % 360; marcarAlterado(); render(); }
+            if (!ur) return;
+            guardarHistorico();
+            if (acao === 'rodar') ur.rot = (Math.round(((ur.rot || 0) + 90) / 90) * 90) % 360;
+            else ur.tam = Math.round(Math.max(0.3, Math.min(6, (ur.tam || 1) * (acao === 'maior' ? 1.2 : 1 / 1.2))) * 100) / 100;
+            marcarAlterado(); render();
         }
         else if (acao === 'metros') {
             var m = pedirMetros(desenho.escala.metros);
