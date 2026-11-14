@@ -20,6 +20,9 @@
         eletrico: { nome: 'Cabo elétrico', cor: '#e53935' },
         conduta_ins: { nome: 'Conduta de insuflação', cor: '#1a3fd6', conduta: true },
         conduta_ret: { nome: 'Conduta de retorno', cor: '#ad1457', conduta: true },
+        conduta_ext: { nome: 'Conduta de extração (VMC)', cor: '#d32f2f', conduta: true },
+        conduta_adm: { nome: 'Conduta de ar novo (VMC)', cor: '#1e9ad6', conduta: true },
+        conduta_rej: { nome: 'Conduta de rejeição (VMC)', cor: '#f29900', conduta: true },
         grelha_linear: { nome: 'Grelha linear', cor: '#1a3fd6', barra: true }
     };
     var MODELOS = {
@@ -27,9 +30,16 @@
         exterior: { nome: 'Unidade exterior', cor: '#37474f' },
         conduta: { nome: 'Unidade de conduta', cor: '#2d3a6e' },
         grelha_ins: { nome: 'Grelha de insuflação', cor: '#1a3fd6' },
-        grelha_ret: { nome: 'Grelha de retorno', cor: '#ad1457' }
+        grelha_ret: { nome: 'Grelha de retorno', cor: '#ad1457' },
+        vmc: { nome: 'VMC (recuperador de calor)', cor: '#111' }
     };
-    var ultimaMedida = { conduta_ins: 'Ø200', conduta_ret: 'Ø200' };
+    var ultimaMedida = { conduta_ins: 'Ø200', conduta_ret: 'Ø200', conduta_ext: 'Ø160', conduta_adm: 'Ø160', conduta_rej: 'Ø160' };
+    // Bocas da VMC (em unidades do símbolo, antes de rodar): em cima extração e insuflação, em baixo ar novo e rejeição
+    var VMC_W = 60, VMC_H = 80;
+    var VMC_BOCAS = [
+        { x: -0.28, y: -1, cor: '#d32f2f', nome: 'extração' }, { x: 0.28, y: -1, cor: '#1a3fd6', nome: 'insuflação' },
+        { x: -0.28, y: 1, cor: '#1e9ad6', nome: 'ar novo' }, { x: 0.28, y: 1, cor: '#f29900', nome: 'rejeição' }
+    ];
     var DICAS = {
         selecionar: 'Toque num elemento para o selecionar e arraste-o para mover. Arraste o fundo para deslocar a planta.',
         interior: 'Toque na planta onde fica a unidade interior.',
@@ -42,6 +52,10 @@
         conduta_ret: 'Desenhe a conduta de retorno até à unidade: toque nos pontos e termine com duplo clique, Enter ou "Terminar".',
         grelha_ins: 'Toque onde fica cada grelha (ou difusor) de insuflação.',
         grelha_linear: 'Toque numa ponta e na outra da grelha linear (ex.: ao longo da janela).',
+        vmc: 'Toque onde fica a VMC. Em cima: extração e insuflação (lado da casa); em baixo: ar novo e rejeição (lado de fora).',
+        conduta_ext: 'Desenhe a extração das casas de banho e cozinha até à boca vermelha da VMC.',
+        conduta_adm: 'Desenhe o ar novo desde o exterior até à boca azul-clara da VMC.',
+        conduta_rej: 'Desenhe a rejeição desde a boca laranja da VMC até ao exterior.',
         grelha_ret: 'Toque onde fica cada grelha de retorno.',
         nota: 'Toque onde quer escrever a nota.',
         escala: 'Toque nas duas pontas de uma medida que conhece (ex.: uma parede) e indique quantos metros tem.'
@@ -208,7 +222,9 @@
         var u = ub * (it.tam || 1), ue = UE;  // u: tamanho do símbolo; ue: pegas (tamanho fixo no ecrã)
         var mod = MODELOS[it.modelo] || MODELOS.interior, interior = it.modelo !== 'exterior';
         var grelha = it.modelo === 'grelha_ins' || it.modelo === 'grelha_ret', conduta = it.modelo === 'conduta';
-        var w = (grelha ? 18 : conduta ? 58 : interior ? 38 : 30) * u * (it.lx || 1), h = (grelha ? 18 : conduta ? 34 : interior ? 15 : 26) * u * (it.ly || 1);
+        var vmc = it.modelo === 'vmc';
+        var w = (grelha ? 18 : vmc ? VMC_W : conduta ? 58 : interior ? 38 : 30) * u * (it.lx || 1),
+            h = (grelha ? 18 : vmc ? VMC_H : conduta ? 34 : interior ? 15 : 26) * u * (it.ly || 1);
         var x0 = it.x - w / 2, y0 = it.y - h / 2;
         var rot = it.rot ? ' transform="rotate(' + it.rot + ' ' + n(it.x) + ' ' + n(it.y) + ')"' : '';
         var r = '<g' + rot + (ecra ? ' data-id="' + it.id + '" style="cursor:' + (ferramenta === 'selecionar' ? 'move' : 'inherit') + '"' : '') + '>';
@@ -226,6 +242,12 @@
         if (selU) {
             r += '<rect x="' + n(x0 - 5 * ue) + '" y="' + n(y0 - 5 * ue) + '" width="' + n(w + 10 * ue) + '" height="' + n(h + 10 * ue) +
                 '" rx="' + n(4 * ue) + '" fill="rgba(74,95,168,0.1)" stroke="#4a5fa8" stroke-width="' + n(1.5 * ue) + '" stroke-dasharray="' + n(4 * ue) + ' ' + n(3 * ue) + '"/>';
+        }
+        if (vmc) {
+            r += svgVMC(it, x0, y0, w, h, u) + pegas(it, x0, y0, w, h, ue, selU) + '</g>';
+            if (it.nome) r += texto(it.x + (w / 2 + 10 * u) * Math.cos((it.rot || 0) * Math.PI / 180), it.y + (w / 2 + 10 * u) * Math.sin((it.rot || 0) * Math.PI / 180) + 4 * ub,
+                it.nome, '#111', 11.5 * ub, ub, 'pointer-events="none" text-anchor="start"');  // ao lado, para não tapar as bocas
+            return r;
         }
         r += '<rect x="' + n(x0) + '" y="' + n(y0) + '" width="' + n(w) + '" height="' + n(h) + '" rx="' + n(conduta ? 0 : 3 * u) +
             '" fill="white" stroke="' + (conduta ? '#111' : mod.cor) + '" stroke-width="' + n((conduta ? 2.6 : 2.2) * u) + '"/>';
@@ -248,20 +270,55 @@
                 '<path d="M' + n(it.x - 6 * u) + ' ' + n(it.y) + 'H' + n(it.x + 6 * u) + 'M' + n(it.x) + ' ' + n(it.y - 6 * u) + 'V' + n(it.y + 6 * u) +
                 '" stroke="' + mod.cor + '" stroke-width="' + n(1.2 * u) + '"/>';
         }
-        if (selU) {  // pegas: bolinha em cima para rodar, quadrado no canto para aumentar/diminuir
-            var hy = y0 - 5 * ue - 20 * ue, cx = x0 + w + 16 * ue, cy = y0 + h + 16 * ue;  // afastadas para não se sobreporem
-            r += '<line x1="' + n(it.x) + '" y1="' + n(y0 - 5 * ue) + '" x2="' + n(it.x) + '" y2="' + n(hy) + '" stroke="#4a5fa8" stroke-width="' + n(1.5 * ue) + '"/>' +
-                '<circle data-alca="rodar" cx="' + n(it.x) + '" cy="' + n(hy) + '" r="' + n(7 * ue) + '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:grab"/>' +
-                '<rect data-alca="tamanho" x="' + n(cx - 6 * ue) + '" y="' + n(cy - 6 * ue) + '" width="' + n(12 * ue) + '" height="' + n(12 * ue) +
-                '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:nwse-resize"/>' +
-                // só a largura (lado direito) e só a altura (em baixo)
-                '<rect data-alca="largura" x="' + n(x0 + w + 7 * ue) + '" y="' + n(it.y - 9 * ue) + '" width="' + n(8 * ue) + '" height="' + n(18 * ue) + '" rx="' + n(3 * ue) +
-                '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ew-resize"/>' +
-                '<rect data-alca="altura" x="' + n(it.x - 9 * ue) + '" y="' + n(y0 + h + 7 * ue) + '" width="' + n(18 * ue) + '" height="' + n(8 * ue) + '" rx="' + n(3 * ue) +
-                '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ns-resize"/>';
-        }
+        r += pegas(it, x0, y0, w, h, ue, selU);
         r += '</g>';
         if (it.nome && !conduta) r += texto(it.x, interior && !grelha ? y0 - 6 * u : y0 + h + 14 * u, it.nome, mod.cor, 11.5 * ub, ub);
+        return r;
+    }
+
+    function pegas(it, x0, y0, w, h, ue, selU) {  // bolinha em cima para rodar, quadrado no canto, barras de largura/altura
+        if (!selU) return '';
+        var hy = y0 - 5 * ue - 20 * ue, cx = x0 + w + 16 * ue, cy = y0 + h + 16 * ue;
+        return '<line x1="' + n(it.x) + '" y1="' + n(y0 - 5 * ue) + '" x2="' + n(it.x) + '" y2="' + n(hy) + '" stroke="#4a5fa8" stroke-width="' + n(1.5 * ue) + '"/>' +
+            '<circle data-alca="rodar" cx="' + n(it.x) + '" cy="' + n(hy) + '" r="' + n(7 * ue) + '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:grab"/>' +
+            '<rect data-alca="tamanho" x="' + n(cx - 6 * ue) + '" y="' + n(cy - 6 * ue) + '" width="' + n(12 * ue) + '" height="' + n(12 * ue) +
+            '" fill="white" stroke="#4a5fa8" stroke-width="' + n(2 * ue) + '" style="cursor:nwse-resize"/>' +
+            '<rect data-alca="largura" x="' + n(x0 + w + 7 * ue) + '" y="' + n(it.y - 9 * ue) + '" width="' + n(8 * ue) + '" height="' + n(18 * ue) + '" rx="' + n(3 * ue) +
+            '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ew-resize"/>' +
+            '<rect data-alca="altura" x="' + n(it.x - 9 * ue) + '" y="' + n(y0 + h + 7 * ue) + '" width="' + n(18 * ue) + '" height="' + n(8 * ue) + '" rx="' + n(3 * ue) +
+            '" fill="#4a5fa8" stroke="white" stroke-width="' + n(1.5 * ue) + '" style="cursor:ns-resize"/>';
+    }
+
+    function bocaVMC(it, b, emImagem) {  // posição de uma boca da VMC (com tamanho e rotação) em coordenadas da imagem
+        var u = U0 * (it.tam || 1), w = VMC_W * u * (it.lx || 1), h = VMC_H * u * (it.ly || 1);
+        var lx = b.x * w, ly = b.y * (h / 2 + 5 * u), a = (it.rot || 0) * Math.PI / 180;
+        return [it.x + lx * Math.cos(a) - ly * Math.sin(a), it.y + lx * Math.sin(a) + ly * Math.cos(a)];
+    }
+
+    function svgVMC(it, x0, y0, w, h, u) {  // caixa cinzenta, permutador, filtros e os dois fluxos cruzados
+        var cx = it.x, cy = it.y, xl = cx - 0.28 * w, xr = cx + 0.28 * w, e = 3.4 * u, r = '';
+        var ya = y0 + 0.40 * h, yb = y0 + 0.60 * h;
+        r += '<rect x="' + n(x0) + '" y="' + n(y0) + '" width="' + n(w) + '" height="' + n(h) + '" fill="#b9b9b9" stroke="#111" stroke-width="' + n(2.4 * u) + '"/>';
+        var hx = Math.min(w * 0.3, h * 0.22), hex = [];
+        for (var i = 0; i < 6; i++) hex.push(n(cx + hx * Math.cos(Math.PI / 6 + i * Math.PI / 3)) + ',' + n(cy + hx * Math.sin(Math.PI / 6 + i * Math.PI / 3)));
+        r += '<polygon points="' + hex.join(' ') + '" fill="none" stroke="#333" stroke-width="' + n(0.8 * u) + '"/>';
+        function tr(pts, cor) {
+            return '<polyline points="' + pts.map(function (p) { return n(p[0]) + ',' + n(p[1]); }).join(' ') + '" fill="none" stroke="' + cor +
+                '" stroke-width="' + n(e) + '" stroke-linejoin="round"/>';
+        }
+        r += tr([[xl, y0], [xl, ya], [cx, cy]], '#d32f2f') + tr([[cx, cy], [xr, yb], [xr, y0 + h]], '#f29900');   // extração → rejeição
+        r += tr([[xl, y0 + h], [xl, yb], [cx, cy]], '#1e9ad6') + tr([[cx, cy], [xr, ya], [xr, y0]], '#1a3fd6');   // ar novo → insuflação
+        [y0 + 0.2 * h, y0 + 0.8 * h].forEach(function (fy) {  // filtros
+            var fw = 9 * u, fh = 7 * u, zx = xl - fw / 2, z = 'M' + n(zx + 1 * u) + ' ' + n(fy + fh / 2 - 2 * u);
+            for (var k = 1; k <= 6; k++) z += 'L' + n(zx + 1 * u + k * (fw - 2 * u) / 6) + ' ' + n(fy + (k % 2 ? -1 : 1) * (fh / 2 - 2 * u));
+            r += '<rect x="' + n(zx) + '" y="' + n(fy - fh / 2) + '" width="' + n(fw) + '" height="' + n(fh) + '" fill="white" stroke="#111" stroke-width="' + n(1.2 * u) + '"/>' +
+                '<path d="' + z + '" fill="none" stroke="#111" stroke-width="' + n(0.7 * u) + '"/>';
+        });
+        VMC_BOCAS.forEach(function (b) {  // bocas (quadrados brancos com a cor do fluxo)
+            var bx = cx + b.x * w, by = b.y < 0 ? y0 - 4 * u : y0 + h + 4 * u, q = 8 * u;
+            r += '<rect x="' + n(bx - q / 2) + '" y="' + n(by - q / 2) + '" width="' + n(q) + '" height="' + n(q) + '" fill="white" stroke="' + b.cor + '" stroke-width="' + n(2 * u) + '"/>';
+        });
+        r += '<text x="' + n(cx + w / 2 - 3 * u) + '" y="' + n(y0 + h - 3 * u) + '" font-size="' + n(7 * u) + '" font-family="Arial, sans-serif" font-weight="bold" text-anchor="end" fill="#333" pointer-events="none">VMC</text>';
         return r;
     }
 
@@ -368,6 +425,7 @@
         h += '<span class="item">Interiores <strong>' + t.interior + '</strong></span>';
         h += '<span class="item">Exteriores <strong>' + t.exterior + '</strong></span>';
         if (t.conduta) h += '<span class="item">Unid. conduta <strong>' + t.conduta + '</strong></span>';
+        if (t.vmc) h += '<span class="item">VMC <strong>' + t.vmc + '</strong></span>';
         if (t.grelha_ins || t.grelha_ret) h += '<span class="item">Grelhas <strong>' + t.grelha_ins + ' ins. · ' + t.grelha_ret + ' ret.</strong></span>';
         if (!pxPorMetro()) h += '<span class="item aviso">Marque a 📏 Escala para ver os metros.</span>';
         resumo.innerHTML = h;
@@ -394,6 +452,7 @@
             else if (it.tipo === 'linha') desc = '<strong>' + CATEGORIAS[it.categoria].nome + '</strong>' +
                 (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra ? '' : (it.nivel === 'baixo' ? ' · por baixo da conduta' : ' · por cima da conduta')) + (it.medida ? ' ' + esc(String(it.medida).replace(/x/i, '×')) : '') + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
             else if (it.tipo === 'unidade') desc = '<strong>' + MODELOS[it.modelo].nome + '</strong>' + (it.nome ? ' · ' + esc(it.nome) : '') +
+                (it.modelo === 'vmc' ? '<br><small>Em cima: extração (vermelho) e insuflação (azul) · em baixo: ar novo (azul-claro) e rejeição (laranja).</small>' : '') +
                 '<br><small>Bolinha: rodar · quadrado: tamanho · barras azuis: só largura ou só altura.</small>';
             else desc = '<strong>Nota</strong>';
             h = '<span>' + desc + '</span>';
@@ -502,8 +561,11 @@
         var limite = 16 / s, melhor = null;
         desenho.itens.forEach(function (it) {
             if (it.tipo !== 'unidade') return;
-            var d = dist(p, [it.x, it.y]);
-            if (d < limite) { limite = d; melhor = [it.x, it.y]; }
+            var alvos = it.modelo === 'vmc' ? VMC_BOCAS.map(function (b) { return bocaVMC(it, b); }) : [[it.x, it.y]];
+            alvos.forEach(function (q) {
+                var d = dist(p, q);
+                if (d < limite) { limite = d; melhor = q; }
+            });
         });
         if (melhor) return melhor;
         limite = 12 / s;
@@ -547,7 +609,8 @@
             desenho.itens.push(u);
             marcarAlterado(); render();
             var grelha = /^grelha/.test(ferramenta);
-            var nome = prompt(grelha ? 'Medida da grelha (opcional, ex.: 600x150)' : ferramenta === 'conduta' ? 'Modelo da unidade (ex.: FDXM35)' : 'Nome da unidade (opcional, ex.: Sala 3,5 kW)', '');
+            var nome = prompt(grelha ? 'Medida da grelha (opcional, ex.: 600x150)' : ferramenta === 'conduta' ? 'Modelo da unidade (ex.: FDXM35)' :
+                ferramenta === 'vmc' ? 'Modelo da VMC (opcional, ex.: Zehnder ComfoAir Q350)' : 'Nome da unidade (opcional, ex.: Sala 3,5 kW)', '');
             if (nome) { u.nome = nome.trim().slice(0, 120); render(); }
             return;
         }
@@ -848,6 +911,7 @@
         if (t.conduta) linhas.push([MODELOS.conduta.cor, 'Unidades de conduta: ' + t.conduta]);
         if (t.grelha_ins) linhas.push([MODELOS.grelha_ins.cor, 'Grelhas de insuflação: ' + t.grelha_ins]);
         if (t.grelha_ret) linhas.push([MODELOS.grelha_ret.cor, 'Grelhas de retorno: ' + t.grelha_ret]);
+        if (t.vmc) linhas.push(['#777', 'VMC: ' + t.vmc]);
         if (!linhas.length) return;
         var f = 13 * u, alt = f * 1.6, pad = f * 0.9;
         ctx.font = 'bold ' + f + 'px Arial, sans-serif';
