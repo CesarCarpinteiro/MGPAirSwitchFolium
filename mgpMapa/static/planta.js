@@ -155,7 +155,7 @@
     // As condutas desenham-se em camadas (paredes, interiores, eixos, rótulos) para os ramais se unirem à principal
     function svgConduta(it, u, ecra, camadaC) {
         var cat = CATEGORIAS[it.categoria];
-        var w = larguraConduta(it, u), d = caminhoCurvo(it.pontos, w * 1.2);
+        var w = larguraConduta(it, u) * (it.esp || 1), d = caminhoCurvo(it.pontos, w * 1.2);
         var sel = ecra && selecionado === it.id, h = '';
         var base = ' d="' + d + '" fill="none" stroke-linejoin="round" stroke-linecap="butt"';
         if (camadaC === 0) {
@@ -179,7 +179,7 @@
 
     function svgBarra(it, u, ecra) {
         var cat = CATEGORIAS[it.categoria], k = pxPorMetro();
-        var w = k ? Math.max(0.08 * k, 7 * u) : 9 * u, sel = ecra && selecionado === it.id, h = '';
+        var w = (k ? Math.max(0.08 * k, 7 * u) : 9 * u) * (it.esp || 1), sel = ecra && selecionado === it.id, h = '';
         var pts = it.pontos.map(function (p) { return n(p[0]) + ',' + n(p[1]); }).join(' ');
         var base = ' points="' + pts + '" fill="none" stroke-linecap="butt"';
         if (sel) h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-opacity="0.22" stroke-width="' + n(w + 12 * u) + '"/>';
@@ -200,9 +200,10 @@
         var pts = it.pontos.map(function (p) { return n(p[0]) + ',' + n(p[1]); }).join(' ');
         var sel = ecra && selecionado === it.id, h = '';
         var base = ' points="' + pts + '" fill="none" stroke-linecap="round" stroke-linejoin="round"';
-        if (sel) h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-opacity="0.25" stroke-width="' + n(14 * u) + '"/>';
-        h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-width="' + n(3 * u) + '"' +
-            (cat.traco ? ' stroke-dasharray="' + cat.traco.map(function (v) { return n(v * u); }).join(' ') + '"' : '') + '/>';
+        var e = it.esp || 1;  // espessura escolhida (1 = padrão)
+        if (sel) h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-opacity="0.25" stroke-width="' + n((11 + 3 * e) * u) + '"/>';
+        h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-width="' + n(3 * e * u) + '"' +
+            (cat.traco ? ' stroke-dasharray="' + cat.traco.map(function (v) { return n(v * u * Math.max(1, e)); }).join(' ') + '"' : '') + '/>';
         if (ecra) h += '<polyline' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(Math.max(18 * UE, 4 * u)) + '" style="cursor:pointer"/>';
         var m = metros(comprimento(it.pontos));
         if (m) {  // ao lado de um troço vertical, por cima de um horizontal
@@ -458,6 +459,10 @@
             else if (it.tipo !== 'linha') h += '<button data-acao="texto">' + (it.tipo === 'nota' ? 'Editar texto' : /^grelha/.test(it.modelo) ? 'Mudar medida' : it.modelo === 'conduta' ? 'Mudar modelo' : 'Mudar nome') + '</button>';
             if (it && it.tipo === 'unidade') h += '<button class="sec" data-acao="rodar" title="Rodar 90°">↻ 90°</button>' +
                 '<button class="sec" data-acao="menor" title="Diminuir">−</button><button class="sec" data-acao="maior" title="Aumentar">+</button>';
+            if (it && it.tipo === 'linha') h += '<button class="sec" data-acao="fino" title="Mais fino">−</button>' +
+                '<span class="esp">' + String(Math.round((it.esp || 1) * 100)) + '%</span>' +
+                '<button class="sec" data-acao="grosso" title="Mais grosso">+</button>';
+            if (!it || it.tipo !== 'linha') { /* nota ou escala: só apagar */ }
             else if (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra) h += '<button data-acao="medida">Mudar medida</button>';
             else [['baixo', '⬇ Por baixo'], ['meio', 'Por cima da conduta'], ['topo', '⬆ Por cima de tudo']].forEach(function (o) {
                 var atual = it.nivel === 'baixo' || it.nivel === 'topo' ? it.nivel : 'meio';
@@ -814,6 +819,14 @@
         else if (acao === 'cancelar') { rascunho = null; render(); }
         else if (acao === 'apagar') apagarSelecionado();
         else if (acao === 'desbloquear') alternarBloqueio();
+        else if (acao === 'fino' || acao === 'grosso') {
+            var lf = item(selecionado);
+            if (!lf) return;
+            guardarHistorico();
+            lf.esp = Math.round(Math.max(0.25, Math.min(6, (lf.esp || 1) * (acao === 'grosso' ? 1.25 : 0.8))) * 100) / 100;
+            if (Math.abs(lf.esp - 1) < 0.03) delete lf.esp;
+            marcarAlterado(); render();
+        }
         else if (acao === 'nivel') {
             var ln = item(selecionado);
             if (ln) { guardarHistorico(); ln.nivel = b.dataset.nivel === 'meio' ? 'cima' : b.dataset.nivel; marcarAlterado(); render(); }
