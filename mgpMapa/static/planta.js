@@ -20,9 +20,8 @@
         eletrico: { nome: 'Cabo elétrico', cor: '#e53935' },
         conduta_ins: { nome: 'Conduta de insuflação', cor: '#1a3fd6', conduta: true },
         conduta_ret: { nome: 'Conduta de retorno', cor: '#ad1457', conduta: true },
-        conduta_ext: { nome: 'Conduta de extração (VMC)', cor: '#d32f2f', conduta: true },
-        conduta_adm: { nome: 'Conduta de ar novo (VMC)', cor: '#1e9ad6', conduta: true },
-        conduta_rej: { nome: 'Conduta de rejeição (VMC)', cor: '#f29900', conduta: true },
+        conduta_ext: { nome: 'Conduta de extração (VMC)', cor: '#d32f2f', conduta: true, fina: true },
+        conduta_adm: { nome: 'Conduta de ar novo (VMC)', cor: '#1e9ad6', conduta: true, fina: true },
         grelha_linear: { nome: 'Grelha linear', cor: '#1a3fd6', barra: true }
     };
     var MODELOS = {
@@ -33,7 +32,7 @@
         grelha_ret: { nome: 'Grelha de retorno', cor: '#ad1457' },
         vmc: { nome: 'VMC (recuperador de calor)', cor: '#111' }
     };
-    var ultimaMedida = { conduta_ins: 'Ø200', conduta_ret: 'Ø200', conduta_ext: 'Ø160', conduta_adm: 'Ø160', conduta_rej: 'Ø160' };
+    var ultimaMedida = { conduta_ins: 'Ø200', conduta_ret: 'Ø200', conduta_ext: 'Ø125', conduta_adm: 'Ø125' };
     // Bocas da VMC (em unidades do símbolo, antes de rodar): em cima extração e insuflação, em baixo ar novo e rejeição
     var VMC_W = 60, VMC_H = 80;
     var VMC_BOCAS = [
@@ -55,7 +54,6 @@
         vmc: 'Toque onde fica a VMC. Em cima: extração e insuflação (lado da casa); em baixo: ar novo e rejeição (lado de fora).',
         conduta_ext: 'Desenhe a extração das casas de banho e cozinha até à boca vermelha da VMC.',
         conduta_adm: 'Desenhe o ar novo desde o exterior até à boca azul-clara da VMC.',
-        conduta_rej: 'Desenhe a rejeição desde a boca laranja da VMC até ao exterior.',
         grelha_ret: 'Toque onde fica cada grelha de retorno.',
         nota: 'Toque onde quer escrever a nota.',
         escala: 'Toque nas duas pontas de uma medida que conhece (ex.: uma parede) e indique quantos metros tem.'
@@ -143,7 +141,8 @@
 
     function larguraConduta(it, u) {  // largura real se houver escala; senão um valor fixo no ecrã
         var k = pxPorMetro(), mm = larguraMedida(it.medida);
-        return k && mm ? Math.max(mm / 1000 * k, 7 * u) : 12 * u;
+        var fina = CATEGORIAS[it.categoria] && CATEGORIAS[it.categoria].fina;  // tubos da VMC: mais finos
+        return k && mm ? Math.max(mm / 1000 * k, (fina ? 4 : 7) * u) : (fina ? 7 : 12) * u;
     }
 
     function rotuloCad(c, w, txt, cor, u) {  // rótulo à maneira do CAD: traço de chamada + texto sublinhado
@@ -373,17 +372,16 @@
             if (it.tipo === 'linha' && it.nivel === 'baixo') h += svgLinha(it, u, ecra);
         });
         [0, 1, 2, 3].forEach(function (c) { condutas.forEach(function (it) { h += svgConduta(it, u, ecra, c); }); });
-        if (ecra) desenho.itens.forEach(function (it) {  // continuam a dar para selecionar por cima da conduta (faixa estreita)
+        // por omissão as tubagens ficam por cima das condutas e por baixo das unidades; 'topo' fica por cima de tudo
+        desenho.itens.forEach(function (it) { if (it.tipo === 'linha' && it.nivel !== 'baixo' && it.nivel !== 'topo') h += svgLinha(it, u, ecra); });
+        desenho.itens.forEach(function (it) { if (it.tipo === 'unidade') h += svgUnidade(it, u, ecra); });
+        desenho.itens.forEach(function (it) { if (it.tipo === 'linha' && it.nivel === 'topo') h += svgLinha(it, u, ecra); });
+        if (ecra) desenho.itens.forEach(function (it) {  // as que estão por baixo continuam a dar para selecionar (faixa estreita)
             if (it.tipo !== 'linha' || it.nivel !== 'baixo') return;
             h += '<polyline points="' + it.pontos.map(function (p) { return n(p[0]) + ',' + n(p[1]); }).join(' ') +
                 '" fill="none" data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(9 * UE) + '" style="cursor:pointer"/>';
         });
-        ['linha', 'unidade', 'nota'].forEach(function (tipo) {
-            desenho.itens.forEach(function (it) {
-                if (it.tipo !== tipo || (tipo === 'linha' && it.nivel === 'baixo')) return;
-                h += tipo === 'linha' ? svgLinha(it, u, ecra) : tipo === 'unidade' ? svgUnidade(it, u, ecra) : svgNota(it, u, ecra);
-            });
-        });
+        desenho.itens.forEach(function (it) { if (it.tipo === 'nota') h += svgNota(it, u, ecra); });
         if (desenho.escala) h += svgEscala(desenho.escala, u, ecra);
         return h;
     }
@@ -450,7 +448,7 @@
             var it = selecionado === 'escala' ? null : item(selecionado), desc = '';
             if (selecionado === 'escala') desc = '<strong>Escala</strong> · ' + String(desenho.escala.metros).replace('.', ',') + ' m';
             else if (it.tipo === 'linha') desc = '<strong>' + CATEGORIAS[it.categoria].nome + '</strong>' +
-                (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra ? '' : (it.nivel === 'baixo' ? ' · por baixo da conduta' : ' · por cima da conduta')) + (it.medida ? ' ' + esc(String(it.medida).replace(/x/i, '×')) : '') + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
+                (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra ? '' : (it.nivel === 'baixo' ? ' · por baixo' : it.nivel === 'topo' ? ' · por cima de tudo' : ' · por cima da conduta')) + (it.medida ? ' ' + esc(String(it.medida).replace(/x/i, '×')) : '') + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
             else if (it.tipo === 'unidade') desc = '<strong>' + MODELOS[it.modelo].nome + '</strong>' + (it.nome ? ' · ' + esc(it.nome) : '') +
                 (it.modelo === 'vmc' ? '<br><small>Em cima: extração (vermelho) e insuflação (azul) · em baixo: ar novo (azul-claro) e rejeição (laranja).</small>' : '') +
                 '<br><small>Bolinha: rodar · quadrado: tamanho · barras azuis: só largura ou só altura.</small>';
@@ -461,7 +459,11 @@
             if (it && it.tipo === 'unidade') h += '<button class="sec" data-acao="rodar" title="Rodar 90°">↻ 90°</button>' +
                 '<button class="sec" data-acao="menor" title="Diminuir">−</button><button class="sec" data-acao="maior" title="Aumentar">+</button>';
             else if (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra) h += '<button data-acao="medida">Mudar medida</button>';
-            else h += '<button class="sec" data-acao="nivel">' + (it.nivel === 'baixo' ? '⬆ Pôr por cima da conduta' : '⬇ Pôr por baixo da conduta') + '</button>';
+            else [['baixo', '⬇ Por baixo'], ['meio', 'Por cima da conduta'], ['topo', '⬆ Por cima de tudo']].forEach(function (o) {
+                var atual = it.nivel === 'baixo' || it.nivel === 'topo' ? it.nivel : 'meio';
+                h += '<button class="' + (atual === o[0] ? '' : 'sec') + '" data-acao="nivel" data-nivel="' + o[0] + '"' +
+                    (o[0] === 'baixo' ? ' title="Por baixo das condutas e das unidades"' : o[0] === 'topo' ? ' title="Por cima das condutas e das unidades"' : '') + '>' + o[1] + '</button>';
+            });
             h += '<button class="perigo" data-acao="apagar">Apagar</button>';
         } else {
             h = '<span>' + DICAS[ferramenta] + '</span>';
@@ -814,7 +816,7 @@
         else if (acao === 'desbloquear') alternarBloqueio();
         else if (acao === 'nivel') {
             var ln = item(selecionado);
-            if (ln) { guardarHistorico(); ln.nivel = ln.nivel === 'baixo' ? 'cima' : 'baixo'; marcarAlterado(); render(); }
+            if (ln) { guardarHistorico(); ln.nivel = b.dataset.nivel === 'meio' ? 'cima' : b.dataset.nivel; marcarAlterado(); render(); }
         }
         else if (acao === 'texto') editarTexto();
         else if (acao === 'medida') mudarMedida();
