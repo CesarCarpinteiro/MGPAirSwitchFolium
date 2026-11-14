@@ -49,6 +49,8 @@
         .ferr.ativa { background: #eef0fa; border-color: #c5cae9; color: #2d3a6e; font-weight: bold; }
         .ferr:disabled { opacity: 0.35; cursor: default; }
         .traco { display: inline-block; width: 24px; height: 0; border-top: 4px solid; border-radius: 2px; }
+        .banda { display: inline-block; width: 24px; height: 9px; border: 2px solid; border-radius: 1px; background: white; }
+        .uc { display: inline-block; border: 2px solid #2d3a6e; border-radius: 3px; font-size: 9px; font-weight: bold; color: #2d3a6e; padding: 1px 4px; line-height: 1.2; }
 
         .resumo {
             display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; padding: 6px 14px;
@@ -124,6 +126,13 @@
         <button class="ferr" data-ferramenta="cobre"><span class="ic"><span class="traco" style="border-color:#c47c2b;"></span></span>Tubagem cobre</button>
         <button class="ferr" data-ferramenta="dreno"><span class="ic"><span class="traco" style="border-color:#1e88e5;border-top-style:dashed;"></span></span>Dreno</button>
         <button class="ferr" data-ferramenta="eletrico"><span class="ic"><span class="traco" style="border-color:#e53935;"></span></span>Cabo elétrico</button>
+        <span class="sep"></span>
+        <button class="ferr" data-ferramenta="conduta"><span class="ic"><span class="uc">UC</span></span>Unid. conduta</button>
+        <button class="ferr" data-ferramenta="conduta_ins"><span class="ic"><span class="banda" style="border-color:#1a3fd6;"></span></span>Conduta insufl.</button>
+        <button class="ferr" data-ferramenta="conduta_ret"><span class="ic"><span class="banda" style="border-color:#ad1457;"></span></span>Conduta retorno</button>
+        <button class="ferr" data-ferramenta="grelha_ins"><span class="ic" style="color:#1a3fd6;">⊠</span>Grelha insufl.</button>
+        <button class="ferr" data-ferramenta="grelha_linear"><span class="ic"><span class="traco" style="border-color:#1a3fd6;border-top-width:7px;"></span></span>Grelha linear</button>
+        <button class="ferr" data-ferramenta="grelha_ret"><span class="ic" style="color:#ad1457;">◩</span>Grelha retorno</button>
         <span class="sep"></span>
         <button class="ferr" data-ferramenta="nota"><span class="ic">𝐓</span>Nota</button>
         <button class="ferr" data-ferramenta="escala"><span class="ic">📏</span>Escala</button>

@@ -2,7 +2,9 @@
 // O desenho fica em coordenadas da imagem (px) e é guardado em JSON:
 //   { escala: {x1, y1, x2, y2, metros} | null,
 //     itens: [ {id, tipo: 'unidade', modelo: 'interior'|'exterior', x, y, nome},
+//              {id, tipo: 'unidade', modelo: 'conduta'|'grelha_ins'|'grelha_ret', x, y, nome},
 //              {id, tipo: 'linha', categoria: 'cobre'|'dreno'|'eletrico', pontos: [[x, y], ...]},
+//              {id, tipo: 'linha', categoria: 'conduta_ins'|'conduta_ret', medida: '300x200', pontos: [...]},
 //              {id, tipo: 'nota', x, y, texto} ] }
 // Os símbolos e textos têm tamanho fixo no ecrã: são desenhados em unidades u = 1/zoom.
 (function () {
@@ -14,9 +16,19 @@
     var CATEGORIAS = {
         cobre: { nome: 'Tubagem de cobre', cor: '#c47c2b' },
         dreno: { nome: 'Dreno', cor: '#1e88e5', traco: [8, 6] },
-        eletrico: { nome: 'Cabo elétrico', cor: '#e53935' }
+        eletrico: { nome: 'Cabo elétrico', cor: '#e53935' },
+        conduta_ins: { nome: 'Conduta de insuflação', cor: '#1a3fd6', conduta: true },
+        conduta_ret: { nome: 'Conduta de retorno', cor: '#ad1457', conduta: true },
+        grelha_linear: { nome: 'Grelha linear', cor: '#1a3fd6', barra: true }
     };
-    var MODELOS = { interior: { nome: 'Unidade interior', cor: '#2d3a6e' }, exterior: { nome: 'Unidade exterior', cor: '#37474f' } };
+    var MODELOS = {
+        interior: { nome: 'Unidade interior', cor: '#2d3a6e' },
+        exterior: { nome: 'Unidade exterior', cor: '#37474f' },
+        conduta: { nome: 'Unidade de conduta', cor: '#2d3a6e' },
+        grelha_ins: { nome: 'Grelha de insuflação', cor: '#1a3fd6' },
+        grelha_ret: { nome: 'Grelha de retorno', cor: '#ad1457' }
+    };
+    var ultimaMedida = { conduta_ins: 'Ø200', conduta_ret: 'Ø200' };
     var DICAS = {
         selecionar: 'Toque num elemento para o selecionar e arraste-o para mover. Arraste o fundo para deslocar a planta.',
         interior: 'Toque na planta onde fica a unidade interior.',
@@ -24,6 +36,12 @@
         cobre: 'Toque nos pontos do percurso da tubagem. Termine com duplo clique, Enter ou "Terminar".',
         dreno: 'Toque nos pontos do percurso do dreno. Termine com duplo clique, Enter ou "Terminar".',
         eletrico: 'Toque nos pontos do percurso do cabo. Termine com duplo clique, Enter ou "Terminar".',
+        conduta: 'Toque na planta onde fica a unidade de conduta (normalmente no teto falso).',
+        conduta_ins: 'Desenhe a conduta a partir da unidade: toque nos pontos e termine com duplo clique, Enter ou "Terminar". Os ramais encaixam na conduta principal e na grelha.',
+        conduta_ret: 'Desenhe a conduta de retorno até à unidade: toque nos pontos e termine com duplo clique, Enter ou "Terminar".',
+        grelha_ins: 'Toque onde fica cada grelha (ou difusor) de insuflação.',
+        grelha_linear: 'Toque numa ponta e na outra da grelha linear (ex.: ao longo da janela).',
+        grelha_ret: 'Toque onde fica cada grelha de retorno.',
         nota: 'Toque onde quer escrever a nota.',
         escala: 'Toque nas duas pontas de uma medida que conhece (ex.: uma parede) e indique quantos metros tem.'
     };
@@ -66,11 +84,11 @@
             var d = dist(pts[i - 1], pts[i]);
             if (feito + d >= alvo && d > 0) {
                 var f = (alvo - feito) / d, dx = pts[i][0] - pts[i - 1][0], dy = pts[i][1] - pts[i - 1][1];
-                return [pts[i - 1][0] + dx * f, pts[i - 1][1] + dy * f, Math.abs(dy) > Math.abs(dx)];
+                return [pts[i - 1][0] + dx * f, pts[i - 1][1] + dy * f, Math.abs(dy) > Math.abs(dx), Math.atan2(dy, dx)];
             }
             feito += d;
         }
-        return [pts[0][0], pts[0][1], false];
+        return [pts[0][0], pts[0][1], false, 0];
     }
     function novoId() { return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
     function item(id) {
@@ -85,7 +103,81 @@
 
     // ── Desenho (SVG) ─────────────────────────────────────────────────
 
+    function larguraMedida(medida) {  // 1.º número da medida, em mm ("300x200" → 300, "Ø200" → 200)
+        var m = String(medida || '').match(/\d+([.,]\d+)?/);
+        return m ? parseFloat(m[0].replace(',', '.')) : 0;
+    }
+
+    function caminhoCurvo(pts, r) {  // percurso com os cantos arredondados (curvas de conduta)
+        var d = 'M' + n(pts[0][0]) + ' ' + n(pts[0][1]);
+        for (var i = 1; i < pts.length - 1; i++) {
+            var a = pts[i - 1], b = pts[i], c = pts[i + 1], dab = dist(a, b), dbc = dist(b, c);
+            var rr = Math.min(r, dab / 2, dbc / 2);
+            if (!(rr > 0)) { d += 'L' + n(b[0]) + ' ' + n(b[1]); continue; }
+            var p1 = [b[0] - (b[0] - a[0]) / dab * rr, b[1] - (b[1] - a[1]) / dab * rr];
+            var p2 = [b[0] + (c[0] - b[0]) / dbc * rr, b[1] + (c[1] - b[1]) / dbc * rr];
+            d += 'L' + n(p1[0]) + ' ' + n(p1[1]) + 'Q' + n(b[0]) + ' ' + n(b[1]) + ' ' + n(p2[0]) + ' ' + n(p2[1]);
+        }
+        var f = pts[pts.length - 1];
+        return d + 'L' + n(f[0]) + ' ' + n(f[1]);
+    }
+
+    function larguraConduta(it, u) {  // largura real se houver escala; senão um valor fixo no ecrã
+        var k = pxPorMetro(), mm = larguraMedida(it.medida);
+        return k && mm ? Math.max(mm / 1000 * k, 7 * u) : 12 * u;
+    }
+
+    function rotuloCad(c, w, txt, cor, u) {  // rótulo à maneira do CAD: traço de chamada + texto sublinhado
+        var sx = c[2] ? c[0] + w / 2 : c[0], sy = c[2] ? c[1] : c[1] + w / 2;
+        var ex = sx + 10 * u, ey = sy + 26 * u, tw = String(txt).length * 7 * u + 8 * u;
+        return '<path d="M' + n(sx) + ' ' + n(sy) + 'L' + n(ex) + ' ' + n(ey) + 'H' + n(ex + tw) + '" fill="none" stroke="#222" stroke-width="' + n(1.3 * u) + '" pointer-events="none"/>' +
+            texto(ex + 4 * u, ey - 4 * u, txt, cor, 12.5 * u, u, 'pointer-events="none" text-anchor="start"');
+    }
+
+    // As condutas desenham-se em camadas (paredes, interiores, eixos, rótulos) para os ramais se unirem à principal
+    function svgConduta(it, u, ecra, camadaC) {
+        var cat = CATEGORIAS[it.categoria];
+        var w = larguraConduta(it, u), d = caminhoCurvo(it.pontos, w * 1.2);
+        var sel = ecra && selecionado === it.id, h = '';
+        var base = ' d="' + d + '" fill="none" stroke-linejoin="round" stroke-linecap="butt"';
+        if (camadaC === 0) {
+            if (sel) h += '<path' + base + ' stroke="' + cat.cor + '" stroke-opacity="0.22" stroke-width="' + n(w + 12 * u) + '"/>';
+            return h + '<path' + base + ' stroke="' + cat.cor + '" stroke-width="' + n(w) + '"/>';               // parede da conduta
+        }
+        if (camadaC === 1) return '<path' + base + ' stroke="white" stroke-width="' + n(Math.max(w - 2.6 * u, u)) + '"/>';  // interior
+        if (camadaC === 2) return '<path' + base + ' stroke="' + cat.cor + '" stroke-width="' + n(1.1 * u) + '" stroke-dasharray="' +   // eixo traço-ponto
+            [16, 5, 3, 5].map(function (v) { return n(v * u); }).join(' ') + '"/>';
+        if (ecra) h += '<path' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(Math.max(w, 18 * u)) + '" style="cursor:pointer"/>';
+        var c = meio(it.pontos);
+        // como no CAD: só a medida (os metros estão nos totais e aparecem ao selecionar)
+        var rotulo = it.medida ? String(it.medida).replace(/x/i, '×') : metros(comprimento(it.pontos));
+        if (rotulo) h += rotuloCad(c, w, rotulo, '#222', u);
+        if (sel) it.pontos.forEach(function (p, i) {
+            h += '<circle data-id="' + it.id + '" data-vertice="' + i + '" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(7 * u) +
+                '" fill="white" stroke="' + cat.cor + '" stroke-width="' + n(2 * u) + '" style="cursor:move"/>';
+        });
+        return h;
+    }
+
+    function svgBarra(it, u, ecra) {
+        var cat = CATEGORIAS[it.categoria], k = pxPorMetro();
+        var w = k ? Math.max(0.08 * k, 7 * u) : 9 * u, sel = ecra && selecionado === it.id, h = '';
+        var pts = it.pontos.map(function (p) { return n(p[0]) + ',' + n(p[1]); }).join(' ');
+        var base = ' points="' + pts + '" fill="none" stroke-linecap="butt"';
+        if (sel) h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-opacity="0.22" stroke-width="' + n(w + 12 * u) + '"/>';
+        h += '<polyline' + base + ' stroke="' + cat.cor + '" stroke-width="' + n(w) + '"/>';
+        if (ecra) h += '<polyline' + base + ' data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(Math.max(w, 18 * u)) + '" style="cursor:pointer"/>';
+        if (it.medida) h += rotuloCad(meio(it.pontos), w, it.medida, '#222', u);
+        if (sel) it.pontos.forEach(function (p, i) {
+            h += '<circle data-id="' + it.id + '" data-vertice="' + i + '" cx="' + n(p[0]) + '" cy="' + n(p[1]) + '" r="' + n(7 * u) +
+                '" fill="white" stroke="' + cat.cor + '" stroke-width="' + n(2 * u) + '" style="cursor:move"/>';
+        });
+        return h;
+    }
+
     function svgLinha(it, u, ecra) {
+        if (CATEGORIAS[it.categoria] && CATEGORIAS[it.categoria].conduta) return '';  // desenhadas à parte, em camadas
+        if (CATEGORIAS[it.categoria] && CATEGORIAS[it.categoria].barra) return svgBarra(it, u, ecra);
         var cat = CATEGORIAS[it.categoria] || CATEGORIAS.cobre;
         var pts = it.pontos.map(function (p) { return n(p[0]) + ',' + n(p[1]); }).join(' ');
         var sel = ecra && selecionado === it.id, h = '';
@@ -109,15 +201,36 @@
 
     function svgUnidade(it, u, ecra) {
         var mod = MODELOS[it.modelo] || MODELOS.interior, interior = it.modelo !== 'exterior';
-        var w = (interior ? 38 : 30) * u, h = (interior ? 15 : 26) * u, x0 = it.x - w / 2, y0 = it.y - h / 2;
-        var r = '<g' + (ecra ? ' data-id="' + it.id + '" style="cursor:' + (ferramenta === 'selecionar' ? 'move' : 'inherit') + '"' : '') + '>';
+        var grelha = it.modelo === 'grelha_ins' || it.modelo === 'grelha_ret', conduta = it.modelo === 'conduta';
+        var w = (grelha ? 18 : conduta ? 58 : interior ? 38 : 30) * u, h = (grelha ? 18 : conduta ? 34 : interior ? 15 : 26) * u;
+        var x0 = it.x - w / 2, y0 = it.y - h / 2;
+        var rot = it.rot ? ' transform="rotate(' + it.rot + ' ' + n(it.x) + ' ' + n(it.y) + ')"' : '';
+        var r = '<g' + rot + (ecra ? ' data-id="' + it.id + '" style="cursor:' + (ferramenta === 'selecionar' ? 'move' : 'inherit') + '"' : '') + '>';
+        if (conduta) {  // cone de redução e plénum (lado da insuflação, à esquerda antes de rodar)
+            var px = x0 - 7 * u;
+            r += '<path d="M' + n(px) + ' ' + n(y0 + 2 * u) + 'L' + n(px - 16 * u) + ' ' + n(it.y - 7 * u) + 'V' + n(it.y + 7 * u) + 'L' + n(px) + ' ' + n(y0 + h - 2 * u) +
+                'Z" fill="white" stroke="#1a3fd6" stroke-width="' + n(1.4 * u) + '"/>' +
+                '<rect x="' + n(px) + '" y="' + n(y0 + 1 * u) + '" width="' + n(7 * u) + '" height="' + n(h - 2 * u) + '" fill="#e91ec8" stroke="#9e9e9e" stroke-width="' + n(u) + '"/>' +
+                '<line x1="' + n(px + 3.5 * u) + '" y1="' + n(y0 + 3 * u) + '" x2="' + n(px + 3.5 * u) + '" y2="' + n(y0 + h - 3 * u) + '" stroke="white" stroke-width="' + n(1.4 * u) +
+                '" stroke-dasharray="' + n(0.1 * u) + ' ' + n(2.6 * u) + '" stroke-linecap="round"/>';
+        }
         if (ecra && selecionado === it.id) {
             r += '<rect x="' + n(x0 - 5 * u) + '" y="' + n(y0 - 5 * u) + '" width="' + n(w + 10 * u) + '" height="' + n(h + 10 * u) +
                 '" rx="' + n(4 * u) + '" fill="rgba(74,95,168,0.1)" stroke="#4a5fa8" stroke-width="' + n(1.5 * u) + '" stroke-dasharray="' + n(4 * u) + ' ' + n(3 * u) + '"/>';
         }
-        r += '<rect x="' + n(x0) + '" y="' + n(y0) + '" width="' + n(w) + '" height="' + n(h) + '" rx="' + n(3 * u) +
-            '" fill="white" stroke="' + mod.cor + '" stroke-width="' + n(2.2 * u) + '"/>';
-        if (interior) {
+        r += '<rect x="' + n(x0) + '" y="' + n(y0) + '" width="' + n(w) + '" height="' + n(h) + '" rx="' + n(conduta ? 0 : 3 * u) +
+            '" fill="white" stroke="' + (conduta ? '#111' : mod.cor) + '" stroke-width="' + n((conduta ? 2.6 : 2.2) * u) + '"/>';
+        if (it.modelo === 'grelha_ins') {  // difusor: quadrado com X
+            r += '<path d="M' + n(x0) + ' ' + n(y0) + 'L' + n(x0 + w) + ' ' + n(y0 + h) + 'M' + n(x0 + w) + ' ' + n(y0) + 'L' + n(x0) + ' ' + n(y0 + h) +
+                '" stroke="' + mod.cor + '" stroke-width="' + n(1.5 * u) + '"/>';
+        } else if (it.modelo === 'grelha_ret') {  // retorno: quadrado com uma diagonal e tracejado
+            r += '<path d="M' + n(x0) + ' ' + n(y0 + h) + 'L' + n(x0 + w) + ' ' + n(y0) + 'M' + n(x0) + ' ' + n(y0 + h / 2) + 'L' + n(x0 + w / 2) + ' ' + n(y0) +
+                'M' + n(x0 + w / 2) + ' ' + n(y0 + h) + 'L' + n(x0 + w) + ' ' + n(y0 + h / 2) + '" stroke="' + mod.cor + '" stroke-width="' + n(1.3 * u) + '"/>';
+        } else if (conduta) {  // unidade de conduta: o modelo escrito dentro (ex.: FDXM35)
+            var rotuloUC = it.nome || 'UC', fs = Math.min(12 * u, (w - 6 * u) / (String(rotuloUC).length * 0.62));
+            r += '<text x="' + n(it.x) + '" y="' + n(it.y + fs * 0.36) + '" font-size="' + n(fs) + '" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" fill="#111"' +
+                (it.rot === 180 ? ' transform="rotate(180 ' + n(it.x) + ' ' + n(it.y) + ')"' : '') + ' pointer-events="none">' + esc(rotuloUC) + '</text>';
+        } else if (interior) {
             r += '<line x1="' + n(x0 + 5 * u) + '" y1="' + n(y0 + h - 4.5 * u) + '" x2="' + n(x0 + w - 5 * u) + '" y2="' + n(y0 + h - 4.5 * u) +
                 '" stroke="' + mod.cor + '" stroke-width="' + n(1.5 * u) + '"/>';
         } else {
@@ -126,7 +239,7 @@
                 '" stroke="' + mod.cor + '" stroke-width="' + n(1.2 * u) + '"/>';
         }
         r += '</g>';
-        if (it.nome) r += texto(it.x, interior ? y0 - 6 * u : y0 + h + 14 * u, it.nome, mod.cor, 11.5 * u, u);
+        if (it.nome && !conduta) r += texto(it.x, interior && !grelha ? y0 - 6 * u : y0 + h + 14 * u, it.nome, mod.cor, 11.5 * u, u);
         return r;
     }
 
@@ -176,7 +289,8 @@
 
     // Por baixo as linhas, por cima as unidades e as notas
     function marcacao(u, ecra) {
-        var h = '';
+        var h = '', condutas = desenho.itens.filter(function (it) { return it.tipo === 'linha' && CATEGORIAS[it.categoria] && CATEGORIAS[it.categoria].conduta; });
+        [0, 1, 2, 3].forEach(function (c) { condutas.forEach(function (it) { h += svgConduta(it, u, ecra, c); }); });
         ['linha', 'unidade', 'nota'].forEach(function (tipo) {
             desenho.itens.forEach(function (it) {
                 if (it.tipo !== tipo) return;
@@ -199,10 +313,11 @@
     }
 
     function totais() {
-        var t = { cobre: 0, dreno: 0, eletrico: 0, interior: 0, exterior: 0 };
+        var t = {};
+        Object.keys(CATEGORIAS).concat(Object.keys(MODELOS)).forEach(function (k) { t[k] = 0; });
         desenho.itens.forEach(function (it) {
-            if (it.tipo === 'linha') t[it.categoria] += comprimento(it.pontos);
-            else if (it.tipo === 'unidade') t[it.modelo] += 1;
+            if (it.tipo === 'linha' && it.categoria in t) t[it.categoria] += comprimento(it.pontos);
+            else if (it.tipo === 'unidade' && it.modelo in t) t[it.modelo] += 1;
         });
         return t;
     }
@@ -211,11 +326,14 @@
         var t = totais(), h = '';
         Object.keys(CATEGORIAS).forEach(function (k) {
             var cat = CATEGORIAS[k];
+            if ((cat.conduta || cat.barra) && !t[k]) return;  // as condutas só aparecem quando existem
             h += '<span class="item"><span class="traco" style="border-color:' + cat.cor + ';' + (cat.traco ? 'border-top-style:dashed;' : '') +
                 'width:16px;border-top-width:3px;"></span>' + cat.nome + ' <strong>' + (pxPorMetro() ? metros(t[k]) : (t[k] ? '—' : '0 m')) + '</strong></span>';
         });
         h += '<span class="item">Interiores <strong>' + t.interior + '</strong></span>';
         h += '<span class="item">Exteriores <strong>' + t.exterior + '</strong></span>';
+        if (t.conduta) h += '<span class="item">Unid. conduta <strong>' + t.conduta + '</strong></span>';
+        if (t.grelha_ins || t.grelha_ret) h += '<span class="item">Grelhas <strong>' + t.grelha_ins + ' ins. · ' + t.grelha_ret + ' ret.</strong></span>';
         if (!pxPorMetro()) h += '<span class="item aviso">Marque a 📏 Escala para ver os metros.</span>';
         resumo.innerHTML = h;
     }
@@ -234,12 +352,14 @@
         } else if (selecionado) {
             var it = selecionado === 'escala' ? null : item(selecionado), desc = '';
             if (selecionado === 'escala') desc = '<strong>Escala</strong> · ' + String(desenho.escala.metros).replace('.', ',') + ' m';
-            else if (it.tipo === 'linha') desc = '<strong>' + CATEGORIAS[it.categoria].nome + '</strong>' + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
+            else if (it.tipo === 'linha') desc = '<strong>' + CATEGORIAS[it.categoria].nome + '</strong>' + (it.medida ? ' ' + esc(String(it.medida).replace(/x/i, '×')) : '') + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
             else if (it.tipo === 'unidade') desc = '<strong>' + MODELOS[it.modelo].nome + '</strong>' + (it.nome ? ' · ' + esc(it.nome) : '');
             else desc = '<strong>Nota</strong>';
             h = '<span>' + desc + '</span>';
             if (selecionado === 'escala') h += '<button data-acao="metros">Mudar metros</button>';
-            else if (it.tipo !== 'linha') h += '<button data-acao="texto">' + (it.tipo === 'nota' ? 'Editar texto' : 'Mudar nome') + '</button>';
+            else if (it.tipo !== 'linha') h += '<button data-acao="texto">' + (it.tipo === 'nota' ? 'Editar texto' : /^grelha/.test(it.modelo) ? 'Mudar medida' : it.modelo === 'conduta' ? 'Mudar modelo' : 'Mudar nome') + '</button>';
+            if (it && it.tipo === 'unidade' && it.modelo === 'conduta') h += '<button data-acao="rodar">↻ Rodar</button>';
+            else if (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra) h += '<button data-acao="medida">Mudar medida</button>';
             h += '<button class="perigo" data-acao="apagar">Apagar</button>';
         } else {
             h = '<span>' + DICAS[ferramenta] + '</span>';
@@ -286,13 +406,31 @@
         var it = item(selecionado);
         if (!it || it.tipo === 'linha') return;
         var atual = it.tipo === 'nota' ? it.texto : it.nome;
-        var v = prompt(it.tipo === 'nota' ? 'Texto da nota' : 'Nome da unidade (ex.: Sala 3,5 kW)', atual || '');
+        var v = prompt(it.tipo === 'nota' ? 'Texto da nota' : /^grelha/.test(it.modelo) ? 'Medida da grelha (ex.: 600x150)' :
+            it.modelo === 'conduta' ? 'Modelo da unidade (ex.: FDXM35)' : 'Nome da unidade (ex.: Sala 3,5 kW)', atual || '');
         if (v === null) return;
         v = v.trim().slice(0, 120);
         if (it.tipo === 'nota' && !v) return;
         guardarHistorico();
         if (it.tipo === 'nota') it.texto = v; else it.nome = v;
         marcarAlterado(); render();
+    }
+
+    function pedirMedida(categoria, atual) {
+        var v = prompt(categoria === 'grelha_linear' ? 'Medida da grelha linear (opcional, ex.: 2 vias)' :
+            'Medida da conduta em mm (Ø200 se for circular, ou 300x200 se for retangular)', atual != null ? atual : (ultimaMedida[categoria] || ''));
+        if (v === null) return null;
+        v = v.trim().slice(0, 30);
+        if (v) ultimaMedida[categoria] = v;
+        return v;
+    }
+
+    function mudarMedida() {
+        var it = item(selecionado);
+        if (!it || it.tipo !== 'linha') return;
+        var v = pedirMedida(it.categoria, it.medida);
+        if (v === null) return;
+        guardarHistorico(); it.medida = v; marcarAlterado(); render();
     }
 
     function terminarRascunho() {
@@ -302,8 +440,14 @@
         while (pts.length > 1 && dist(pts[pts.length - 1], pts[pts.length - 2]) < 2 / s) pts.pop();
         if (rascunho.categoria !== 'escala' && pts.length >= 2) {
             guardarHistorico();
-            desenho.itens.push({ id: novoId(), tipo: 'linha', categoria: rascunho.categoria, pontos: pts.map(function (p) { return [n(p[0]), n(p[1])]; }) });
+            var nova = { id: novoId(), tipo: 'linha', categoria: rascunho.categoria, pontos: pts.map(function (p) { return [n(p[0]), n(p[1])]; }) };
+            desenho.itens.push(nova);
             marcarAlterado();
+            if (CATEGORIAS[nova.categoria].conduta || CATEGORIAS[nova.categoria].barra) {
+                rascunho = null; render();
+                var m = pedirMedida(nova.categoria);
+                nova.medida = m === null ? (ultimaMedida[nova.categoria] || '') : m;
+            }
         }
         rascunho = null;
         render();
@@ -316,6 +460,18 @@
             if (it.tipo !== 'unidade') return;
             var d = dist(p, [it.x, it.y]);
             if (d < limite) { limite = d; melhor = [it.x, it.y]; }
+        });
+        if (melhor) return melhor;
+        limite = 12 / s;
+        desenho.itens.forEach(function (it) {  // ramais: encaixa em cima de uma conduta ou grelha linear
+            if (it.tipo !== 'linha' || !(CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra)) return;
+            for (var i = 1; i < it.pontos.length; i++) {
+                var a = it.pontos[i - 1], b = it.pontos[i], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+                if (!l2) continue;
+                var t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
+                var q = [a[0] + t * dx, a[1] + t * dy], d = dist(p, q);
+                if (d < limite) { limite = d; melhor = q; }
+            }
         });
         if (melhor) return melhor;
         if (anterior) {
@@ -332,12 +488,13 @@
             render();
             return;
         }
-        if (ferramenta === 'interior' || ferramenta === 'exterior') {
+        if (ferramenta in MODELOS) {
             guardarHistorico();
             var u = { id: novoId(), tipo: 'unidade', modelo: ferramenta, x: n(p[0]), y: n(p[1]), nome: '' };
             desenho.itens.push(u);
             marcarAlterado(); render();
-            var nome = prompt('Nome da unidade (opcional, ex.: Sala 3,5 kW)', '');
+            var grelha = /^grelha/.test(ferramenta);
+            var nome = prompt(grelha ? 'Medida da grelha (opcional, ex.: 600x150)' : ferramenta === 'conduta' ? 'Modelo da unidade (ex.: FDXM35)' : 'Nome da unidade (opcional, ex.: Sala 3,5 kW)', '');
             if (nome) { u.nome = nome.trim().slice(0, 120); render(); }
             return;
         }
@@ -367,6 +524,7 @@
         // linhas
         if (!rascunho) rascunho = { categoria: ferramenta, pontos: [encaixar(p, null)] };
         else rascunho.pontos.push(encaixar(p, rascunho.pontos[rascunho.pontos.length - 1]));
+        if (ferramenta === 'grelha_linear' && rascunho.pontos.length === 2) { terminarRascunho(); return; }
         render();
     }
 
@@ -488,7 +646,10 @@
     svg.addEventListener('dblclick', function (e) {
         if (rascunho && rascunho.categoria !== 'escala') { terminarRascunho(); return; }
         // com a captura do ponteiro o alvo do duplo clique é o svg: usa-se o que ficou selecionado
-        if (ferramenta === 'selecionar' && selecionado && selecionado !== 'escala') editarTexto();
+        if (ferramenta === 'selecionar' && selecionado && selecionado !== 'escala') {
+            var it = item(selecionado);
+            if (it && it.tipo === 'linha' && (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra)) mudarMedida(); else editarTexto();
+        }
     });
 
     svg.addEventListener('wheel', function (e) {
@@ -515,6 +676,11 @@
         else if (acao === 'cancelar') { rascunho = null; render(); }
         else if (acao === 'apagar') apagarSelecionado();
         else if (acao === 'texto') editarTexto();
+        else if (acao === 'medida') mudarMedida();
+        else if (acao === 'rodar') {
+            var ur = item(selecionado);
+            if (ur) { guardarHistorico(); ur.rot = ((ur.rot || 0) + 90) % 360; marcarAlterado(); render(); }
+        }
         else if (acao === 'metros') {
             var m = pedirMetros(desenho.escala.metros);
             if (m) { guardarHistorico(); desenho.escala.metros = m; marcarAlterado(); render(); }
@@ -592,6 +758,9 @@
         });
         if (t.interior) linhas.push([MODELOS.interior.cor, 'Unidades interiores: ' + t.interior]);
         if (t.exterior) linhas.push([MODELOS.exterior.cor, 'Unidades exteriores: ' + t.exterior]);
+        if (t.conduta) linhas.push([MODELOS.conduta.cor, 'Unidades de conduta: ' + t.conduta]);
+        if (t.grelha_ins) linhas.push([MODELOS.grelha_ins.cor, 'Grelhas de insuflação: ' + t.grelha_ins]);
+        if (t.grelha_ret) linhas.push([MODELOS.grelha_ret.cor, 'Grelhas de retorno: ' + t.grelha_ret]);
         if (!linhas.length) return;
         var f = 13 * u, alt = f * 1.6, pad = f * 0.9;
         ctx.font = 'bold ' + f + 'px Arial, sans-serif';
