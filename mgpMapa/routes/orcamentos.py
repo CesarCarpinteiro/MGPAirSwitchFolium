@@ -207,7 +207,6 @@ def _ler_formulario():
 INCLUIDOS_PADRAO = [
     'Tubagem em cobre isolado a poliuretano alta densidade entre as unidades interiores e exteriores',
     'Drenagem condensados em PVC 32mm DIN',
-    'Instalação elétrica para cada aparelho',
 ]
 
 
