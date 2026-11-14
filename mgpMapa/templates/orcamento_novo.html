@@ -249,7 +249,7 @@
                         <div class="resumo-row" id="rDescontoRow" style="display:none;"><span id="rDescontoLabel">Desconto</span><span id="rDesconto"></span></div>
                         <div class="resumo-row"><span id="rIvaLabel">IVA</span><span id="rIva">0,00 €</span></div>
                         <div class="resumo-row total"><span>Total</span><span id="rTotal">0,00 €</span></div>
-                        <div class="resumo-nota">Preços sem IVA, já com a margem de {{ '%g' % margem }}% sobre o catálogo. O IVA é somado no fim.</div>
+                        <div class="resumo-nota">Preços sem IVA, já com a margem {% if margem_por_marca %}de cada marca{% else %}de {{ '%g' % margem }}%{% endif %} sobre o catálogo. O IVA é somado no fim.</div>
                     </div>
                     <button type="submit" class="btn-submit">{{ 'Guardar alterações' if o else 'Criar orçamento' }}</button>
                 </div>

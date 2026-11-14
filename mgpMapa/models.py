@@ -216,7 +216,8 @@ class Organizacao(db.Model):
     redes = db.Column(db.String(120))
     nif = db.Column(db.String(20))
     logo = db.Column(db.String(200))
-    orc_margem = db.Column(db.Float, default=35)  # % sobre o preço de catálogo
+    orc_margem = db.Column(db.Float, default=35)  # % sobre o preço de catálogo (marcas sem margem própria)
+    orc_margens_marca = db.Column(db.Text)  # JSON {"marca em minúsculas": %}; sobrepõe-se a orc_margem
     orc_termos = db.Column(db.Text)
     orc_pagamento = db.Column(db.Text)
     sms_lembretes = db.Column(db.Boolean, default=False)  # SMS automáticos de manutenção (8 e 10 meses)

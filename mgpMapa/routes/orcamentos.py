@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import os
 import re
 import unicodedata
@@ -40,7 +41,25 @@ def _org():
 
 
 def _margem(org):
+    """Margem geral: a das marcas que não têm margem própria."""
     return MARGEM_PADRAO if org is None or org.orc_margem is None else org.orc_margem
+
+
+def _chave_marca(marca):
+    return ' '.join((marca or '').split()).lower()
+
+
+def _margens_marca(org):
+    """{marca em minúsculas: %} das marcas com margem própria."""
+    try:
+        dados = json.loads(org.orc_margens_marca) if org and org.orc_margens_marca else {}
+    except ValueError:
+        return {}
+    return {k: float(v) for k, v in dados.items() if isinstance(v, (int, float))} if isinstance(dados, dict) else {}
+
+
+def _margem_produto(margens, geral, marca):
+    return margens.get(_chave_marca(marca), geral)
 
 
 def _texto(valor, padrao):
@@ -191,6 +210,7 @@ def _form_orcamento(o=None):
         termos, pagamento = o.termos or '', o.condicoes_pagamento or ''
     return render_template('orcamento_novo.html', o=o, linhas=linhas, iva_padrao=IVA_PADRAO,
                            tem_catalogo=tem_catalogo, is_admin=current_user.is_admin, margem=_margem(org),
+                           margem_por_marca=bool(_margens_marca(org)),
                            termos=termos, pagamento=pagamento)
 
 
@@ -241,14 +261,16 @@ def api_produtos():
         query = query.filter(or_(Produto.marca.ilike(like), Produto.modelo.ilike(like),
                                  Produto.descricao.ilike(like), Produto.categoria.ilike(like)))
     produtos = query.order_by(Produto.marca, Produto.modelo).limit(15).all()
-    fator = 1 + _margem(_org()) / 100
+    org = _org()
+    margens, geral = _margens_marca(org), _margem(org)
     return jsonify([{
         'id': p.id,
         'marca': p.marca or '',
         'modelo': p.modelo,
         'descricao': p.descricao or '',
         'categoria': p.categoria or '',
-        'preco': round(p.preco * fator, 2),  # preço de venda (catálogo + margem), sem IVA
+        # preço de venda (catálogo + margem da marca), sem IVA
+        'preco': round(p.preco * (1 + _margem_produto(margens, geral, p.marca) / 100), 2),
         'label': ' '.join(x for x in [p.marca, p.modelo, p.descricao] if x),
     } for p in produtos])
 
@@ -459,6 +481,11 @@ def definicoes():
         for campo in ['designacao_social', 'morada', 'email', 'redes', 'nif', 'telefone']:
             setattr(org, campo, request.form.get(campo, '').strip())
         org.orc_margem = min(max(_num(request.form.get('orc_margem'), MARGEM_PADRAO), 0), 1000)
+        margens = {}
+        for marca, valor in zip(request.form.getlist('mm_marca'), request.form.getlist('mm_valor')):
+            if _chave_marca(marca) and valor.strip():  # vazio = usa a margem geral
+                margens[_chave_marca(marca)] = min(max(_num(valor, 0), 0), 1000)
+        org.orc_margens_marca = json.dumps(margens, ensure_ascii=False) if margens else None
         org.orc_termos = request.form.get('orc_termos', '').strip()
         org.orc_pagamento = request.form.get('orc_pagamento', '').strip()
 
@@ -479,6 +506,15 @@ def definicoes():
         db.session.commit()
         flash('Definições guardadas.', 'success')
         return redirect(url_for('orcamentos.definicoes'))
-    return render_template('orcamento_definicoes.html', o=org, margem=_margem(org),
+    margens = _margens_marca(org)
+    # Marcas do catálogo (com o nome como está escrito) + as que têm margem mas já não estão no catálogo
+    nomes = {}
+    for (marca,) in db.session.query(Produto.marca).filter(Produto.org_id == current_user.org_id).distinct():
+        if _chave_marca(marca):
+            nomes.setdefault(_chave_marca(marca), ' '.join(marca.split()))
+    for chave in margens:
+        nomes.setdefault(chave, chave.title())
+    marcas = sorted(({'nome': n, 'margem': margens.get(k)} for k, n in nomes.items()), key=lambda m: m['nome'].lower())
+    return render_template('orcamento_definicoes.html', o=org, margem=_margem(org), marcas=marcas,
                            termos=_texto(org.orc_termos if org else None, TERMOS_PADRAO),
                            pagamento=_texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO), is_admin=True)
