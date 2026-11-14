@@ -162,21 +162,29 @@ def _ler_formulario():
     quantidades = request.form.getlist('linha_qtd')
     precos = request.form.getlist('linha_preco')
     notas = request.form.getlist('linha_nota')
-    notas += [''] * (len(descricoes) - len(notas))
+    incluidos = request.form.getlist('linha_incluido')
+    pcats = request.form.getlist('linha_pcat')
+    for lista in (notas, incluidos, pcats):
+        lista += [''] * (len(descricoes) - len(lista))
 
     # Só aceita produtos do catálogo da própria organização
     ids_validos = {p.id for p in db.session.query(Produto.id).filter_by(org_id=current_user.org_id)}
     linhas = []
-    for pid, desc, qtd, preco, nota in zip(produto_ids, descricoes, quantidades, precos, notas):
+    for pid, desc, qtd, preco, nota, incl, pcat in zip(produto_ids, descricoes, quantidades, precos, notas, incluidos, pcats):
         desc = desc.strip()
         if not desc:
+            continue
+        if incl == '1':  # material incluído no artigo de cima: só quantidade e descrição
+            if linhas:
+                linhas.append(OrcamentoLinha(descricao=desc[:300], quantidade=_num(qtd, 1), preco_unitario=0, incluido=True))
             continue
         pid = int(pid) if pid.isdigit() and int(pid) in ids_validos else None
         linhas.append(OrcamentoLinha(produto_id=pid, descricao=desc[:300],
                                      quantidade=_num(qtd, 1), preco_unitario=_num(preco),
-                                     nota=nota.strip()[:1000] or None))
+                                     nota=nota.strip()[:1000] or None,
+                                     preco_catalogo=_num(pcat, None) if pid and pcat else None))
 
-    if not cliente or not linhas:
+    if not cliente or not any(not l.incluido for l in linhas):
         return None, None
 
     desconto = min(max(_num(request.form.get('desconto')), 0), 100)
@@ -187,12 +195,73 @@ def _ler_formulario():
                   cliente_contacto=request.form.get('cliente_contacto', '').strip(),
                   cliente_email=request.form.get('cliente_email', '').strip(),
                   cliente_morada=request.form.get('cliente_morada', '').strip(),
-                  descricao='; '.join(l.descricao for l in linhas)[:500],
+                  descricao='; '.join(l.descricao for l in linhas if not l.incluido)[:500],
+                  margens=_ler_margens_form(),
                   termos=request.form.get('termos', '').strip(),
                   condicoes_pagamento=request.form.get('condicoes_pagamento', '').strip(),
                   num_maquinas=request.form.get('num_maquinas', type=int),
                   desconto=desconto, iva_taxa=iva_taxa, valor=round(totais['total'], 2))
     return campos, linhas
+
+
+INCLUIDOS_PADRAO = [
+    'Tubagem em cobre isolado a poliuretano alta densidade entre as unidades interiores e exteriores',
+    'Drenagem condensados em PVC 32mm DIN',
+    'Instalação elétrica para cada aparelho',
+]
+
+
+def _incluidos(org):
+    """Opções de material incluído da organização (None = nunca definidas → as do modelo)."""
+    if org is None or org.orc_incluidos is None:
+        return list(INCLUIDOS_PADRAO)
+    try:
+        lista = json.loads(org.orc_incluidos)
+    except ValueError:
+        return list(INCLUIDOS_PADRAO)
+    return [str(t) for t in lista if str(t).strip()] if isinstance(lista, list) else []
+
+
+def _juntar_incluidos(org, textos):
+    """Acrescenta textos novos às opções (sem repetir, ignorando maiúsculas)."""
+    lista = _incluidos(org)
+    vistos = {t.strip().lower() for t in lista}
+    for t in textos:
+        t = ' '.join(str(t).split())[:300]
+        if t and t.lower() not in vistos:
+            lista.append(t); vistos.add(t.lower())
+    org.orc_incluidos = json.dumps(lista[:300], ensure_ascii=False)
+
+
+def _ler_margens_form():
+    """Margens escolhidas no orçamento: {"marca": %, "_outras": %} em JSON."""
+    margens = {}
+    for chave, valor in zip(request.form.getlist('mm_chave'), request.form.getlist('mm_pct')):
+        if _chave_marca(chave) and str(valor).strip():
+            margens[_chave_marca(chave)] = min(max(_num(valor, 0), 0), 1000)
+    if str(request.form.get('margem_outras', '')).strip():
+        margens['_outras'] = min(max(_num(request.form.get('margem_outras'), 0), 0), 1000)
+    return json.dumps(margens, ensure_ascii=False) if margens else None
+
+
+def _margens_orcamento(org, o=None):
+    """Marcas do catálogo com a margem a usar no orçamento (a guardada nele ou a das Definições)."""
+    guardadas = {}
+    if o is not None and o.margens:
+        try:
+            guardadas = json.loads(o.margens) or {}
+        except ValueError:
+            guardadas = {}
+    por_marca, geral = _margens_marca(org), _margem(org)
+    nomes = {}
+    for (marca,) in db.session.query(Produto.marca).filter(Produto.org_id == current_user.org_id).distinct():
+        if _chave_marca(marca):
+            nomes.setdefault(_chave_marca(marca), ' '.join(marca.split()))
+    outras = guardadas.get('_outras', geral)
+    # guardada neste orçamento → a da marca nas Definições → a de "outras marcas"
+    marcas = [{'chave': k, 'nome': nomes[k], 'pct': guardadas[k] if k in guardadas else por_marca.get(k, outras)}
+              for k in sorted(nomes, key=lambda k: nomes[k].lower())]
+    return marcas, outras
 
 
 def _form_orcamento(o=None):
@@ -203,8 +272,11 @@ def _form_orcamento(o=None):
         termos = _texto(org.orc_termos if org else None, TERMOS_PADRAO)
         pagamento = _texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO)
     else:
-        linhas = [{'produto_id': l.produto_id or '', 'descricao': l.descricao,
-                   'quantidade': l.quantidade, 'preco': l.preco_unitario, 'nota': l.nota or ''} for l in o.linhas]
+        marcas_prod = dict(db.session.query(Produto.id, Produto.marca).filter(
+            Produto.id.in_([l.produto_id for l in o.linhas if l.produto_id] or [0])).all())
+        linhas = [{'produto_id': l.produto_id or '', 'descricao': l.descricao, 'quantidade': l.quantidade,
+                   'preco': l.preco_unitario, 'nota': l.nota or '', 'incluido': bool(l.incluido),
+                   'pcat': l.preco_catalogo, 'marca': _chave_marca(marcas_prod.get(l.produto_id))} for l in o.linhas]
         if not linhas and o.valor:
             # Orçamento antigo sem linhas: uma linha com a descrição e o valor sem IVA (o total mantém-se)
             iva = o.iva_taxa if o.iva_taxa is not None else IVA_PADRAO
@@ -213,7 +285,8 @@ def _form_orcamento(o=None):
         termos, pagamento = o.termos or '', o.condicoes_pagamento or ''
     return render_template('orcamento_novo.html', o=o, linhas=linhas, iva_padrao=IVA_PADRAO,
                            tem_catalogo=tem_catalogo, is_admin=current_user.is_admin, margem=_margem(org),
-                           margem_por_marca=bool(_margens_marca(org)),
+                           margem_por_marca=bool(_margens_marca(org)), margens_orc=_margens_orcamento(org, o),
+                           incluidos=_incluidos(org),
                            termos=termos, pagamento=pagamento)
 
 
@@ -254,6 +327,19 @@ def editar_orcamento(id):
     return _form_orcamento(o)
 
 
+@orcamentos_bp.route('/api/incluidos', methods=['POST'])
+@login_required
+def adicionar_incluido():
+    """Guarda um texto novo nas opções de material incluído (botão "+ Adicionar às opções")."""
+    texto = ' '.join(str((request.get_json(silent=True) or {}).get('texto') or '').split())
+    org = _org()
+    if not texto or not org:
+        return jsonify({'ok': False, 'mensagem': 'Escreva o texto da opção.'}), 400
+    _juntar_incluidos(org, [texto])
+    db.session.commit()
+    return jsonify({'ok': True, 'opcoes': _incluidos(org)})
+
+
 @orcamentos_bp.route('/api/produtos')
 @login_required
 def api_produtos():
@@ -280,6 +366,8 @@ def api_produtos():
         'categoria': p.categoria or '',
         # preço de venda (catálogo + margem da marca), sem IVA
         'preco': round(p.preco * (1 + _margem_produto(margens, geral, p.marca) / 100), 2),
+        'preco_catalogo': p.preco,
+        'marca_chave': _chave_marca(p.marca),
         'label': ' '.join(x for x in [p.marca, p.modelo, p.descricao] if x),
     } for p in produtos])
 
@@ -496,6 +584,9 @@ def definicoes():
                 margens[_chave_marca(marca)] = min(max(_num(valor, 0), 0), 1000)
         org.orc_margens_marca = json.dumps(margens, ensure_ascii=False) if margens else None
         org.orc_termos = request.form.get('orc_termos', '').strip()
+        if 'orc_incluidos' in request.form:
+            org.orc_incluidos = '[]'
+            _juntar_incluidos(org, request.form.get('orc_incluidos', '').splitlines())
         org.orc_pagamento = request.form.get('orc_pagamento', '').strip()
 
         logo = request.files.get('logo')
@@ -524,6 +615,6 @@ def definicoes():
     for chave in margens:
         nomes.setdefault(chave, chave.title())
     marcas = sorted(({'nome': n, 'margem': margens.get(k)} for k, n in nomes.items()), key=lambda m: m['nome'].lower())
-    return render_template('orcamento_definicoes.html', o=org, margem=_margem(org), marcas=marcas,
+    return render_template('orcamento_definicoes.html', o=org, margem=_margem(org), marcas=marcas, incluidos=_incluidos(org),
                            termos=_texto(org.orc_termos if org else None, TERMOS_PADRAO),
                            pagamento=_texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO), is_admin=True)

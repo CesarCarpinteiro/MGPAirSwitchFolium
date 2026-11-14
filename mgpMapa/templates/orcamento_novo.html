@@ -78,7 +78,23 @@
             font-size: 1.2em; line-height: 1; padding: 4px;
         }
         .remove-btn:hover { color: #e53935; }
-        .nota-wrap { grid-column: 1 / -1; margin-top: -2px; }
+        .nota-wrap { grid-column: 1 / -1; margin-top: -2px; display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+        .nota-wrap .f-nota { flex-basis: 100%; }
+        .incl-btn { background: none; border: none; color: #2e7d32; font-size: 0.8em; font-weight: bold; cursor: pointer; padding: 2px 0; }
+        .incl-btn:hover { text-decoration: underline; }
+        .linha.sub { border-top: none; padding: 2px 0 4px; }
+        .incl-desc { display: flex; align-items: center; gap: 6px; padding-left: 14px; min-width: 0; }
+        .incl-desc .seta { color: #2e7d32; font-weight: bold; }
+        .incl-ac { position: relative; flex: 1; min-width: 0; }
+        .incl-ac .f-desc, .linha.sub .f-qtd { font-size: 0.88em; background: #f6fbf6; border-color: #c8e6c9; }
+        .incl-ac .ac-item.novo { color: #2e7d32; font-weight: bold; }
+        .incl-tag { text-align: right; font-size: 0.8em; font-style: italic; color: #2e7d32; }
+        .margens-orc { display: flex; flex-wrap: wrap; gap: 10px; }
+        .mm-item { display: flex; align-items: center; gap: 10px; background: #f8f9fd; border: 1px solid #e3e6ef; border-radius: 8px; padding: 8px 12px; cursor: text; }
+        .mm-item.outras { background: #eef0fa; }
+        .mm-nome { font-weight: bold; font-size: 0.88em; color: #333; }
+        .mm-campo { display: flex; align-items: center; gap: 4px; color: #777; }
+        .mm-campo input { width: 78px; text-align: right; padding: 7px 9px; }
         .nota-btn { background: none; border: none; color: #5c6bc0; font-size: 0.8em; font-weight: bold; cursor: pointer; padding: 2px 0; }
         .nota-btn:hover { text-decoration: underline; }
         .f-nota { display: none; width: 100%; resize: vertical; min-height: 36px; font-size: 0.85em; font-style: italic;
@@ -141,6 +157,9 @@
             .linha .ac-wrap { grid-column: 1 / 3; }
             .linha .linha-total { grid-column: 1 / 3; }
             .linha .remove-btn { grid-row: 1; grid-column: 3; }
+            .linha.sub .incl-desc { grid-column: 1 / 3; padding-left: 4px; }
+            .linha.sub .linha-total { display: none; }
+            .mm-item { flex: 1 1 140px; justify-content: space-between; }
             .page-header { padding: 10px 12px; }
             .page-header h1 { font-size: 1.1em; }
             .header-actions a { padding: 7px 10px; font-size: 0.82em; }
@@ -210,6 +229,24 @@
         </div>
 
         <div class="card">
+            <div class="section-title">📊 Margem por marca</div>
+            <p class="ajuda">Margem sobre o preço de catálogo, só para este orçamento. Vem das Definições; ao mudar, os preços das linhas dessa marca são recalculados.</p>
+            <div class="margens-orc">
+                {% for m in margens_orc[0] %}
+                <label class="mm-item">
+                    <span class="mm-nome">{{ m.nome }}</span>
+                    <input type="hidden" name="mm_chave" value="{{ m.chave }}">
+                    <span class="mm-campo"><input type="number" name="mm_pct" class="num mm-pct" data-chave="{{ m.chave }}" min="0" step="0.5" value="{{ '%g' % m.pct }}"><span>%</span></span>
+                </label>
+                {% endfor %}
+                <label class="mm-item outras">
+                    <span class="mm-nome">{{ 'Outras marcas' if margens_orc[0] else 'Margem' }}</span>
+                    <span class="mm-campo"><input type="number" name="margem_outras" id="margemOutras" class="num mm-pct" data-chave="" min="0" step="0.5" value="{{ '%g' % margens_orc[1] }}"><span>%</span></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="section-title">🧾 Produtos e serviços</div>
             <div class="linhas-head">
                 <div>Produto / descrição</div><div class="r">Qtd.</div><div class="r">Preço s/ IVA</div><div class="r">Total</div><div></div>
@@ -269,6 +306,8 @@
     <div class="linha">
         <div class="ac-wrap">
             <input type="hidden" name="linha_produto_id" class="f-pid">
+            <input type="hidden" name="linha_incluido" value="">
+            <input type="hidden" name="linha_pcat" class="f-pcat">
             <input type="text" name="linha_descricao" class="ac-input f-desc" placeholder="Escreva marca ou modelo… ex: daikin 3,5">
             <div class="ac-list"></div>
         </div>
@@ -277,9 +316,31 @@
         <div class="linha-total">0,00 €</div>
         <button type="button" class="remove-btn" title="Remover linha" aria-label="Remover linha">×</button>
         <div class="nota-wrap">
+            <button type="button" class="incl-btn">+ Incluído (tubagem, dreno…)</button>
             <button type="button" class="nota-btn">+ Observação</button>
             <textarea name="linha_nota" class="f-nota" rows="1" maxlength="1000" placeholder="Ex.: Inclui 3 m de tubagem de cobre e conduta (já incluído no preço)" aria-label="Observação do artigo"></textarea>
         </div>
+    </div>
+</template>
+
+<template id="inclTpl">
+    <div class="linha sub">
+        <div class="incl-desc">
+            <span class="seta">↳</span>
+            <input type="hidden" name="linha_produto_id" class="f-pid" value="">
+            <input type="hidden" name="linha_preco" class="f-preco" value="0">
+            <input type="hidden" name="linha_nota" value="">
+            <input type="hidden" name="linha_incluido" value="1">
+            <input type="hidden" name="linha_pcat" value="">
+            <div class="incl-ac">
+                <input type="text" name="linha_descricao" class="f-desc" maxlength="300" placeholder="Material incluído… ex.: tubagem, drenagem" aria-label="Descrição do material incluído">
+                <div class="ac-list"></div>
+            </div>
+        </div>
+        <input type="number" name="linha_qtd" class="num f-qtd" min="0" step="any" value="1" aria-label="Quantidade incluída">
+        <div class="incl-tag">Incluído</div>
+        <div class="linha-total"></div>
+        <button type="button" class="remove-btn" title="Remover" aria-label="Remover">×</button>
     </div>
 </template>
 
@@ -301,9 +362,38 @@
     }
     function num(el) { return parseFloat(String(el.value).replace(',', '.')) || 0; }
 
+    var OPCOES_INCL = {{ incluidos|tojson }};  // opções de material incluído (autocomplete)
+
+    // Margem do orçamento para uma marca (a da caixa da marca, ou a de "outras marcas")
+    function caixaMarca(chave) {
+        if (!chave) return null;
+        var achada = null;
+        document.querySelectorAll('.mm-pct[data-chave]').forEach(function(el) { if (el.dataset.chave === chave) achada = el; });
+        return achada;
+    }
+    function margemPara(chave) { return num(caixaMarca(chave) || document.getElementById('margemOutras')); }
+    function precoComMargem(linha) {
+        var pcat = parseFloat(linha.querySelector('.f-pcat').value);
+        if (!linha.querySelector('.f-pid').value || !(pcat >= 0)) return null;
+        return Math.round(pcat * (1 + margemPara(linha.dataset.marca) / 100) * 100) / 100;
+    }
+    document.querySelectorAll('.mm-pct').forEach(function(caixa) {
+        caixa.addEventListener('input', function() {
+            var chave = caixa.dataset.chave;
+            document.querySelectorAll('#linhas .linha:not(.sub)').forEach(function(l) {
+                var m = l.dataset.marca || '';
+                var afetada = chave ? m === chave : !caixaMarca(m);  // "outras" aplica-se às marcas sem caixa própria
+                var p = afetada ? precoComMargem(l) : null;
+                if (p != null) l.querySelector('.f-preco').value = p.toFixed(2);
+            });
+            recalc();
+        });
+    });
+
     function recalc() {
         var subtotal = 0, maquinas = 0;
         document.querySelectorAll('#linhas .linha').forEach(function(l) {
+            if (l.classList.contains('sub')) return;  // material incluído: sem preço
             var q = num(l.querySelector('.f-qtd')), p = num(l.querySelector('.f-preco'));
             subtotal += q * p;
             l.querySelector('.linha-total').textContent = eur(q * p);
@@ -333,11 +423,16 @@
             linha.querySelector('.f-qtd').value = dados.quantidade;
             linha.querySelector('.f-preco').value = Number(dados.preco).toFixed(2);
             if (dados.produto_id) linha.classList.add('catalogo');
+            linha.querySelector('.f-pcat').value = dados.pcat != null ? dados.pcat : '';
+            linha.dataset.marca = dados.marca || '';
             if (dados.nota) {
                 linha.querySelector('.f-nota').value = dados.nota;
                 linha.querySelector('.nota-wrap').classList.add('aberta');
             }
         }
+        linha.querySelector('.incl-btn').addEventListener('click', function() {
+            addIncluido(linha).querySelector('.f-desc').focus();
+        });
         linha.querySelector('.nota-btn').addEventListener('click', function() {
             linha.querySelector('.nota-wrap').classList.add('aberta');
             linha.querySelector('.f-nota').focus();
@@ -350,11 +445,73 @@
         linha.querySelector('.f-qtd').addEventListener('input', recalc);
         linha.querySelector('.f-preco').addEventListener('input', recalc);
         linha.querySelector('.remove-btn').addEventListener('click', function() {
+            while (linha.nextElementSibling && linha.nextElementSibling.classList.contains('sub')) linha.nextElementSibling.remove();
             linha.remove();
             if (!document.querySelector('#linhas .linha')) addLinha();
             recalc();
         });
         return linha;
+    }
+
+    // Material incluído no artigo de cima: quantidade + descrição, com autocomplete das opções guardadas
+    function addIncluido(linha, dados) {
+        var sub = document.getElementById('inclTpl').content.firstElementChild.cloneNode(true);
+        var depois = linha;
+        while (depois.nextElementSibling && depois.nextElementSibling.classList.contains('sub')) depois = depois.nextElementSibling;
+        depois.after(sub);
+        if (dados) {
+            sub.querySelector('.f-desc').value = dados.descricao;
+            sub.querySelector('.f-qtd').value = dados.quantidade;
+        }
+        sub.querySelector('.remove-btn').addEventListener('click', function() { sub.remove(); recalc(); });
+        ligarIncluido(sub);
+        return sub;
+    }
+
+    function ligarIncluido(sub) {
+        var input = sub.querySelector('.f-desc'), lista = sub.querySelector('.ac-list'), res = [], ativo = -1;
+        function norm(t) { return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+        function fechar() { lista.style.display = 'none'; }
+        function render() {
+            var q = input.value.trim(), termos = norm(q).split(/\s+/).filter(Boolean);
+            res = OPCOES_INCL.filter(function(t) {
+                var n = norm(t);
+                return termos.every(function(x) { return n.indexOf(x) >= 0; });
+            }).slice(0, 12).map(function(t) { return { texto: t }; });
+            if (q && !OPCOES_INCL.some(function(t) { return norm(t) === norm(q); })) res.push({ texto: q, novo: true });
+            if (!res.length) { fechar(); return; }
+            if (ativo >= res.length) ativo = res.length - 1;
+            lista.innerHTML = res.map(function(r, i) {
+                return '<div class="ac-item' + (r.novo ? ' novo' : '') + (i === ativo ? ' active' : '') + '" data-i="' + i + '"><div class="ac-nome">' +
+                    (r.novo ? '+ Adicionar às opções: «' + esc(r.texto) + '»' : esc(r.texto)) + '</div></div>';
+            }).join('');
+            lista.style.display = 'block';
+        }
+        function escolher(r) {
+            input.value = r.texto;
+            fechar();
+            if (r.novo) {
+                fetch('/api/incluidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: r.texto }) })
+                    .then(function(x) { return x.json(); })
+                    .then(function(d) { if (!d.ok) throw new Error(d.mensagem); OPCOES_INCL = d.opcoes; showToast('Opção guardada para os próximos orçamentos.'); })
+                    .catch(function(e) { showToast(e.message || 'Não foi possível guardar a opção.', 'error'); });
+            }
+            var q = sub.querySelector('.f-qtd'); q.focus(); q.select();
+        }
+        input.addEventListener('input', function() { ativo = 0; render(); });
+        input.addEventListener('focus', function() { ativo = -1; render(); });
+        input.addEventListener('blur', function() { setTimeout(fechar, 150); });
+        input.addEventListener('keydown', function(e) {
+            if (lista.style.display !== 'block' || !res.length) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); ativo = (ativo + 1) % res.length; render(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); ativo = (ativo - 1 + res.length) % res.length; render(); }
+            else if (e.key === 'Enter' && ativo >= 0) { e.preventDefault(); escolher(res[ativo]); }
+            else if (e.key === 'Escape') fechar();
+        });
+        lista.addEventListener('mousedown', function(e) {
+            var it = e.target.closest('.ac-item');
+            if (it) { e.preventDefault(); escolher(res[+it.dataset.i]); }
+        });
     }
 
     function ligarAutocomplete(linha) {
@@ -398,14 +555,18 @@
         function escolher(p) {
             input.value = p.label;
             linha.querySelector('.f-pid').value = p.id;
-            linha.querySelector('.f-preco').value = p.preco.toFixed(2);
+            linha.querySelector('.f-pcat').value = p.preco_catalogo;
+            linha.dataset.marca = p.marca_chave || '';
+            var comMargem = precoComMargem(linha);  // com a margem escolhida neste orçamento
+            linha.querySelector('.f-preco').value = (comMargem != null ? comMargem : p.preco).toFixed(2);
             linha.dataset.categoria = p.categoria || '';
             linha.dataset.descricao = p.descricao || '';
             linha.classList.add('catalogo');
             fechar();
             recalc();
             // Ao preencher a última linha, abre logo uma nova
-            if (linha === document.querySelector('#linhas .linha:last-child')) addLinha();
+            var principais = document.querySelectorAll('#linhas .linha:not(.sub)');
+            if (linha === principais[principais.length - 1]) addLinha();
             var qtd = linha.querySelector('.f-qtd');
             qtd.focus(); qtd.select();
         }
@@ -413,6 +574,8 @@
         input.addEventListener('input', function() {
             // Texto alterado à mão: deixa de estar ligado ao produto do catálogo
             linha.querySelector('.f-pid').value = '';
+            linha.querySelector('.f-pcat').value = '';
+            linha.dataset.marca = '';
             linha.dataset.categoria = '';
             linha.dataset.descricao = '';
             linha.classList.remove('catalogo');
@@ -447,11 +610,15 @@
     document.getElementById('numMaquinas').addEventListener('input', function() { maquinasEditado = true; });
 
     document.getElementById('orcForm').addEventListener('submit', function(e) {
-        var preenchidas = Array.prototype.filter.call(document.querySelectorAll('#linhas .f-desc'), function(i) { return i.value.trim(); });
+        var preenchidas = Array.prototype.filter.call(document.querySelectorAll('#linhas .linha:not(.sub) .f-desc'), function(i) { return i.value.trim(); });
         if (!preenchidas.length) { e.preventDefault(); showToast('Adicione pelo menos uma linha.', 'error'); }
     });
 
-    {{ linhas|tojson }}.forEach(addLinha);
+    var ultimaPrincipal = null;
+    {{ linhas|tojson }}.forEach(function(d) {
+        if (d.incluido) { if (ultimaPrincipal) addIncluido(ultimaPrincipal, d); }
+        else ultimaPrincipal = addLinha(d);
+    });
     addLinha();
     recalc();
 

@@ -121,7 +121,7 @@
             <input class="morada" id="morada" value="{{ p.morada or '' }}" maxlength="300" placeholder="Morada" aria-label="Morada">
         </div>
         <div class="acoes">
-            <button type="button" id="btnImagem" title="Descarregar a planta com o desenho">⬇<span class="txt"> Imagem</span></button>
+            <button type="button" id="btnImagem" title="Descarregar a planta com o desenho em PDF">⬇<span class="txt"> PDF</span></button>
             {% if pode_apagar %}
             <form method="POST" action="/plantas/{{ p.id }}/apagar" onsubmit="return confirm('Apagar esta planta e o desenho? Não dá para desfazer.')">
                 <button type="submit" title="Apagar planta">🗑</button>

@@ -892,6 +892,8 @@
     });
 
     document.getElementById('btnImagem').addEventListener('click', function () {
+        var btn = this, rotulo = btn.innerHTML;
+        btn.disabled = true; btn.textContent = 'A gerar…';
         var u = Math.max(W, H) / 1100;  // símbolos do mesmo tamanho relativo que na planta vista inteira
         var marca = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' + marcacao(u, false) + '</svg>';
         var fundo = new Image(), por_cima = new Image();
@@ -903,13 +905,22 @@
                 ctx.drawImage(fundo, 0, 0, W, H);
                 ctx.drawImage(por_cima, 0, 0, W, H);
                 legenda(ctx, u);
+                // A imagem desenhada vai para o servidor, que devolve o PDF (A4 com cabeçalho)
                 c.toBlob(function (blob) {
-                    var a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = (campoNome.value.trim() || 'planta').replace(/[^\w\-]+/g, '_') + '.png';
-                    a.click();
-                    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
-                }, 'image/png');
+                    var fd = new FormData();
+                    fd.append('imagem', blob, 'planta.jpg');
+                    fetch('/plantas/' + dados.id + '/pdf', { method: 'POST', body: fd })
+                        .then(function (r) { if (!r.ok) throw new Error(); return r.blob(); })
+                        .then(function (pdf) {
+                            var a = document.createElement('a');
+                            a.href = URL.createObjectURL(pdf);
+                            a.download = (campoNome.value.trim() || 'planta').replace(/[^\w\-]+/g, '_') + '.pdf';
+                            document.body.appendChild(a); a.click(); a.remove();
+                            setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+                        })
+                        .catch(function () { showToast('Não foi possível gerar o PDF.', 'error'); })
+                        .then(function () { btn.disabled = false; btn.innerHTML = rotulo; });
+                }, 'image/jpeg', 0.92);
             };
             por_cima.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(marca);
         };

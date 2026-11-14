@@ -1,5 +1,7 @@
+import io
 import json
 import os
+import re
 import uuid
 from datetime import datetime
 
@@ -8,7 +10,7 @@ from flask_login import current_user, login_required
 from PIL import Image, UnidentifiedImageError
 
 from db import db
-from models import Planta, Usuario
+from models import Organizacao, Planta, Usuario
 
 plantas_bp = Blueprint('plantas', __name__)
 
@@ -116,6 +118,72 @@ def guardar(id):
     p.atualizado_em = datetime.now()
     db.session.commit()
     return jsonify({'ok': True, 'mensagem': 'Planta guardada.'})
+
+
+@plantas_bp.route('/plantas/<int:id>/pdf', methods=['POST'])
+@login_required
+def exportar_pdf(id):
+    """Recebe a planta já desenhada (imagem feita no browser) e devolve-a num PDF A4 com cabeçalho."""
+    from reportlab.lib.colors import HexColor
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.units import mm
+    from reportlab.lib.utils import ImageReader
+    from reportlab.pdfgen import canvas
+
+    p = _planta(id)
+    if (request.content_length or 0) > 25 * 1024 * 1024:
+        return jsonify({'ok': False, 'mensagem': 'A imagem é demasiado grande.'}), 400
+    try:
+        img = Image.open(request.files['imagem'].stream)
+        img.load()
+        img = img.convert('RGB')
+    except (KeyError, UnidentifiedImageError, OSError):
+        return jsonify({'ok': False, 'mensagem': 'Não foi possível gerar o PDF.'}), 400
+
+    org = db.session.get(Organizacao, current_user.org_id)
+    pagina = landscape(A4) if img.width >= img.height else A4
+    largura, altura = pagina
+    margem, topo = 12 * mm, 20 * mm
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=pagina)
+    c.setTitle(p.nome)
+
+    # Cabeçalho: logótipo, empresa, nome e morada da planta, data
+    x = margem
+    if org and org.logo:
+        caminho_logo = os.path.join(current_app.root_path, current_app.config['UPLOAD_FOLDER'], org.logo)
+        if os.path.exists(caminho_logo):
+            try:
+                logo = ImageReader(caminho_logo)
+                lw, lh = logo.getSize()
+                h = 12 * mm
+                c.drawImage(logo, x, altura - margem - h, width=h * lw / lh, height=h, mask='auto')
+                x += h * lw / lh + 5 * mm
+            except Exception:
+                pass
+    azul = HexColor('#2d3a6e')
+    c.setFillColor(azul)
+    c.setFont('Helvetica-Bold', 13)
+    c.drawString(x, altura - margem - 5 * mm, p.nome[:90])
+    c.setFont('Helvetica', 9)
+    c.setFillColor(HexColor('#555555'))
+    sub = ' · '.join(t for t in [p.morada, (org.designacao_social or org.nome) if org else ''] if t)
+    if sub:
+        c.drawString(x, altura - margem - 10 * mm, sub[:140])
+    c.drawRightString(largura - margem, altura - margem - 5 * mm, datetime.now().strftime('%d/%m/%Y'))
+    c.setStrokeColor(HexColor('#c5cae9'))
+    c.line(margem, altura - margem - topo + 4 * mm, largura - margem, altura - margem - topo + 4 * mm)
+
+    # Planta ajustada ao espaço que sobra, centrada
+    caixa_l, caixa_a = largura - 2 * margem, altura - 2 * margem - topo
+    escala = min(caixa_l / img.width, caixa_a / img.height)
+    w, h = img.width * escala, img.height * escala
+    c.drawImage(ImageReader(img), margem + (caixa_l - w) / 2, margem + (caixa_a - h) / 2, width=w, height=h)
+    c.showPage()
+    c.save()
+    buf.seek(0)
+    nome = re.sub(r'[^\w\-]+', '_', p.nome).strip('_') or 'planta'
+    return send_file(buf, mimetype='application/pdf', as_attachment=True, download_name=f'{nome}.pdf')
 
 
 @plantas_bp.route('/plantas/<int:id>/nome', methods=['POST'])

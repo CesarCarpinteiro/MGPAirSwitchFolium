@@ -127,6 +127,7 @@ class Orcamento(db.Model):
     iva_taxa = db.Column(db.Float, default=23)
     termos = db.Column(db.Text)
     condicoes_pagamento = db.Column(db.Text)
+    margens = db.Column(db.Text)  # JSON {"marca": %, "_outras": %} usadas neste orçamento
     linhas = db.relationship('OrcamentoLinha', backref='orcamento', cascade='all, delete-orphan',
                              order_by='OrcamentoLinha.id')
 
@@ -139,6 +140,8 @@ class OrcamentoLinha(db.Model):
     quantidade = db.Column(db.Float, default=1)
     preco_unitario = db.Column(db.Float, default=0)  # sem IVA
     nota = db.Column(db.Text)  # observação por baixo do artigo (ex.: "Inclui 3 m de tubagem")
+    incluido = db.Column(db.Boolean, default=False)  # material incluído no artigo de cima (qtd + descrição, sem preço)
+    preco_catalogo = db.Column(db.Float)  # preço de catálogo usado (para recalcular se mudar a margem)
 
 class Produto(db.Model):
     __tablename__ = 'produtos'
@@ -218,7 +221,8 @@ class Organizacao(db.Model):
     nif = db.Column(db.String(20))
     logo = db.Column(db.String(200))
     orc_margem = db.Column(db.Float, default=35)  # % sobre o preço de catálogo (marcas sem margem própria)
-    orc_margens_marca = db.Column(db.Text)  # JSON {"marca em minúsculas": %}; sobrepõe-se a orc_margem
+    orc_margens_marca = db.Column(db.Text)
+    orc_incluidos = db.Column(db.Text)  # JSON [texto, ...]: opções de material incluído (tubagem, dreno…)  # JSON {"marca em minúsculas": %}; sobrepõe-se a orc_margem
     orc_termos = db.Column(db.Text)
     orc_pagamento = db.Column(db.Text)
     sms_lembretes = db.Column(db.Boolean, default=False)  # SMS automáticos de manutenção (8 e 10 meses)

@@ -84,6 +84,8 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
                                  textColor=AZUL, spaceAfter=4),
         'nota': ParagraphStyle('nota', parent=base, fontName='Helvetica-Oblique', fontSize=7.5, leading=10,
                                textColor=CINZA_AZUL, spaceBefore=2),
+        'incl': ParagraphStyle('incl', parent=base, fontSize=8, leading=10.5, textColor=CINZA_AZUL, leftIndent=6),
+        'incl_r': ParagraphStyle('incl_r', parent=base, fontName='Helvetica-Oblique', fontSize=8, leading=10.5, textColor=CINZA_AZUL, alignment=TA_RIGHT),
         'pequeno': ParagraphStyle('pequeno', parent=base, fontSize=7.5, textColor=CINZA_AZUL),
     }
 
@@ -137,7 +139,16 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
     dados = [[p('ART', 'th'), p('DESIGNAÇÃO', 'th'), p('UN', 'th'), p('Qtd', 'th_r'),
               p('PVP Unit', 'th_r'), p('Imposto', 'th_r'), p('Total ilíquido', 'th_r')]]
     iva_txt = f'{qtd(o.iva_taxa or 0)}%'
-    for i, l in enumerate(o.linhas, 1):
+    art, incluidas, fundos = 0, [], []  # fundos: (linha da tabela, nº do artigo) para alternar a cor por artigo
+    for l in o.linhas:
+        if l.incluido:  # material incluído no artigo de cima (mesma cor de fundo do artigo)
+            incluidas.append((len(dados), art))
+            fundos.append((len(dados), art))
+            dados.append(['', p('– ' + l.descricao, 'incl'), '', p(qtd(l.quantidade or 0), 'td_r'), p('Incluído', 'incl_r'), '', ''])
+            continue
+        art += 1
+        i = art
+        fundos.append((len(dados), art))
         designacao = [p(l.descricao, 'td'), p(l.nota, 'nota')] if l.nota else p(l.descricao, 'td')
         dados.append([p(i, 'td'), designacao, p('UN', 'td'), p(qtd(l.quantidade or 0), 'td_r'),
                       p(eur(l.preco_unitario), 'td_r'), p(iva_txt, 'td_r'),
@@ -145,11 +156,11 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
     tabela = Table(dados, colWidths=[10 * mm, None, 10 * mm, 11 * mm, 25 * mm, 16 * mm, 27 * mm], repeatRows=1)
     tabela.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), AZUL_TABELA),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [AZUL_LINHA_1, AZUL_LINHA_2]),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ] + [('BACKGROUND', (0, r), (-1, r), AZUL_LINHA_1 if a % 2 else AZUL_LINHA_2) for r, a in fundos] + [
         ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
         ('LEFTPADDING', (0, 0), (-1, -1), 4), ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-    ]))
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ] + [('TOPPADDING', (0, r), (-1, r), 0) for r, _ in incluidas]))
     story += [tabela, Spacer(1, 9 * mm)]
 
     # ── Totais ──

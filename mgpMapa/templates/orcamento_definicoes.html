@@ -176,6 +176,14 @@
         </div>
 
         <div class="card">
+            <div class="section-title">🔧 Material incluído</div>
+            <p class="ajuda">Opções que aparecem ao escrever em "+ Incluído" por baixo de cada artigo do orçamento (uma por linha). Também se acrescentam opções novas diretamente no orçamento.</p>
+            <div class="form-group">
+                <textarea name="orc_incluidos" rows="6">{{ incluidos|join('\n') }}</textarea>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="section-title">📝 Textos por omissão</div>
             <p class="ajuda">Aparecem já preenchidos em cada novo orçamento. Pode ajustá-los em cada orçamento antes de o criar.</p>
             <div class="form-grid">
