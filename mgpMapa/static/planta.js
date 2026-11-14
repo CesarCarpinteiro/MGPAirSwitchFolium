@@ -294,7 +294,7 @@
     function svgRascunho(u) {
         if (!rascunho) return '';
         var pts = rascunho.pontos.slice();
-        if (cursor) pts.push(encaixar(cursor, pts[pts.length - 1]));
+        if (cursor) pts.push(encaixar(cursor, pts[pts.length - 1], rascunho.categoria));
         var cor = rascunho.categoria === 'escala' ? '#607d8b' : CATEGORIAS[rascunho.categoria].cor;
         var r = '<polyline points="' + pts.map(function (p) { return n(p[0]) + ',' + n(p[1]); }).join(' ') +
             '" fill="none" stroke="' + cor + '" stroke-width="' + n(3 * u) + '" stroke-dasharray="' + n(5 * u) + ' ' + n(4 * u) +
@@ -312,10 +312,18 @@
     // Por baixo as linhas, por cima as unidades e as notas
     function marcacao(u, ecra) {
         var h = '', condutas = desenho.itens.filter(function (it) { return it.tipo === 'linha' && CATEGORIAS[it.categoria] && CATEGORIAS[it.categoria].conduta; });
+        desenho.itens.forEach(function (it) {  // tubagens e cabos que passam por baixo das condutas
+            if (it.tipo === 'linha' && it.nivel === 'baixo') h += svgLinha(it, u, ecra);
+        });
         [0, 1, 2, 3].forEach(function (c) { condutas.forEach(function (it) { h += svgConduta(it, u, ecra, c); }); });
+        if (ecra) desenho.itens.forEach(function (it) {  // continuam a dar para selecionar por cima da conduta (faixa estreita)
+            if (it.tipo !== 'linha' || it.nivel !== 'baixo') return;
+            h += '<polyline points="' + it.pontos.map(function (p) { return n(p[0]) + ',' + n(p[1]); }).join(' ') +
+                '" fill="none" data-id="' + it.id + '" stroke="transparent" stroke-width="' + n(9 * UE) + '" style="cursor:pointer"/>';
+        });
         ['linha', 'unidade', 'nota'].forEach(function (tipo) {
             desenho.itens.forEach(function (it) {
-                if (it.tipo !== tipo) return;
+                if (it.tipo !== tipo || (tipo === 'linha' && it.nivel === 'baixo')) return;
                 h += tipo === 'linha' ? svgLinha(it, u, ecra) : tipo === 'unidade' ? svgUnidade(it, u, ecra) : svgNota(it, u, ecra);
             });
         });
@@ -383,7 +391,8 @@
         } else if (selecionado) {
             var it = selecionado === 'escala' ? null : item(selecionado), desc = '';
             if (selecionado === 'escala') desc = '<strong>Escala</strong> · ' + String(desenho.escala.metros).replace('.', ',') + ' m';
-            else if (it.tipo === 'linha') desc = '<strong>' + CATEGORIAS[it.categoria].nome + '</strong>' + (it.medida ? ' ' + esc(String(it.medida).replace(/x/i, '×')) : '') + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
+            else if (it.tipo === 'linha') desc = '<strong>' + CATEGORIAS[it.categoria].nome + '</strong>' +
+                (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra ? '' : (it.nivel === 'baixo' ? ' · por baixo da conduta' : ' · por cima da conduta')) + (it.medida ? ' ' + esc(String(it.medida).replace(/x/i, '×')) : '') + (metros(comprimento(it.pontos)) ? ' · ' + metros(comprimento(it.pontos)) : '') + ' · arraste os pontos para ajustar';
             else if (it.tipo === 'unidade') desc = '<strong>' + MODELOS[it.modelo].nome + '</strong>' + (it.nome ? ' · ' + esc(it.nome) : '') +
                 '<br><small>Bolinha: rodar · quadrado: tamanho · barras azuis: só largura ou só altura.</small>';
             else desc = '<strong>Nota</strong>';
@@ -393,6 +402,7 @@
             if (it && it.tipo === 'unidade') h += '<button class="sec" data-acao="rodar" title="Rodar 90°">↻ 90°</button>' +
                 '<button class="sec" data-acao="menor" title="Diminuir">−</button><button class="sec" data-acao="maior" title="Aumentar">+</button>';
             else if (CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra) h += '<button data-acao="medida">Mudar medida</button>';
+            else h += '<button class="sec" data-acao="nivel">' + (it.nivel === 'baixo' ? '⬆ Pôr por cima da conduta' : '⬇ Pôr por baixo da conduta') + '</button>';
             h += '<button class="perigo" data-acao="apagar">Apagar</button>';
         } else {
             h = '<span>' + DICAS[ferramenta] + '</span>';
@@ -487,7 +497,8 @@
     }
 
     // Encaixa nas unidades (para ligar as linhas às máquinas) e na horizontal/vertical
-    function encaixar(p, anterior) {
+    function encaixar(p, anterior, categoria) {
+        var cat = CATEGORIAS[categoria], emConduta = !!(cat && (cat.conduta || cat.barra));
         var limite = 16 / s, melhor = null;
         desenho.itens.forEach(function (it) {
             if (it.tipo !== 'unidade') return;
@@ -496,7 +507,7 @@
         });
         if (melhor) return melhor;
         limite = 12 / s;
-        desenho.itens.forEach(function (it) {  // ramais: encaixa em cima de uma conduta ou grelha linear
+        if (emConduta) desenho.itens.forEach(function (it) {  // ramais: encaixa em cima de uma conduta ou grelha linear
             if (it.tipo !== 'linha' || !(CATEGORIAS[it.categoria].conduta || CATEGORIAS[it.categoria].barra)) return;
             for (var i = 1; i < it.pontos.length; i++) {
                 var a = it.pontos[i - 1], b = it.pontos[i], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
@@ -564,8 +575,8 @@
             return;
         }
         // linhas
-        if (!rascunho) rascunho = { categoria: ferramenta, pontos: [encaixar(p, null)] };
-        else rascunho.pontos.push(encaixar(p, rascunho.pontos[rascunho.pontos.length - 1]));
+        if (!rascunho) rascunho = { categoria: ferramenta, pontos: [encaixar(p, null, ferramenta)] };
+        else rascunho.pontos.push(encaixar(p, rascunho.pontos[rascunho.pontos.length - 1], ferramenta));
         if (ferramenta === 'grelha_linear' && rascunho.pontos.length === 2) { terminarRascunho(); return; }
         render();
     }
@@ -677,7 +688,7 @@
                     if (d0 > 0) it.tam = Math.round(Math.max(0.3, Math.min(6, (o.tam || 1) * d1 / d0)) * 100) / 100;
                 } else if (it.tipo === 'linha') {
                     if (toque.alvo.vertice != null) {
-                        var p = encaixar(cursor, null);
+                        var p = encaixar(cursor, null, it.categoria);
                         it.pontos[toque.alvo.vertice] = [n(p[0]), n(p[1])];
                     } else {
                         it.pontos = o.pontos.map(function (p) { return [n(p[0] + dx), n(p[1] + dy)]; });
@@ -738,6 +749,10 @@
         else if (acao === 'cancelar') { rascunho = null; render(); }
         else if (acao === 'apagar') apagarSelecionado();
         else if (acao === 'desbloquear') alternarBloqueio();
+        else if (acao === 'nivel') {
+            var ln = item(selecionado);
+            if (ln) { guardarHistorico(); ln.nivel = ln.nivel === 'baixo' ? 'cima' : 'baixo'; marcarAlterado(); render(); }
+        }
         else if (acao === 'texto') editarTexto();
         else if (acao === 'medida') mudarMedida();
         else if (acao === 'rodar' || acao === 'maior' || acao === 'menor') {
