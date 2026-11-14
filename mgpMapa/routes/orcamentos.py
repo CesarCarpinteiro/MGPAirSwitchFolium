@@ -8,7 +8,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import or_
+from sqlalchemy import case, func, or_
 
 from db import db
 from models import Orcamento, OrcamentoLinha, Organizacao, Produto, Usuario
@@ -260,7 +260,13 @@ def api_produtos():
         like = f'%{termo}%'
         query = query.filter(or_(Produto.marca.ilike(like), Produto.modelo.ilike(like),
                                  Produto.descricao.ilike(like), Produto.categoria.ilike(like)))
-    produtos = query.order_by(Produto.marca, Produto.modelo).limit(15).all()
+    # Os conjuntos (ex.: "2X MTJ-12… + 1X MOX…") só aparecem quando se procuram de propósito
+    if not re.search(r'\b\d\s*x\b|\+|twin|conjunto', q, re.IGNORECASE):
+        query = query.filter(~Produto.modelo.contains('+'), func.coalesce(Produto.descricao, '') != 'Conjunto')
+    # Primeiro os modelos que começam pelo que se escreveu
+    primeiro = q.split()[0] if q.split() else ''
+    comeca = case((Produto.modelo.ilike(f'{primeiro}%'), 0), else_=1)
+    produtos = query.order_by(comeca, Produto.marca, Produto.modelo).limit(20).all()
     org = _org()
     margens, geral = _margens_marca(org), _margem(org)
     return jsonify([{
