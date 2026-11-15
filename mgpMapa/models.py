@@ -152,6 +152,7 @@ class Produto(db.Model):
     descricao = db.Column(db.String(300))
     categoria = db.Column(db.String(100))
     preco = db.Column(db.Float, nullable=False)  # sem IVA
+    sem_margem = db.Column(db.Boolean, default=False)  # vende-se ao preço do catálogo
 
 class PushSubscription(db.Model):
     __tablename__ = 'push_subscriptions'

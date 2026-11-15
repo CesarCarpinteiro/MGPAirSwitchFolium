@@ -387,7 +387,10 @@
         document.querySelectorAll('.mm-pct[data-chave]').forEach(function(el) { if (el.dataset.chave === chave) achada = el; });
         return achada;
     }
-    function margemPara(chave) { return num(caixaMarca(chave) || document.getElementById('margemOutras')); }
+    function margemPara(chave) {
+        if (chave === '_sem') return 0;  // sem marca ou "sem margem" no catálogo: preço do catálogo
+        return num(caixaMarca(chave) || document.getElementById('margemOutras'));
+    }
     function precoComMargem(linha) {
         var pcat = parseFloat(linha.querySelector('.f-pcat').value);
         if (!linha.querySelector('.f-pid').value || !(pcat >= 0)) return null;
@@ -398,7 +401,7 @@
             var chave = caixa.dataset.chave;
             document.querySelectorAll('#linhas .linha:not(.sub)').forEach(function(l) {
                 var m = l.dataset.marca || '';
-                var afetada = chave ? m === chave : !caixaMarca(m);  // "outras" aplica-se às marcas sem caixa própria
+                var afetada = m !== '_sem' && (chave ? m === chave : !caixaMarca(m));  // "outras" aplica-se às marcas sem caixa própria
                 var p = afetada ? precoComMargem(l) : null;
                 if (p != null) l.querySelector('.f-preco').value = p.toFixed(2);
             });

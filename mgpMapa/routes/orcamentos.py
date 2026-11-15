@@ -58,8 +58,18 @@ def _margens_marca(org):
     return {k: float(v) for k, v in dados.items() if isinstance(v, (int, float))} if isinstance(dados, dict) else {}
 
 
-def _margem_produto(margens, geral, marca):
-    return margens.get(_chave_marca(marca), geral)
+SEM_MARGEM = '_sem'  # produtos sem marca ou marcados "sem margem": vendem-se ao preço do catálogo
+
+
+def _chave_margem(p):
+    if not p or p.sem_margem or not _chave_marca(p.marca):
+        return SEM_MARGEM
+    return _chave_marca(p.marca)
+
+
+def _margem_produto(margens, geral, p):
+    chave = _chave_margem(p)
+    return 0 if chave == SEM_MARGEM else margens.get(chave, geral)
 
 
 def _texto(valor, padrao):
@@ -279,11 +289,11 @@ def _form_orcamento(o=None):
         termos = _texto(org.orc_termos if org else None, TERMOS_PADRAO)
         pagamento = _texto(org.orc_pagamento if org else None, PAGAMENTO_PADRAO)
     else:
-        marcas_prod = dict(db.session.query(Produto.id, Produto.marca).filter(
-            Produto.id.in_([l.produto_id for l in o.linhas if l.produto_id] or [0])).all())
+        marcas_prod = {p.id: _chave_margem(p) for p in db.session.query(Produto).filter(
+            Produto.id.in_([l.produto_id for l in o.linhas if l.produto_id] or [0]))}
         linhas = [{'produto_id': l.produto_id or '', 'descricao': l.descricao, 'quantidade': l.quantidade,
                    'preco': l.preco_unitario, 'nota': l.nota or '', 'incluido': bool(l.incluido),
-                   'pcat': l.preco_catalogo, 'marca': _chave_marca(marcas_prod.get(l.produto_id))} for l in o.linhas]
+                   'pcat': l.preco_catalogo, 'marca': marcas_prod.get(l.produto_id, '')} for l in o.linhas]
         if not linhas and o.valor:
             # Orçamento antigo sem linhas: uma linha com a descrição e o valor sem IVA (o total mantém-se)
             iva = o.iva_taxa if o.iva_taxa is not None else IVA_PADRAO
@@ -373,9 +383,9 @@ def api_produtos():
         'descricao': p.descricao or '',
         'categoria': p.categoria or '',
         # preço de venda (catálogo + margem da marca), sem IVA
-        'preco': round(p.preco * (1 + _margem_produto(margens, geral, p.marca) / 100), 2),
+        'preco': round(p.preco * (1 + _margem_produto(margens, geral, p) / 100), 2),
         'preco_catalogo': p.preco,
-        'marca_chave': _chave_marca(p.marca),
+        'marca_chave': _chave_margem(p),
         'label': ' '.join(x for x in [p.marca, p.modelo, p.descricao] if x),
     } for p in produtos])
 
@@ -405,7 +415,12 @@ COLUNAS_CATALOGO = {
     'descricao': ['descricao', 'description', 'designacao', 'produto', 'nome'],
     'categoria': ['categoria', 'tipo', 'category', 'familia', 'gama'],
     'preco': ['preco', 'price', 'pvp', 'valor', 'custo'],
+    'sem_margem': ['semmargem'],
 }
+
+
+def _sim(texto):
+    return _normalizar(texto) in ('1', 'sim', 's', 'x', 'yes', 'y', 'true', 'verdadeiro')
 
 
 def _normalizar(texto):
@@ -466,7 +481,8 @@ def catalogo():
         if modelo and preco:
             db.session.add(Produto(org_id=current_user.org_id, marca=request.form.get('marca', '').strip(),
                                    modelo=modelo, descricao=request.form.get('descricao', '').strip(),
-                                   categoria=request.form.get('categoria', '').strip(), preco=_num(preco)))
+                                   categoria=request.form.get('categoria', '').strip(), preco=_num(preco),
+                                   sem_margem=request.form.get('sem_margem') == '1'))
             db.session.commit()
             flash('Produto adicionado.', 'success')
         return redirect(url_for('orcamentos.catalogo'))
@@ -514,7 +530,8 @@ def importar_catalogo():
             continue
         descricao = valor(row, 'descricao') if 'modelo' in mapa else ''
         novos.append(Produto(org_id=current_user.org_id, marca=valor(row, 'marca')[:100], modelo=modelo[:200],
-                             descricao=descricao[:300], categoria=valor(row, 'categoria')[:100], preco=preco))
+                             descricao=descricao[:300], categoria=valor(row, 'categoria')[:100], preco=preco,
+                             sem_margem=_sim(valor(row, 'sem_margem'))))
 
     if request.form.get('substituir') == '1':
         ids_org = db.session.query(Produto.id).filter_by(org_id=current_user.org_id)
@@ -553,6 +570,7 @@ def editar_produto(id):
         p.descricao = request.form.get('descricao', p.descricao or '').strip()
         p.categoria = request.form.get('categoria', p.categoria or '').strip()
         p.preco = _num(request.form.get('preco'), p.preco)
+        p.sem_margem = request.form.get('sem_margem') == '1'
         db.session.commit()
         flash('Produto atualizado.', 'success')
     return redirect(url_for('orcamentos.catalogo'))

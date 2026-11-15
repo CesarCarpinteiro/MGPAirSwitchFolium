@@ -125,7 +125,7 @@
                 Ficheiro <strong>CSV ou Excel</strong> com as colunas <code>marca</code>, <code>modelo</code>,
                 <code>descricao</code>, <code>categoria</code> e <code>preco</code> (<strong>sem IVA</strong>).
                 Só <code>modelo</code> e <code>preco</code> são obrigatórias, e os nomes das colunas não precisam de ser exatos.
-                <a href="/orcamentos/catalogo/modelo.csv">Descarregar ficheiro de exemplo</a><br>A margem de venda é aplicada em <a href="/orcamentos/definicoes">Definições</a>.
+                <a href="/orcamentos/catalogo/modelo.csv">Descarregar ficheiro de exemplo</a><br>A margem de venda é aplicada em <a href="/orcamentos/definicoes">Definições</a>. Os produtos <strong>sem marca</strong> (ex.: bomba de condensados, serviços) e os marcados <strong>sem margem</strong> vendem-se ao preço do catálogo.
             </p>
             <form method="POST" action="/orcamentos/catalogo/importar" enctype="multipart/form-data">
                 <div class="row">
@@ -147,6 +147,7 @@
                     <input type="text" name="descricao" placeholder="Descrição (ex: 3,5 kW)">
                     <input type="text" name="categoria" placeholder="Categoria (ex: Serviço)">
                     <input type="text" name="preco" inputmode="decimal" placeholder="Preço s/ IVA (€) *" required>
+                    <label class="check" style="grid-column:1/-1;"><input type="checkbox" name="sem_margem" value="1"> Sem margem (vende-se ao preço do catálogo)</label>
                     <button type="submit" class="btn-submit">Adicionar</button>
                 </div>
             </form>
@@ -160,7 +161,7 @@
         <div class="table-scroll">
         <table>
             <thead>
-                <tr><th>Marca</th><th>Modelo</th><th>Descrição</th><th>Categoria</th><th style="text-align:right;width:120px;">Preço catálogo</th><th style="width:70px;"></th></tr>
+                <tr><th>Marca</th><th>Modelo</th><th>Descrição</th><th>Categoria</th><th style="text-align:right;width:120px;">Preço catálogo</th><th style="width:70px;text-align:center;" title="Vende-se ao preço do catálogo, sem margem">Sem margem</th><th style="width:70px;"></th></tr>
             </thead>
             <tbody>
                 {% for p in produtos %}
@@ -170,6 +171,7 @@
                     <td><input type="text" name="descricao" value="{{ p.descricao or '' }}" form="ed-{{ p.id }}"></td>
                     <td><input type="text" name="categoria" value="{{ p.categoria or '' }}" form="ed-{{ p.id }}"></td>
                     <td><input type="text" name="preco" class="preco" inputmode="decimal" value="{{ '%.2f' % p.preco }}" form="ed-{{ p.id }}"></td>
+                    <td style="text-align:center;">{% if p.marca and p.marca.strip() %}<input type="checkbox" name="sem_margem" value="1" form="ed-{{ p.id }}" {{ 'checked' if p.sem_margem }} title="Sem margem">{% else %}<span title="Sem marca: vende-se sempre ao preço do catálogo" style="color:#999;font-size:12px;">sem marca</span>{% endif %}</td>
                     <td style="white-space:nowrap;">
                         <form method="POST" action="/orcamentos/catalogo/editar/{{ p.id }}" id="ed-{{ p.id }}" style="display:inline;">
                             <button type="submit" class="icon-btn save" title="Guardar">💾</button>
