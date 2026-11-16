@@ -35,3 +35,9 @@ body:has(> .rodape-app), body:has(> * > .rodape-app) { padding-bottom: 0 !import
 @media (max-width: 600px) {
     .leaflet-control-geocoder-form input { font-size: 16px; }  /* 16px: o iPhone não faz zoom ao tocar */
 }
+
+/* iPhone (Safari do iOS 26): a zona da barra das horas fica com a cor do cabeçalho fixo / do fundo da página.
+   Cabeçalho sempre no topo + fundo azul por trás → o topo fica todo azul, sem a faixa cinzenta desfocada */
+html { background-color: #2d3a6e !important; }
+body { min-height: 100vh; }
+html body .page-header { position: sticky !important; top: 0; z-index: 900; }
