@@ -9,14 +9,12 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas as rl_canvas
-from reportlab.platypus import (Flowable, Image, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer,
-                                Table, TableStyle)
+from reportlab.platypus import Image, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 AZUL = colors.HexColor('#2d3a6e')
 TEXTO = colors.HexColor('#222631')
 CINZA = colors.HexColor('#70758a')
 LINHA = colors.HexColor('#dcdfe8')
-VALIDADE_DIAS = 30
 
 LARGURA, ALTURA = A4
 MARGEM = 18 * mm
@@ -67,29 +65,6 @@ class _CanvasNumerado(rl_canvas.Canvas):
         self.restoreState()
 
 
-class _AoFundo(Flowable):
-    """Coloca o bloco no fundo da página (se couber nela); senão passa para a página seguinte como normal."""
-
-    def __init__(self, bloco, folga=6 * mm):
-        super().__init__()
-        self.bloco, self.folga = bloco, folga
-
-    def wrap(self, largura, altura):
-        _, h = self.bloco.wrap(largura, altura)
-        self._h = h
-        self.width = largura
-        self.height = altura if h + self.folga <= altura else h  # ocupa o espaço livre para ir parar ao fundo
-        return self.width, self.height
-
-    def split(self, largura, altura):
-        if self._h + self.folga <= altura:
-            return []
-        return [PageBreak(), self.bloco]
-
-    def draw(self):
-        self.bloco.drawOn(self.canv, 0, 0)
-
-
 def gerar_pdf_orcamento(o, org, totais, logo_path=None):
     buf = io.BytesIO()
     empresa = (org.designacao_social or org.nome) if org else ''
@@ -126,8 +101,6 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         'tot_fv': estilo('tot_fv', fontName='Helvetica-Bold', fontSize=15, leading=19, textColor=AZUL, alignment=TA_RIGHT),
         'seccao': estilo('seccao', fontName='Helvetica-Bold', fontSize=10.5, leading=14, spaceAfter=4),
         'texto': estilo('texto', fontSize=9.4, leading=13.6, textColor=colors.HexColor('#3a3f50')),
-        'pequeno': estilo('pequeno', fontSize=9, leading=12.5, textColor=CINZA),
-        'assin': estilo('assin', fontSize=9, leading=12, textColor=CINZA),
     }
 
     def p(texto, nome):
@@ -252,24 +225,6 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         story += [sem_margens(duas), Spacer(1, 6 * mm)]
     elif blocos:
         story += [KeepTogether(seccao(blocos[0][0], blocos[0][1](largura_util))), Spacer(1, 6 * mm)]
-
-    # ── Validade e aceitação ──
-    def linha_assinatura(rotulo):
-        t = Table([[''], [p(rotulo, 'assin')]], colWidths=[75 * mm], rowHeights=[14 * mm, None])
-        t.setStyle(TableStyle([('LINEBELOW', (0, 0), (0, 0), 0.5, CINZA),
-                               ('LEFTPADDING', (0, 0), (-1, -1), 0), ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-                               ('TOPPADDING', (0, 1), (0, 1), 3)]))
-        return t
-
-    aceitacao = Table([[linha_assinatura('Data'), '', linha_assinatura('Assinatura do cliente')]],
-                      colWidths=[75 * mm, largura_util - 150 * mm, 75 * mm])
-    sem_margens(aceitacao)
-    fim_doc = Table([[[
-        p(f'Orçamento válido por {VALIDADE_DIAS} dias. Para adjudicar, basta devolver este documento assinado '
-          'ou confirmar por escrito.', 'pequeno'),
-        Spacer(1, 2 * mm), aceitacao,
-    ]]], colWidths=[largura_util])
-    story.append(_AoFundo(sem_margens(fim_doc)))
 
     rodape = '  ·  '.join(x for x in [empresa, f'NIF {org.nif}' if org and org.nif else '',
                                        org.telefone if org else '', org.email if org else ''] if x)
