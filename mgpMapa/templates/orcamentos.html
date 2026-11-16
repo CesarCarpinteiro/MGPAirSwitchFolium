@@ -87,8 +87,19 @@
             background: #f8faf8; color: #2d3a6e; padding: 10px 14px;
             text-align: left; font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.4px;
         }
+        .table-scroll { overflow-x: auto; }
+        .orcamentos-table th { padding: 10px 10px !important; }
+        .orcamentos-table td.acoes { text-align: right; }
+        .acao { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 32px; height: 30px; padding: 0 7px !important; vertical-align: middle; }
+        .acao .lbl { display: none; }
+        .acao .ptag { font-size: 0.75em; }
+        /* Computador com o menu fixo e pouco espaço: tabela mais compacta */
+        @media (min-width: 1100px) and (max-width: 1300px) {
+            html.mn-fixo .orcamentos-table td.desc { max-width: 130px !important; }
+            html.mn-fixo .orcamentos-table .col-criado { display: none; }
+        }
         .orcamentos-table td {
-            padding: 11px 14px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle;
+            padding: 11px 10px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle;
         }
         .orcamentos-table tr:last-child td { border-bottom: none; }
         .orcamentos-table tr:hover td { background: #fafff9; }
@@ -170,6 +181,13 @@
             .action-bar { flex-direction: column; align-items: stretch; }
             .auto-actions { flex-direction: column; text-align: center; }
             .content { padding: 0 10px; }
+            .page-header { padding: 10px 12px; }
+            .page-header h1 { font-size: 1.1em; }
+            .header-actions { gap: 6px; }
+            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+        }
+        /* Ecrãs estreitos: a tabela vira cartões */
+        @media (max-width: 900px) {
             /* Tabela vira cartões no telemóvel */
             .orcamentos-table thead { display: none; }
             .orcamentos-table, .orcamentos-table tbody, .orcamentos-table tr { display: block; width: 100%; }
@@ -184,10 +202,7 @@
             }
             .orcamentos-table td.desc { white-space: normal !important; }
             .orcamentos-table td.acoes { justify-content: flex-end; border-top: 1px solid #f0f0f0; margin-top: 4px; padding-top: 8px; }
-            .page-header { padding: 10px 12px; }
-            .page-header h1 { font-size: 1.1em; }
-            .header-actions { gap: 6px; }
-            .header-actions a { padding: 7px 10px; font-size: 0.82em; }
+            .acao .lbl { display: inline; }
         }
         /* Telemóvel: o cabeçalho passa os botões para uma 2ª linha quando não cabem */
         @media (max-width: 700px) {
@@ -295,8 +310,7 @@
                     <th>Máquinas</th>
                     <th>Valor</th>
                     <th>Data</th>
-                    <th>Estado</th>
-                    {% if is_admin %}<th>Criado por</th>{% endif %}
+                    {% if is_admin %}<th class="col-criado">Criado por</th>{% endif %}
                     <th></th>
                 </tr>
             </thead>
@@ -309,37 +323,15 @@
                         {{ o.descricao or '—' }}
                     </td>
                     <td data-label="Máquinas">{{ o.num_maquinas or '—' }}</td>
-                    <td data-label="Valor"><strong style="color:#2d3a6e;">{{ ('{:,.2f}'.format(o.valor).replace(',', ' ').replace('.', ',') ~ ' €') if o.valor else '—' }}</strong></td>
+                    <td data-label="Valor" style="white-space:nowrap;"><strong style="color:#2d3a6e;">{{ ('{:,.2f}'.format(o.valor).replace(',', ' ').replace('.', ',') ~ ' €') if o.valor else '—' }}</strong></td>
                     <td data-label="Data" style="color:#888; font-size:0.88em;">{{ o.created_at or '—' }}</td>
-                    <td data-label="Estado">
-                        {% if is_admin %}
-                        <form method="POST" action="/orcamentos/estado/{{ o.id }}" style="margin:0;">
-                            <select class="estado-select" name="estado" onchange="this.form.submit()">
-                                <option value="Pendente" {{ 'selected' if o.estado == 'Pendente' }}>Pendente</option>
-                                <option value="Aprovado" {{ 'selected' if o.estado == 'Aprovado' }}>Aprovado</option>
-                                <option value="Rejeitado" {{ 'selected' if o.estado == 'Rejeitado' }}>Rejeitado</option>
-                                <option value="Concluído" {{ 'selected' if o.estado == 'Concluído' }}>Concluído</option>
-                            </select>
-                        </form>
-                        {% else %}
-                            {% if o.estado == 'Pendente' %}
-                                <span class="badge badge-pendente">Pendente</span>
-                            {% elif o.estado == 'Aprovado' %}
-                                <span class="badge badge-aprovado">Aprovado</span>
-                            {% elif o.estado == 'Rejeitado' %}
-                                <span class="badge badge-rejeitado">Rejeitado</span>
-                            {% else %}
-                                <span class="badge badge-concluido">{{ o.estado }}</span>
-                            {% endif %}
-                        {% endif %}
-                    </td>
                     {% if is_admin %}
-                    <td data-label="Criado por" style="font-size:0.85em; color:#888;">{{ u.nome }}</td>
+                    <td data-label="Criado por" class="col-criado" style="font-size:0.85em; color:#888;">{{ u.nome }}</td>
                     {% endif %}
                     <td class="acoes" style="white-space:nowrap;">
-                        {% if o.user_id == current_user.id or is_admin %}<a href="/orcamentos/{{ o.id }}/editar" class="pdf-link" title="Editar orçamento">Editar</a>{% endif %}
-                        {% if o.linhas %}<a href="/orcamentos/{{ o.id }}/pdf" target="_blank" class="pdf-link" title="Ver PDF">PDF</a>
-                        {% if o.user_id == current_user.id or is_admin %}<button type="button" class="pdf-link partilhar-btn" data-id="{{ o.id }}" data-cliente="{{ o.cliente|e }}" onclick="abrirPartilha(this.dataset.id, this.dataset.cliente)" title="Enviar ao cliente">📤 Partilhar{% if o.partilha_token %} <span class="ptag" title="Já tem link">🔗</span>{% endif %}</button>{% endif %}{% endif %}
+                        {% if o.user_id == current_user.id or is_admin %}<a href="/orcamentos/{{ o.id }}/editar" class="pdf-link acao" title="Editar orçamento">✏️<span class="lbl">Editar</span></a>{% endif %}
+                        {% if o.linhas %}<a href="/orcamentos/{{ o.id }}/pdf" target="_blank" class="pdf-link acao" title="Ver PDF">PDF</a>
+                        {% if o.user_id == current_user.id or is_admin %}<button type="button" class="pdf-link acao partilhar-btn" data-id="{{ o.id }}" data-cliente="{{ o.cliente|e }}" onclick="abrirPartilha(this.dataset.id, this.dataset.cliente)" title="Partilhar com o cliente">📤<span class="lbl">Partilhar</span>{% if o.partilha_token %}<span class="ptag" title="Já tem link">🔗</span>{% endif %}</button>{% endif %}{% endif %}
                         <form method="POST" action="/orcamentos/delete/{{ o.id }}" id="odel-{{ o.id }}" style="margin:0;display:inline;">
                             <button type="button" class="delete-btn"
                                 data-formid="odel-{{ o.id }}"
@@ -436,7 +428,7 @@
                 document.getElementById('pEmailSub').textContent = d.email ? 'Para ' + d.email : 'Mensagem com o link do orçamento';
                 document.getElementById('pSms').href = 'sms:' + (d.telefone || '').replace(/\s/g, '') + (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(msg);
                 var tag = document.querySelector('.partilhar-btn[data-id="' + id + '"]');
-                if (tag && !tag.querySelector('.ptag')) tag.insertAdjacentHTML('beforeend', ' <span class="ptag" title="Já tem link">🔗</span>');
+                if (tag && !tag.querySelector('.ptag')) tag.insertAdjacentHTML('beforeend', '<span class="ptag" title="Já tem link">🔗</span>');
                 // Enviar o próprio PDF (telemóvel): prepara já o ficheiro, a partilha tem de sair do toque
                 if (navigator.canShare) {
                     fetch('/orcamentos/' + id + '/pdf').then(function(r) { return r.blob(); }).then(function(b) {
