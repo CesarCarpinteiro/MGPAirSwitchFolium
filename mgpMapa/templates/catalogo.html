@@ -120,7 +120,7 @@
 <div class="content">
     <div class="two-col">
         <div class="card">
-            <div class="section-title">📥 Importar lista de preços</div>
+            <div class="section-title">Importar lista de preços</div>
             <p class="help">
                 Ficheiro <strong>CSV ou Excel</strong> com as colunas <code>marca</code>, <code>modelo</code>,
                 <code>descricao</code>, <code>categoria</code> e <code>preco</code> (<strong>sem IVA</strong>).
@@ -139,7 +139,7 @@
         </div>
 
         <div class="card">
-            <div class="section-title">➕ Adicionar produto ou serviço</div>
+            <div class="section-title">Adicionar produto ou serviço</div>
             <form method="POST" action="/orcamentos/catalogo">
                 <div class="add-grid">
                     <input type="text" name="marca" placeholder="Marca">
@@ -155,7 +155,7 @@
     </div>
 
     <div class="card">
-        <div class="section-title">📦 Produtos <span class="count" id="count">{{ produtos|length }} produtos</span></div>
+        <div class="section-title">Produtos <span class="count" id="count">{{ produtos|length }} produtos</span></div>
         {% if produtos %}
         <input type="search" id="filtro" placeholder="Filtrar por marca, modelo, categoria…" style="width:100%;margin-bottom:12px;">
         <div class="table-scroll">
@@ -192,7 +192,7 @@
     </div>
 </div>
 
-<footer>&copy; GestãoPro</footer>
+<footer class="rodape-app">&copy; GestãoPro</footer>
 
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 

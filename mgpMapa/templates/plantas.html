@@ -124,7 +124,7 @@
 
 <div class="content">
     <div class="card">
-        <div class="section-title">📐 Nova planta</div>
+        <div class="section-title">Nova planta</div>
         <p class="ajuda">Carregue a planta da casa (PDF, JPG ou PNG, ou uma fotografia) e desenhe por cima as unidades, a tubagem, o dreno e o cabo elétrico.</p>
         <form id="novaForm" autocomplete="off">
             <div class="form-grid">
@@ -149,7 +149,7 @@
     </div>
 
     <div class="card">
-        <div class="section-title">🏠 Plantas <span class="count">{{ plantas|length }}</span></div>
+        <div class="section-title">Plantas <span class="count">{{ plantas|length }}</span></div>
         {% if plantas %}
         <div class="grelha">
             {% for p, u in plantas %}
@@ -178,7 +178,7 @@
     </div>
 </div>
 
-<footer>&copy; GestãoPro</footer>
+<footer class="rodape-app">&copy; GestãoPro</footer>
 
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 

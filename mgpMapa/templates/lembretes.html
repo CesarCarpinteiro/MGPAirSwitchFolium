@@ -118,7 +118,7 @@
     {% endif %}
 
     <div class="card">
-        <div class="section-title">📅 A enviar <span class="count">{{ pendentes|length }}</span></div>
+        <div class="section-title">A enviar <span class="count">{{ pendentes|length }}</span></div>
         <p class="ajuda">
             Todos os dias às 9h são enviados os SMS previstos para esse dia e preparados os do dia seguinte.
             Se não fizer nada, saem à hora prevista. Se entretanto agendar ou registar a manutenção do cliente, o SMS é cancelado sozinho.
@@ -151,7 +151,7 @@
     </div>
 
     <div class="card">
-        <div class="section-title">🕓 Histórico (60 dias) <span class="count">{{ historico|length }}</span></div>
+        <div class="section-title">Histórico (60 dias) <span class="count">{{ historico|length }}</span></div>
         {% if historico %}
         <table>
             <thead><tr><th>Cliente</th><th>Lembrete</th><th>Estado</th><th></th></tr></thead>
@@ -183,7 +183,7 @@
     </div>
 </div>
 
-<footer>&copy; GestãoPro</footer>
+<footer class="rodape-app">&copy; GestãoPro</footer>
 
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 

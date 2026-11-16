@@ -211,7 +211,7 @@
     <form method="POST" action="{{ '/orcamentos/%d/editar' % o.id if o else '/orcamentos/novo' }}" id="orcForm" autocomplete="off">
 
         <div class="card">
-            <div class="section-title">👤 Cliente</div>
+            <div class="section-title">Cliente</div>
             <div class="form-grid">
                 <div class="form-group span2">
                     <label>Nome *</label>
@@ -237,7 +237,7 @@
         </div>
 
         <div class="card">
-            <div class="section-title">📊 Margem por marca</div>
+            <div class="section-title">Margem por marca</div>
             <p class="ajuda">Margem sobre o preço de catálogo, só para este orçamento. Vem das Definições; ao mudar, os preços das linhas dessa marca são recalculados.</p>
             <div class="margens-orc">
                 {% for m in margens_orc[0] %}
@@ -255,7 +255,7 @@
         </div>
 
         <div class="card">
-            <div class="section-title">🧾 Produtos e serviços</div>
+            <div class="section-title">Produtos e serviços</div>
             <div class="linhas-head">
                 <div>Produto / descrição</div><div class="r">Qtd.</div><div class="r">Preço s/ IVA</div><div class="r">Total</div><div></div>
             </div>
@@ -264,7 +264,7 @@
         </div>
 
         <div class="card">
-            <div class="section-title">📝 Termos e condições de pagamento</div>
+            <div class="section-title">Termos e condições de pagamento</div>
             <p class="ajuda">Textos por omissão definidos{% if is_admin %} em <a href="/orcamentos/definicoes">Definições</a>{% else %} pelo administrador{% endif %}. Pode ajustá-los só para este orçamento.</p>
             <div class="form-grid cols-2">
                 <div class="form-group">
@@ -279,7 +279,7 @@
         </div>
 
         <div class="card">
-            <div class="section-title">💶 Totais</div>
+            <div class="section-title">Totais</div>
             <div class="totais-grid">
                 <div class="form-grid">
                     <div class="form-group">
@@ -355,7 +355,7 @@
     </div>
 </template>
 
-<footer>&copy; GestãoPro</footer>
+<footer class="rodape-app">&copy; GestãoPro</footer>
 
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 

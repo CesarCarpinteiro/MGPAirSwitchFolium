@@ -115,7 +115,7 @@
     <form method="POST" action="/orcamentos/definicoes" enctype="multipart/form-data">
 
         <div class="card">
-            <div class="section-title">🏢 Empresa (cabeçalho do PDF)</div>
+            <div class="section-title">Empresa (cabeçalho do PDF)</div>
             <p class="ajuda">Estes dados aparecem no topo de todos os orçamentos enviados aos clientes.</p>
             <div class="form-grid">
                 <div class="form-group">
@@ -154,7 +154,7 @@
         </div>
 
         <div class="card">
-            <div class="section-title">💶 Preços</div>
+            <div class="section-title">Preços</div>
             <p class="ajuda">Os preços importados das tabelas são de catálogo. A margem é somada automaticamente quando escolhe um produto no orçamento, e o preço continua editável em cada linha. Cada marca pode ter a sua margem; as marcas deixadas em branco usam a margem de <strong>outras marcas</strong>.</p>
             <div class="margens">
                 {% for m in marcas %}
@@ -176,7 +176,7 @@
         </div>
 
         <div class="card">
-            <div class="section-title">🔧 Material incluído</div>
+            <div class="section-title">Material incluído</div>
             <p class="ajuda">Opções que aparecem ao escrever em "+ Incluído" por baixo de cada artigo do orçamento. Uma por linha, no formato <strong>Nome | descrição</strong> (ex.: <em>Tubagem | Tubagem em cobre isolado…</em>). A descrição vem preenchida no orçamento e pode ser ajustada. Também se acrescentam opções novas diretamente no orçamento.</p>
             <div class="form-group">
                 <textarea name="orc_incluidos" rows="6">{% for i in incluidos %}{{ i.nome }}{% if i.descricao %} | {{ i.descricao }}{% endif %}
@@ -185,7 +185,7 @@
         </div>
 
         <div class="card">
-            <div class="section-title">📝 Textos por omissão</div>
+            <div class="section-title">Textos por omissão</div>
             <p class="ajuda">Aparecem já preenchidos em cada novo orçamento. Pode ajustá-los em cada orçamento antes de o criar.</p>
             <div class="form-grid">
                 <div class="form-group">
@@ -203,7 +203,7 @@
     </form>
 </div>
 
-<footer>&copy; GestãoPro</footer>
+<footer class="rodape-app">&copy; GestãoPro</footer>
 
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 

@@ -70,7 +70,7 @@
         '}' +
         '@media print{.mn-btn,.mn-painel,.mn-fundo{display:none!important}html.mn-fixo body{padding-right:0!important}}';
     // Letra do menu (igual em todas as páginas)
-    if (!document.querySelector('link[data-mn-fonte]')) {
+    if (!document.querySelector('link[data-mn-fonte], link[href*="Plus+Jakarta+Sans"]')) {
         var fonte = document.createElement('link');
         fonte.rel = 'stylesheet';
         fonte.href = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap';
@@ -165,6 +165,31 @@
         });
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
-    else montar();
+    // Rodapé no fundo do ecrã quando a página é curta
+    function rodape() {
+        var f = document.querySelector('.rodape-app');
+        if (!f) return;
+        f.style.removeProperty('margin-top');
+        var cs = getComputedStyle(document.body);
+        var fim = f.getBoundingClientRect().bottom + window.scrollY + parseFloat(cs.paddingBottom) + parseFloat(cs.marginBottom);
+        var falta = window.innerHeight - fim;
+        if (falta > 0) f.style.setProperty('margin-top', falta + 'px', 'important');
+    }
+    function iniciar() {
+        montar();
+        rodape();
+        window.addEventListener('load', rodape);
+        window.addEventListener('resize', rodape);
+        if (window.ResizeObserver) {
+            var pendente = false;
+            new ResizeObserver(function() {
+                if (pendente) return;
+                pendente = true;
+                requestAnimationFrame(function() { pendente = false; rodape(); });
+            }).observe(document.body);
+        }
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
+    else iniciar();
 })();

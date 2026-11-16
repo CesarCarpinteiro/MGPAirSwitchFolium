@@ -1,0 +1,21 @@
+/* Aspeto comum a todas as páginas (as páginas não partilham um template base; o app.py injeta este ficheiro) */
+:root { --fonte: "Plus Jakarta Sans", "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+/* Uma só letra em toda a app (os ícones e os desenhos ficam como estão) */
+body,
+body *:not(i):not(svg):not(svg *):not(.fa):not([class^="fa-"]):not([class*=" fa-"]):not(.glyphicon):not(code):not(pre) {
+    font-family: var(--fonte) !important;
+}
+body { -webkit-font-smoothing: antialiased; }
+
+/* Mesma largura de conteúdo em todas as páginas */
+.content { max-width: 1040px !important; }
+
+/* Rodapé discreto no fim da página (o menu.js empurra-o para o fundo quando a página é curta) */
+.rodape-app {
+    position: static !important; width: auto !important; background: none !important; border: 0 !important;
+    color: #9aa0b8 !important; font-size: 12px !important; text-align: center !important;
+    padding: 18px 10px 22px !important;
+}
+/* Já não há rodapé fixo a compensar */
+body:has(> .rodape-app), body:has(> * > .rodape-app) { padding-bottom: 0 !important; }

@@ -87,8 +87,11 @@ def orcamentos():
     else:
         todos = db.session.query(Orcamento, Usuario).join(Usuario, Orcamento.user_id == Usuario.id).filter(
             Orcamento.org_id == current_user.org_id, Orcamento.user_id == current_user.id).order_by(Orcamento.id.desc()).all()
+    sufixo = datetime.now().strftime('/%m/%Y')
+    do_mes = [o for o, _ in todos if (o.created_at or '').endswith(sufixo)]
     return render_template('orcamentos.html', orcamentos=todos, is_admin=is_admin,
-                           novo_id=request.args.get('novo', type=int))
+                           novo_id=request.args.get('novo', type=int), mes_qtd=len(do_mes),
+                           mes_valor=sum(o.valor or 0 for o in do_mes))
 
 
 @orcamentos_bp.route('/orcamentos/delete/<int:id>', methods=['POST'])

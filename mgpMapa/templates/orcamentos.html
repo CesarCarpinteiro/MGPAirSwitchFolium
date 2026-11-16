@@ -244,18 +244,14 @@
             <div class="s-sub">orçamentos</div>
         </div>
         <div class="summary-card">
-            <div class="s-label">Pendentes</div>
-            <div class="s-value" style="color:#e65100;">
-                {{ orcamentos | selectattr('0.estado', 'equalto', 'Pendente') | list | length }}
-            </div>
-            <div class="s-sub">a aguardar</div>
+            <div class="s-label">Este mês</div>
+            <div class="s-value">{{ mes_qtd }}</div>
+            <div class="s-sub">orçamentos</div>
         </div>
         <div class="summary-card">
-            <div class="s-label">Aprovados</div>
-            <div class="s-value" style="color:#2d3a6e;">
-                {{ orcamentos | selectattr('0.estado', 'equalto', 'Aprovado') | list | length }}
-            </div>
-            <div class="s-sub">confirmados</div>
+            <div class="s-label">Valor este mês</div>
+            <div class="s-value">{{ '%.0f€' % mes_valor }}</div>
+            <div class="s-sub">com IVA</div>
         </div>
         <div class="summary-card">
             <div class="s-label">Valor Total</div>
@@ -283,7 +279,7 @@
 
     <!-- List -->
     <div class="card">
-        <div class="section-title">📄 Lista de Orçamentos</div>
+        <div class="section-title">Lista de Orçamentos</div>
         {% if orcamentos %}
         <div class="table-scroll">
         <table class="orcamentos-table">
@@ -339,7 +335,7 @@
 
 </div>
 
-<footer>&copy; GestãoPro</footer>
+<footer class="rodape-app">&copy; GestãoPro</footer>
 
 <script>
     // Orçamento acabado de criar: leva o utilizador até à linha na lista

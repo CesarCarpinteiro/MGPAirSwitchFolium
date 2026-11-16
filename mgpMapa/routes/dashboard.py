@@ -10,6 +10,10 @@ from models import (Fatura, Ferias, HorasTrabalhadas, Obra, ObraFuncionario,
 dashboard_bp = Blueprint('dashboard', __name__)
 
 
+MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto',
+         'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+
 @dashboard_bp.route('/dashboard')
 @login_required
 def dashboard():
@@ -35,7 +39,8 @@ def dashboard():
         Fatura.data.like(f'%/{str(mes).zfill(2)}/{ano}')).all()
     total_faturas = sum(f.valor or 0 for f in faturas_mes)
 
-    orcamentos_pendentes = db.session.query(Orcamento).filter_by(org_id=org_id, estado='Pendente').count()
+    orcamentos_mes = db.session.query(Orcamento).filter_by(org_id=org_id).filter(
+        Orcamento.created_at.like(f'%/{str(mes).zfill(2)}/{ano}')).count()
 
     obras_ativas = db.session.query(Obra).filter_by(org_id=org_id).filter(
         Obra.estado.in_(['agendada', 'em_curso'])).order_by(Obra.data_inicio).all()
@@ -49,7 +54,7 @@ def dashboard():
     return render_template('dashboard.html',
         org_nome=org_nome, tem_mapa=tem_mapa,
         pendentes=pendentes, total_horas=total_horas, horas_por_func=horas_por_func,
-        total_faturas=total_faturas, orcamentos_pendentes=orcamentos_pendentes,
+        total_faturas=total_faturas, orcamentos_mes=orcamentos_mes,
         obras_ativas=obras_ativas, obra_funcs=obra_funcs,
         num_funcionarios=num_funcionarios,
-        mes_nome=now.strftime('%B %Y').capitalize(), now=now)
+        mes_nome=f'{MESES[now.month - 1]} {now.year}', now=now)

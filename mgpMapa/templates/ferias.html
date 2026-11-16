@@ -366,7 +366,7 @@
 
         {% if pendentes %}
         <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-            <span>⏳ Pendentes ({{ pendentes|length }})</span>
+            <span>Pendentes ({{ pendentes|length }})</span>
             {% if is_admin %}
             <form method="POST" action="/ferias/responder-bulk" id="bulkForm" style="display:flex;gap:8px;align-items:center;">
                 <input type="hidden" name="estado" value="aprovado" id="bulkEstado">
@@ -420,7 +420,7 @@
         {% endif %}
 
         {% if respondidas %}
-        <div class="section-title">📋 Histórico ({{ respondidas|length }})</div>
+        <div class="section-title">Histórico ({{ respondidas|length }})</div>
         {% for f, u in respondidas %}
         <div class="ferias-card {{ f.estado }}">
             <div class="ferias-header">
@@ -565,7 +565,7 @@
     </div>
 </div>
 
-<footer>&copy; GestãoPro</footer>
+<footer class="rodape-app">&copy; GestãoPro</footer>
 
 <script id="ferias-data" type="application/json">{{ ferias_json | safe }}</script>
 
