@@ -9,8 +9,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas as rl_canvas
-from reportlab.platypus import (Image, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table,
-                                TableStyle)
+from reportlab.platypus import (Flowable, Image, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer,
+                                Table, TableStyle)
 
 AZUL = colors.HexColor('#2d3a6e')
 TEXTO = colors.HexColor('#222631')
@@ -67,6 +67,29 @@ class _CanvasNumerado(rl_canvas.Canvas):
         self.restoreState()
 
 
+class _AoFundo(Flowable):
+    """Coloca o bloco no fundo da página (se couber nela); senão passa para a página seguinte como normal."""
+
+    def __init__(self, bloco, folga=6 * mm):
+        super().__init__()
+        self.bloco, self.folga = bloco, folga
+
+    def wrap(self, largura, altura):
+        _, h = self.bloco.wrap(largura, altura)
+        self._h = h
+        self.width = largura
+        self.height = altura if h + self.folga <= altura else h  # ocupa o espaço livre para ir parar ao fundo
+        return self.width, self.height
+
+    def split(self, largura, altura):
+        if self._h + self.folga <= altura:
+            return []
+        return [PageBreak(), self.bloco]
+
+    def draw(self):
+        self.bloco.drawOn(self.canv, 0, 0)
+
+
 def gerar_pdf_orcamento(o, org, totais, logo_path=None):
     buf = io.BytesIO()
     empresa = (org.designacao_social or org.nome) if org else ''
@@ -81,30 +104,30 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         return ParagraphStyle(nome, parent=base, **kw)
 
     st = {
-        'empresa': estilo('empresa', fontName='Helvetica-Bold', fontSize=12, leading=15, textColor=AZUL),
-        'empresa_sub': estilo('empresa_sub', fontSize=8.3, leading=11.5, textColor=CINZA),
-        'titulo': estilo('titulo', fontName='Helvetica-Bold', fontSize=15, leading=19, alignment=TA_RIGHT),
-        'data': estilo('data', fontSize=9, leading=12, textColor=CINZA, alignment=TA_RIGHT),
-        'rotulo': estilo('rotulo', fontSize=8, leading=11, textColor=CINZA),
-        'cliente': estilo('cliente', fontName='Helvetica-Bold', fontSize=10.5, leading=14),
-        'cliente_txt': estilo('cliente_txt', fontSize=8.8, leading=12, textColor=colors.HexColor('#4a4f60')),
-        'th': estilo('th', fontName='Helvetica-Bold', fontSize=8.3, leading=11, textColor=CINZA),
-        'th_r': estilo('th_r', fontName='Helvetica-Bold', fontSize=8.3, leading=11, textColor=CINZA, alignment=TA_RIGHT),
-        'td': estilo('td', fontSize=9, leading=12),
-        'td_r': estilo('td_r', fontSize=9, leading=12, alignment=TA_RIGHT),
-        'td_rb': estilo('td_rb', fontName='Helvetica-Bold', fontSize=9, leading=12, alignment=TA_RIGHT),
-        'nota': estilo('nota', fontName='Helvetica-Oblique', fontSize=8, leading=10.8, textColor=CINZA, spaceBefore=1.5),
-        'incl': estilo('incl', fontSize=8.5, leading=11, textColor=colors.HexColor('#4a4f60'), leftIndent=10),
-        'incl_desc': estilo('incl_desc', fontSize=8, leading=10.5, textColor=CINZA, leftIndent=10),
-        'incl_r': estilo('incl_r', fontName='Helvetica-Oblique', fontSize=8.5, leading=11, textColor=CINZA, alignment=TA_RIGHT),
-        'tot_l': estilo('tot_l', fontSize=9, leading=12, textColor=CINZA),
-        'tot_v': estilo('tot_v', fontSize=9, leading=12, alignment=TA_RIGHT),
-        'tot_fl': estilo('tot_fl', fontName='Helvetica-Bold', fontSize=10.5, leading=14),
-        'tot_fv': estilo('tot_fv', fontName='Helvetica-Bold', fontSize=12.5, leading=16, textColor=AZUL, alignment=TA_RIGHT),
-        'seccao': estilo('seccao', fontName='Helvetica-Bold', fontSize=9.5, leading=13, spaceAfter=3),
-        'texto': estilo('texto', fontSize=8.6, leading=12.2, textColor=colors.HexColor('#3a3f50')),
-        'pequeno': estilo('pequeno', fontSize=8, leading=11, textColor=CINZA),
-        'assin': estilo('assin', fontSize=8, leading=10, textColor=CINZA),
+        'empresa': estilo('empresa', fontName='Helvetica-Bold', fontSize=14, leading=18, textColor=AZUL),
+        'empresa_sub': estilo('empresa_sub', fontSize=9.3, leading=13, textColor=CINZA),
+        'titulo': estilo('titulo', fontName='Helvetica-Bold', fontSize=19, leading=23, alignment=TA_RIGHT),
+        'data': estilo('data', fontSize=10, leading=13, textColor=CINZA, alignment=TA_RIGHT),
+        'rotulo': estilo('rotulo', fontSize=9, leading=12, textColor=CINZA),
+        'cliente': estilo('cliente', fontName='Helvetica-Bold', fontSize=12.5, leading=16),
+        'cliente_txt': estilo('cliente_txt', fontSize=10, leading=14, textColor=colors.HexColor('#4a4f60')),
+        'th': estilo('th', fontName='Helvetica-Bold', fontSize=9, leading=12, textColor=CINZA),
+        'th_r': estilo('th_r', fontName='Helvetica-Bold', fontSize=9, leading=12, textColor=CINZA, alignment=TA_RIGHT),
+        'td': estilo('td', fontSize=10, leading=13.5),
+        'td_r': estilo('td_r', fontSize=10, leading=13.5, alignment=TA_RIGHT),
+        'td_rb': estilo('td_rb', fontName='Helvetica-Bold', fontSize=10, leading=13.5, alignment=TA_RIGHT),
+        'nota': estilo('nota', fontName='Helvetica-Oblique', fontSize=9, leading=12, textColor=CINZA, spaceBefore=2),
+        'incl': estilo('incl', fontSize=9.5, leading=12.5, textColor=colors.HexColor('#4a4f60'), leftIndent=12),
+        'incl_desc': estilo('incl_desc', fontSize=8.8, leading=11.8, textColor=CINZA, leftIndent=12),
+        'incl_r': estilo('incl_r', fontName='Helvetica-Oblique', fontSize=9.5, leading=12.5, textColor=CINZA, alignment=TA_RIGHT),
+        'tot_l': estilo('tot_l', fontSize=10, leading=13.5, textColor=CINZA),
+        'tot_v': estilo('tot_v', fontSize=10, leading=13.5, alignment=TA_RIGHT),
+        'tot_fl': estilo('tot_fl', fontName='Helvetica-Bold', fontSize=12, leading=16),
+        'tot_fv': estilo('tot_fv', fontName='Helvetica-Bold', fontSize=15, leading=19, textColor=AZUL, alignment=TA_RIGHT),
+        'seccao': estilo('seccao', fontName='Helvetica-Bold', fontSize=10.5, leading=14, spaceAfter=4),
+        'texto': estilo('texto', fontSize=9.4, leading=13.6, textColor=colors.HexColor('#3a3f50')),
+        'pequeno': estilo('pequeno', fontSize=9, leading=12.5, textColor=CINZA),
+        'assin': estilo('assin', fontSize=9, leading=12, textColor=CINZA),
     }
 
     def p(texto, nome):
@@ -141,12 +164,12 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         esquerda.append(p('\n'.join(det_emp), 'empresa_sub'))
 
     direita = [p(f'Orçamento n.º {o.id}', 'titulo'), Spacer(1, 1 * mm), p(f'{data:%d/%m/%Y}', 'data')]
-    cab = sem_margens(Table([[esquerda, direita]], colWidths=[largura_util - 60 * mm, 60 * mm]))
-    story += [cab, Spacer(1, 5 * mm)]
+    cab = sem_margens(Table([[esquerda, direita]], colWidths=[largura_util - 78 * mm, 78 * mm]))
+    story += [cab, Spacer(1, 7 * mm)]
 
     linha = Table([['']], colWidths=[largura_util], rowHeights=[1])
     linha.setStyle(TableStyle([('LINEABOVE', (0, 0), (-1, -1), 0.6, LINHA)]))
-    story += [linha, Spacer(1, 4 * mm)]
+    story += [linha, Spacer(1, 6 * mm)]
 
     # ── Cliente ──
     det_cliente = [x for x in [f'NIF {o.cliente_nif}' if o.cliente_nif else '', o.cliente_morada,
@@ -154,7 +177,7 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
     story += [p('Cliente', 'rotulo'), Spacer(1, 1 * mm), p(o.cliente, 'cliente')]
     if det_cliente:
         story.append(p('\n'.join(det_cliente), 'cliente_txt'))
-    story.append(Spacer(1, 6 * mm))
+    story.append(Spacer(1, 9 * mm))
 
     # ── Artigos ──
     iva_txt = f'{qtd(o.iva_taxa or 0)}%'
@@ -176,18 +199,18 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         dados.append([designacao, p(qtd(l.quantidade or 0), 'td_r'), p(eur(l.preco_unitario), 'td_r'),
                       p(iva_txt, 'td_r'), p(eur((l.quantidade or 0) * (l.preco_unitario or 0)), 'td_rb')])
 
-    tabela = Table(dados, colWidths=[None, 13 * mm, 26 * mm, 13 * mm, 27 * mm], repeatRows=1)
+    tabela = Table(dados, colWidths=[None, 13 * mm, 28 * mm, 13 * mm, 29 * mm], repeatRows=1)
     tabela.setStyle(TableStyle([
         ('LINEBELOW', (0, 0), (-1, 0), 0.8, TEXTO),
-        ('TOPPADDING', (0, 0), (-1, -1), 5), ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 7), ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
         ('LEFTPADDING', (0, 0), (-1, -1), 0), ('RIGHTPADDING', (0, 0), (-1, -1), 0),
         ('LEFTPADDING', (1, 0), (-1, -1), 6),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
     ] + [('LINEBELOW', (0, r), (-1, r), 0.5, LINHA) for r in fim.values()]
-      + [('BOTTOMPADDING', (0, r), (-1, r), 7) for r in fim.values()]
+      + [('BOTTOMPADDING', (0, r), (-1, r), 9) for r in fim.values()]
       + [('NOSPLIT', (0, inicio[a]), (-1, f)) for a, f in fim.items() if a in inicio and f > inicio[a]]
       + estilos))
-    story += [tabela, Spacer(1, 5 * mm)]
+    story += [tabela, Spacer(1, 7 * mm)]
 
     # ── Totais ──
     linhas_tot = [[p('Subtotal', 'tot_l'), p(eur(totais['subtotal']), 'tot_v')]]
@@ -197,15 +220,15 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
     linhas_tot += [[p(f'IVA ({iva_txt})', 'tot_l'), p(eur(totais['iva']), 'tot_v')],
                    [p('Total', 'tot_fl'), p(eur(totais['total']), 'tot_fv')]]
     n = len(linhas_tot)
-    tot = Table(linhas_tot, colWidths=[35 * mm, 35 * mm], hAlign='RIGHT')
+    tot = Table(linhas_tot, colWidths=[40 * mm, 40 * mm], hAlign='RIGHT')
     tot.setStyle(TableStyle([
         ('LEFTPADDING', (0, 0), (-1, -1), 0), ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.5), ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
+        ('TOPPADDING', (0, 0), (-1, -1), 3.5), ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),
         ('VALIGN', (0, 0), (-1, -1), 'BOTTOM'),
         ('LINEABOVE', (0, n - 1), (-1, n - 1), 0.8, TEXTO),
-        ('TOPPADDING', (0, n - 1), (-1, n - 1), 6),
+        ('TOPPADDING', (0, n - 1), (-1, n - 1), 8),
     ]))
-    story += [KeepTogether([tot]), Spacer(1, 7 * mm)]
+    story += [KeepTogether([tot]), Spacer(1, 11 * mm)]
 
     # ── Termos e condições / Condições de pagamento (lado a lado quando há os dois) ──
     blocos = []
@@ -232,7 +255,7 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
 
     # ── Validade e aceitação ──
     def linha_assinatura(rotulo):
-        t = Table([[''], [p(rotulo, 'assin')]], colWidths=[75 * mm], rowHeights=[9 * mm, None])
+        t = Table([[''], [p(rotulo, 'assin')]], colWidths=[75 * mm], rowHeights=[14 * mm, None])
         t.setStyle(TableStyle([('LINEBELOW', (0, 0), (0, 0), 0.5, CINZA),
                                ('LEFTPADDING', (0, 0), (-1, -1), 0), ('RIGHTPADDING', (0, 0), (-1, -1), 0),
                                ('TOPPADDING', (0, 1), (0, 1), 3)]))
@@ -241,11 +264,12 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
     aceitacao = Table([[linha_assinatura('Data'), '', linha_assinatura('Assinatura do cliente')]],
                       colWidths=[75 * mm, largura_util - 150 * mm, 75 * mm])
     sem_margens(aceitacao)
-    story.append(KeepTogether([
+    fim_doc = Table([[[
         p(f'Orçamento válido por {VALIDADE_DIAS} dias. Para adjudicar, basta devolver este documento assinado '
           'ou confirmar por escrito.', 'pequeno'),
-        Spacer(1, 1 * mm), aceitacao,
-    ]))
+        Spacer(1, 2 * mm), aceitacao,
+    ]]], colWidths=[largura_util])
+    story.append(_AoFundo(sem_margens(fim_doc)))
 
     rodape = '  ·  '.join(x for x in [empresa, f'NIF {org.nif}' if org and org.nif else '',
                                        org.telefone if org else '', org.email if org else ''] if x)
