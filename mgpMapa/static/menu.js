@@ -12,7 +12,7 @@
         ['Trabalho', [
             ['/orcamentos', '📄', 'Orçamentos', /^\/orcamentos(\/novo|\/\d+.*)?$/],
             ADMIN && ['/orcamentos/catalogo', '📦', 'Catálogo', /^\/orcamentos\/catalogo/, true],
-            ADMIN && ['/orcamentos/definicoes', '⚙️', 'Definições de orçamentos', /^\/orcamentos\/definicoes/, true],
+            ADMIN && ['/orcamentos/definicoes', '⚙️', 'Definições', /^\/orcamentos\/definicoes/, true],
             ['/plantas', '📐', 'Plantas', /^\/plantas/],
             ADMIN ? ['/marcacoes', '📅', 'Marcações', /^\/marcacoes/] : ['/minhas-obras', '🔧', 'As minhas obras', /^\/minhas-obras/],
             ADMIN && ['/lembretes', '💬', 'SMS de manutenção', /^\/lembretes/],
@@ -49,14 +49,14 @@
         '.mn-grupo{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9aa0b8;padding:14px 20px 4px}' +
         '.mn-item{display:flex;align-items:center;gap:12px;padding:11px 20px;color:#1f2433;text-decoration:none;font-size:15px;font-weight:500;border-left:3px solid transparent}' +
         '.mn-item:hover{background:#f3f5fc}' +
-        '.mn-item.mn-sub{padding:8px 20px 8px 50px;font-size:14px;color:#555}' +
+        '.mn-item.mn-sub{padding:7px 20px 7px 36px;font-size:14px;color:#666}' +
         '.mn-item.mn-atual{background:#eef0fa;border-left-color:#2d3a6e;color:#2d3a6e;font-weight:700}' +
         '.mn-item .mn-i{width:24px;text-align:center;font-size:18px}' +
         '.mn-rodape{border-top:1px solid #eee;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}' +
         '.mn-item.mn-sair{color:#c62828}' +
-        '@media(max-width:600px){.mn-btn .mn-txt{display:none}.mn-btn{padding:0 10px}' +
-        // no telemóvel o cabeçalho fica só com o essencial: o resto está no menu
-        '.mn-casa>a[href="/"],.mn-casa>a[href="/registos"],.mn-casa>a[href="/perfil"],.mn-casa>a.user-pill{display:none!important}}' +
+        // No cabeçalho ficam só as notificações e o menu: os atalhos de navegação estão todos no menu
+        '.mn-casa>a{display:none!important}' +
+        '@media(max-width:600px){.mn-btn .mn-txt{display:none}.mn-btn{padding:0 10px}}' +
         '.mn-fixar{display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;font-size:13px;padding:5px 8px;cursor:pointer;margin-right:4px}' +
         // Computador: menu sempre aberto à direita (pode-se esconder e voltar a fixar)
         '@media(min-width:1100px){' +
@@ -65,7 +65,6 @@
             'html.mn-fixo .mn-painel{transform:none;width:' + LARG + 'px;box-shadow:-1px 0 0 #e1e4ef;transition:none}' +
             'html.mn-fixo .mn-fundo{display:none}' +
             'html.mn-fixo .mn-btn{display:none!important}' +
-            'html.mn-fixo .mn-casa>a[href="/"],html.mn-fixo .mn-casa>a[href="/registos"],html.mn-fixo .mn-casa>a[href="/perfil"],html.mn-fixo .mn-casa>a.user-pill{display:none!important}' +
             'html.mn-fixo .mn-item{padding-top:9px;padding-bottom:9px;font-size:14px}' +
             'html.mn-fixo .mn-item.mn-sub{padding-top:6px;padding-bottom:6px;font-size:13px}' +
         '}' +
@@ -79,7 +78,7 @@
     function item(l, aqui) {
         var atual = l[3].test(aqui);
         return '<a href="' + l[0] + '" class="mn-item' + (l[4] ? ' mn-sub' : '') + (atual ? ' mn-atual' : '') + '"' +
-            (atual ? ' aria-current="page"' : '') + '><span class="mn-i">' + l[1] + '</span>' + esc(l[2]) + '</a>';
+            (atual ? ' aria-current="page"' : '') + '>' + esc(l[2]) + '</a>';
     }
 
     function montar() {
@@ -95,7 +94,7 @@
             itens.forEach(function(l) { html += item(l, aqui); });
         });
         html += '</nav><div class="mn-rodape">' + item(['/perfil', '👤', 'Perfil', /^\/perfil/], aqui) +
-            '<a href="/logout" class="mn-item mn-sair"><span class="mn-i">⎋</span>Terminar sessão</a></div>';
+            '<a href="/logout" class="mn-item mn-sair">Terminar sessão</a></div>';
 
         var fundo = document.createElement('div');
         fundo.className = 'mn-fundo';
@@ -115,7 +114,10 @@
         var sitio = document.querySelector('.header-actions') ||
             (document.querySelector('.page-header') && document.querySelector('.page-header').lastElementChild) ||
             document.querySelector('.topo');
-        if (sitio) { sitio.appendChild(btn); sitio.classList.add('mn-casa'); }
+        if (sitio) {
+            sitio.appendChild(btn);
+            if (!sitio.classList.contains('topo')) sitio.classList.add('mn-casa');  // no editor de plantas fica tudo
+        }
         else { btn.classList.add('mn-flutua', 'mn-claro'); document.body.appendChild(btn); }
 
         var raiz = document.documentElement, bFechar = painel.querySelector('.mn-fechar'), bFixar = painel.querySelector('.mn-fixar');
