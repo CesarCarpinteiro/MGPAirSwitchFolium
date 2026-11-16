@@ -175,9 +175,21 @@
         var falta = window.innerHeight - fim;
         if (falta > 0) f.style.setProperty('margin-top', falta + 'px', 'important');
     }
+    // O cabeçalho é fixo (para o Safari do iPhone pintar a zona das horas de azul): o conteúdo começa logo abaixo dele
+    function cabecalho() {
+        var h = document.querySelector('.page-header');
+        if (!h || getComputedStyle(h).position !== 'fixed') return;
+        var alt = h.offsetHeight;
+        document.body.style.setProperty('padding-top', alt + 'px', 'important');
+        document.documentElement.style.setProperty('--altura-cabecalho', (alt + 10) + 'px');
+    }
     function iniciar() {
         montar();
+        cabecalho();
         rodape();
+        window.addEventListener('resize', cabecalho);
+        var h = document.querySelector('.page-header');
+        if (h && window.ResizeObserver) new ResizeObserver(cabecalho).observe(h);
         window.addEventListener('load', rodape);
         window.addEventListener('resize', rodape);
         if (window.ResizeObserver) {
