@@ -104,9 +104,9 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         return ParagraphStyle(nome, parent=base, **kw)
 
     st = {
-        'empresa': estilo('empresa', fontName='Helvetica-Bold', fontSize=14, leading=18, textColor=AZUL),
+        'empresa': estilo('empresa', fontName='Helvetica-Bold', fontSize=13.5, leading=17, textColor=AZUL),
         'empresa_sub': estilo('empresa_sub', fontSize=9.3, leading=13, textColor=CINZA),
-        'titulo': estilo('titulo', fontName='Helvetica-Bold', fontSize=19, leading=23, alignment=TA_RIGHT),
+        'titulo': estilo('titulo', fontName='Helvetica-Bold', fontSize=17, leading=21, alignment=TA_RIGHT),
         'data': estilo('data', fontSize=10, leading=13, textColor=CINZA, alignment=TA_RIGHT),
         'rotulo': estilo('rotulo', fontSize=9, leading=12, textColor=CINZA),
         'cliente': estilo('cliente', fontName='Helvetica-Bold', fontSize=12.5, leading=16),
@@ -164,7 +164,7 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
         esquerda.append(p('\n'.join(det_emp), 'empresa_sub'))
 
     direita = [p(f'Orçamento n.º {o.id}', 'titulo'), Spacer(1, 1 * mm), p(f'{data:%d/%m/%Y}', 'data')]
-    cab = sem_margens(Table([[esquerda, direita]], colWidths=[largura_util - 78 * mm, 78 * mm]))
+    cab = sem_margens(Table([[esquerda, direita]], colWidths=[largura_util - 66 * mm, 66 * mm]))
     story += [cab, Spacer(1, 7 * mm)]
 
     linha = Table([['']], colWidths=[largura_util], rowHeights=[1])
