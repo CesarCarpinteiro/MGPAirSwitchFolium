@@ -3,7 +3,8 @@ from datetime import timedelta
 
 from dotenv import load_dotenv
 from flask import Flask, flash, jsonify, redirect, request
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
+from markupsafe import escape
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFError, CSRFProtect, generate_csrf
 
@@ -58,6 +59,13 @@ def create_app():
             html = resposta.get_data(as_text=True)
             if '</head>' in html:
                 extra = f'<meta name="csrf-token" content="{generate_csrf()}"><script src="/static/csrf.js"></script>'
+                if current_user.is_authenticated and current_user.org_id and not request.path.startswith('/setup'):
+                    # Menu lateral com todas as páginas
+                    from models import Organizacao
+                    org = db.session.get(Organizacao, current_user.org_id)
+                    mapa = '0' if org and getattr(org, 'tipo_negocio', '') == 'espaco' else '1'
+                    extra += (f'<script src="/static/menu.js?v=3" data-admin="{1 if current_user.is_admin else 0}" '
+                              f'data-mapa="{mapa}" data-nome="{escape(current_user.nome or "")}" defer></script>')
                 if 'rel="icon"' not in html:
                     extra += '<link rel="icon" type="image/png" href="/static/icons/icon-64.png?v=2">'
                 resposta.set_data(html.replace('</head>', extra + '</head>', 1))
