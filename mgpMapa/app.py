@@ -67,7 +67,7 @@ def create_app():
                     mapa = '0' if org and getattr(org, 'tipo_negocio', '') == 'espaco' else '1'
                     extra += ('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
                               '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">'
-                              '<link rel="stylesheet" href="/static/tema.css?v=8">')
+                              '<link rel="stylesheet" href="/static/tema.css?v=9">')
                     extra += (f'<script src="/static/menu.js?v=10" data-admin="{1 if current_user.is_admin else 0}" '
                               f'data-mapa="{mapa}" data-nome="{escape(current_user.nome or "")}" defer></script>')
                 if 'rel="icon"' not in html:

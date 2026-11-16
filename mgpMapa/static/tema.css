@@ -40,7 +40,7 @@ body:has(> .rodape-app), body:has(> * > .rodape-app) { padding-bottom: 0 !import
    Cabeçalho sempre no topo + fundo azul por trás → o topo fica todo azul, sem a faixa cinzenta desfocada */
 html { background-color: #2d3a6e !important; }
 body { min-height: 100vh; }
-html body .page-header { position: fixed !important; top: 0; left: 0; right: 0; z-index: 900; box-sizing: border-box; }
+html body .page-header { position: fixed !important; top: 0; left: 0; right: 0; z-index: 900; box-sizing: border-box; background-color: #2d3a6e !important; }  /* cor sólida por baixo do degradé: é a que o Safari usa */
 html { scroll-padding-top: var(--altura-cabecalho, 80px); }  /* saltos para um elemento não ficam tapados pelo cabeçalho */
 @media (min-width: 1100px) { html.mn-fixo body .page-header { right: 236px; } }  /* com o menu fixo à direita */
 
