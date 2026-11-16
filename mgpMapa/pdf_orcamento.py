@@ -120,37 +120,40 @@ def gerar_pdf_orcamento(o, org, totais, logo_path=None):
     except (TypeError, ValueError):
         data = datetime.now()
 
-    esquerda = []
-    if logo_path and os.path.exists(logo_path):
-        try:
-            img = Image(logo_path)
-            escala = min(40 * mm / img.imageWidth, 18 * mm / img.imageHeight)
-            img.drawWidth, img.drawHeight = img.imageWidth * escala, img.imageHeight * escala
-            img.hAlign = 'LEFT'
-            esquerda += [img, Spacer(1, 2.5 * mm)]
-        except Exception:
-            pass
-    esquerda.append(p(empresa, 'empresa'))
+    # Empresa: logótipo ao lado do nome, morada e contactos
+    texto_emp = [p(empresa, 'empresa')]
     det_emp = [x for x in [org.morada if org else '', f'NIF {org.nif}' if org and org.nif else '',
                            ' · '.join(y for y in [org.telefone, org.email] if y) if org else ''] if x]
     if det_emp:
-        esquerda.append(p('\n'.join(det_emp), 'empresa_sub'))
-
-    direita = [p(f'Orçamento n.º {o.id}', 'titulo'), Spacer(1, 1 * mm), p(f'{data:%d/%m/%Y}', 'data')]
-    cab = sem_margens(Table([[esquerda, direita]], colWidths=[largura_util - 66 * mm, 66 * mm]))
-    story += [cab, Spacer(1, 7 * mm)]
+        texto_emp.append(p('\n'.join(det_emp), 'empresa_sub'))
+    img = None
+    if logo_path and os.path.exists(logo_path):
+        try:
+            img = Image(logo_path)
+            escala = min(30 * mm / img.imageWidth, 19 * mm / img.imageHeight)
+            img.drawWidth, img.drawHeight = img.imageWidth * escala, img.imageHeight * escala
+        except Exception:
+            img = None
+    if img:
+        cab = Table([[img, texto_emp]], colWidths=[img.drawWidth + 5 * mm, largura_util - img.drawWidth - 5 * mm])
+        sem_margens(cab, [('VALIGN', (0, 0), (-1, -1), 'MIDDLE')])
+    else:
+        cab = sem_margens(Table([[texto_emp]], colWidths=[largura_util]))
+    story += [cab, Spacer(1, 6 * mm)]
 
     linha = Table([['']], colWidths=[largura_util], rowHeights=[1])
     linha.setStyle(TableStyle([('LINEABOVE', (0, 0), (-1, -1), 0.6, LINHA)]))
     story += [linha, Spacer(1, 6 * mm)]
 
-    # ── Cliente ──
+    # Cliente (à esquerda) | n.º do orçamento e data (à direita)
     det_cliente = [x for x in [f'NIF {o.cliente_nif}' if o.cliente_nif else '', o.cliente_morada,
                                ' · '.join(y for y in [o.cliente_contacto, o.cliente_email] if y)] if x]
-    story += [p('Cliente', 'rotulo'), Spacer(1, 1 * mm), p(o.cliente, 'cliente')]
+    cliente = [p('Cliente', 'rotulo'), Spacer(1, 1 * mm), p(o.cliente, 'cliente')]
     if det_cliente:
-        story.append(p('\n'.join(det_cliente), 'cliente_txt'))
-    story.append(Spacer(1, 9 * mm))
+        cliente.append(p('\n'.join(det_cliente), 'cliente_txt'))
+    direita = [p(f'Orçamento n.º {o.id}', 'titulo'), Spacer(1, 1 * mm), p(f'{data:%d/%m/%Y}', 'data')]
+    story += [sem_margens(Table([[cliente, direita]], colWidths=[largura_util - 70 * mm, 70 * mm])),
+              Spacer(1, 9 * mm)]
 
     # ── Artigos ──
     iva_txt = f'{qtd(o.iva_taxa or 0)}%'
