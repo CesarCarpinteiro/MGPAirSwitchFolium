@@ -3,7 +3,6 @@ import io
 import json
 import os
 import re
-import secrets
 import unicodedata
 from datetime import datetime
 
@@ -89,8 +88,7 @@ def orcamentos():
         todos = db.session.query(Orcamento, Usuario).join(Usuario, Orcamento.user_id == Usuario.id).filter(
             Orcamento.org_id == current_user.org_id, Orcamento.user_id == current_user.id).order_by(Orcamento.id.desc()).all()
     return render_template('orcamentos.html', orcamentos=todos, is_admin=is_admin,
-                           novo_id=request.args.get('novo', type=int),
-                           partilhar_id=request.args.get('novo', type=int) if request.args.get('partilhar') else None)
+                           novo_id=request.args.get('novo', type=int))
 
 
 @orcamentos_bp.route('/orcamentos/delete/<int:id>', methods=['POST'])
@@ -322,7 +320,7 @@ def novo_orcamento():
         db.session.add(o)
         db.session.commit()
         flash(f'Orçamento #{o.id} criado.', 'success')
-        return redirect(url_for('orcamentos.orcamentos', novo=o.id, partilhar=1))
+        return redirect(url_for('orcamentos.orcamentos', novo=o.id))
     return _form_orcamento()
 
 
@@ -418,52 +416,6 @@ def orcamento_pdf(id):
     pdf, nome = _pdf(o)
     return send_file(io.BytesIO(pdf), mimetype='application/pdf', download_name=nome,
                      as_attachment=request.args.get('download') == '1')
-
-
-@orcamentos_bp.route('/orcamentos/<int:id>/partilhar', methods=['POST'])
-@login_required
-def partilhar_orcamento(id):
-    """Cria (uma vez) o link público do orçamento e devolve o que é preciso para o enviar."""
-    o = _meu_orcamento(id)
-    if not o or not o.linhas:
-        return jsonify({'ok': False, 'mensagem': 'Orçamento não encontrado.'}), 404
-    if not o.partilha_token:
-        o.partilha_token = secrets.token_urlsafe(24)
-        db.session.commit()
-    org = db.session.query(Organizacao).filter_by(id=o.org_id).first()
-    empresa = (org.designacao_social or org.nome) if org else ''
-    total = f'{o.valor:,.2f}'.replace(',', ' ').replace('.', ',') + ' €' if o.valor else ''
-    texto = (f'Olá{(" " + o.cliente.split()[0]) if o.cliente else ""}, segue o orçamento nº {o.id}'
-             f'{" da " + empresa if empresa else ""}{" (total " + total + " c/ IVA)" if total else ""}:')
-    return jsonify({'ok': True, 'caminho': url_for('orcamentos.orcamento_publico', token=o.partilha_token),
-                    'texto': texto, 'telefone': o.cliente_contacto or '', 'email': o.cliente_email or '',
-                    'assunto': f'Orçamento nº {o.id}{" – " + empresa if empresa else ""}',
-                    'ficheiro': _pdf(o)[1]})
-
-
-@orcamentos_bp.route('/orcamentos/<int:id>/partilhar/desativar', methods=['POST'])
-@login_required
-def desativar_partilha(id):
-    o = _meu_orcamento(id)
-    if not o:
-        return jsonify({'ok': False, 'mensagem': 'Orçamento não encontrado.'}), 404
-    o.partilha_token = None
-    db.session.commit()
-    return jsonify({'ok': True})
-
-
-@orcamentos_bp.route('/o/<token>')
-def orcamento_publico(token):
-    """PDF do orçamento para o cliente, sem login (só com o link)."""
-    o = db.session.query(Orcamento).filter_by(partilha_token=token).first() if len(token) >= 20 else None
-    if not o or not o.linhas:
-        return Response('Este orçamento já não está disponível.', status=404, mimetype='text/plain; charset=utf-8')
-    pdf, nome = _pdf(o)
-    resposta = send_file(io.BytesIO(pdf), mimetype='application/pdf', download_name=nome,
-                         as_attachment=request.args.get('download') == '1')
-    resposta.headers['Cache-Control'] = 'no-store'
-    resposta.headers['X-Robots-Tag'] = 'noindex'
-    return resposta
 
 
 # ── Catálogo de produtos (admin) ──────────────────────────────────────

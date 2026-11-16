@@ -128,7 +128,6 @@ class Orcamento(db.Model):
     termos = db.Column(db.Text)
     condicoes_pagamento = db.Column(db.Text)
     margens = db.Column(db.Text)  # JSON {"marca": %, "_outras": %} usadas neste orçamento
-    partilha_token = db.Column(db.String(64), unique=True, index=True)  # link público /o/<token> (None = não partilhado)
     linhas = db.relationship('OrcamentoLinha', backref='orcamento', cascade='all, delete-orphan',
                              order_by='OrcamentoLinha.id')
 

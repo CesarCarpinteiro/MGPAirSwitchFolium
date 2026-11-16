@@ -92,7 +92,6 @@
         .orcamentos-table td.acoes { text-align: right; }
         .acao { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 32px; height: 30px; padding: 0 7px !important; vertical-align: middle; }
         .acao .lbl { display: none; }
-        .acao .ptag { font-size: 0.75em; }
         /* Computador com o menu fixo e pouco espaço: tabela mais compacta */
         @media (min-width: 1100px) and (max-width: 1300px) {
             html.mn-fixo .orcamentos-table td.desc { max-width: 130px !important; }
@@ -127,20 +126,6 @@
         }
         .delete-btn:hover { color: #e53935; transform: scale(1.15); }
         button.pdf-link { background: white; cursor: pointer; font-family: inherit; }
-        .partilha-box { max-width: 400px; text-align: left; }
-        .partilha-box .confirm-title { display:flex; justify-content:space-between; align-items:center; }
-        .partilha-fechar { background:none; border:none; font-size:1.3em; cursor:pointer; color:#999; line-height:1; }
-        .partilha-opcoes { display:grid; gap:8px; margin:14px 0; }
-        .partilha-opcao { display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid #dde1f0; border-radius:9px; background:white; color:#1a1a1a; text-decoration:none; font-size:0.92em; font-weight:600; cursor:pointer; font-family:inherit; text-align:left; }
-        .partilha-opcao:hover { background:#f5f6fc; }
-        .partilha-opcao small { display:block; font-weight:normal; color:#888; font-size:0.85em; }
-        .partilha-opcao .ic { font-size:1.3em; width:26px; text-align:center; }
-        .partilha-opcao.wa { border-color:#b9e8c6; }
-        .partilha-link { display:flex; gap:6px; }
-        .partilha-link input { flex:1; min-width:0; padding:8px 10px; border:1px solid #ddd; border-radius:7px; font-size:0.82em; color:#555; }
-        .partilha-link button { padding:8px 12px; border:none; border-radius:7px; background:#2d3a6e; color:white; cursor:pointer; font-weight:600; font-size:0.85em; }
-        .partilha-nota { font-size:0.78em; color:#999; margin-top:10px; line-height:1.4; }
-        .partilha-nota a { color:#c62828; cursor:pointer; }
         .confirm-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.38); z-index:1000; align-items:center; justify-content:center; padding:16px; }
         .confirm-backdrop.open { display:flex; }
         .confirm-box { background:white; border-radius:12px; width:100%; max-width:340px; box-shadow:0 8px 32px rgba(0,0,0,0.16); font-family:'DM Sans',sans-serif; padding:24px 22px; text-align:center; }
@@ -330,8 +315,8 @@
                     {% endif %}
                     <td class="acoes" style="white-space:nowrap;">
                         {% if o.user_id == current_user.id or is_admin %}<a href="/orcamentos/{{ o.id }}/editar" class="pdf-link acao" title="Editar orçamento">✏️<span class="lbl">Editar</span></a>{% endif %}
-                        {% if o.linhas %}<a href="/orcamentos/{{ o.id }}/pdf" target="_blank" class="pdf-link acao" title="Ver PDF">PDF</a>
-                        {% if o.user_id == current_user.id or is_admin %}<button type="button" class="pdf-link acao partilhar-btn" data-id="{{ o.id }}" data-cliente="{{ o.cliente|e }}" onclick="abrirPartilha(this.dataset.id, this.dataset.cliente)" title="Partilhar com o cliente">📤<span class="lbl">Partilhar</span>{% if o.partilha_token %}<span class="ptag" title="Já tem link">🔗</span>{% endif %}</button>{% endif %}{% endif %}
+                        {% if o.linhas %}<a href="/orcamentos/{{ o.id }}/pdf" target="_blank" class="pdf-link acao abrir-pdf" title="Abrir o PDF">PDF</a>
+                        {% endif %}
                         <form method="POST" action="/orcamentos/delete/{{ o.id }}" id="odel-{{ o.id }}" style="margin:0;display:inline;">
                             <button type="button" class="delete-btn"
                                 data-formid="odel-{{ o.id }}"
@@ -382,98 +367,34 @@
 
 <div id="toast-container" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 
-<div id="partilhaModal" class="confirm-backdrop">
-    <div class="confirm-box partilha-box">
-        <div class="confirm-title"><span id="partilhaTitulo">Partilhar orçamento</span><button class="partilha-fechar" onclick="fecharPartilha()" aria-label="Fechar">×</button></div>
-        <div class="confirm-sub" id="partilhaSub" style="margin-bottom:0;"></div>
-        <div class="partilha-opcoes">
-            <button type="button" class="partilha-opcao" id="pNativo" style="display:none;"><span class="ic">📲</span><span>Enviar o PDF…<small>WhatsApp, email, Mensagens… (escolhe a app)</small></span></button>
-            <a class="partilha-opcao wa" id="pWhats" target="_blank" rel="noopener"><span class="ic">💬</span><span>WhatsApp<small id="pWhatsSub">Mensagem com o link do orçamento</small></span></a>
-            <a class="partilha-opcao" id="pEmail"><span class="ic">✉️</span><span>Email<small id="pEmailSub">Mensagem com o link do orçamento</small></span></a>
-            <a class="partilha-opcao" id="pSms"><span class="ic">💭</span><span>SMS<small>Mensagem com o link do orçamento</small></span></a>
-        </div>
-        <div class="partilha-link"><input type="text" id="pLink" readonly onclick="this.select()"><button type="button" id="pCopiar">Copiar link</button></div>
-        <div class="partilha-nota">Quem tiver o link vê o PDF do orçamento, sem precisar de conta. Se o alterares, o link mostra sempre a versão mais recente. <a id="pDesativar">Desativar link</a></div>
-    </div>
-</div>
 <script>
-    var _partilha = null;
-    function telefoneWhats(t) {
-        var d = (t || '').replace(/[^\d+]/g, '');
-        if (d.indexOf('+') === 0) return d.slice(1);
-        if (d.indexOf('00') === 0) return d.slice(2);
-        if (d.length === 9) return '351' + d;  // número português sem indicativo
-        return d;
-    }
-    function abrirPartilha(id, cliente) {
-        var modal = document.getElementById('partilhaModal');
-        document.getElementById('partilhaTitulo').textContent = 'Partilhar orçamento #' + id;
-        document.getElementById('partilhaSub').textContent = cliente || '';
-        document.getElementById('pLink').value = 'A preparar o link…';
-        document.getElementById('pNativo').style.display = 'none';
-        modal.classList.add('open');
-        _partilha = {id: id};
-        fetch('/orcamentos/' + id + '/partilhar', {method: 'POST', headers: {'Accept': 'application/json'}})
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (!d.ok) { showToast(d.mensagem || 'Não foi possível partilhar.', 'error'); fecharPartilha(); return; }
-                if (!_partilha || _partilha.id !== id) return;
-                var url = location.origin + d.caminho, msg = d.texto + '\n' + url;
-                _partilha.dados = d; _partilha.url = url;
-                document.getElementById('pLink').value = url;
-                var tel = telefoneWhats(d.telefone);
-                document.getElementById('pWhats').href = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(msg);
-                document.getElementById('pWhatsSub').textContent = tel ? 'Para ' + d.telefone : 'Escolhes o contacto no WhatsApp';
-                document.getElementById('pEmail').href = 'mailto:' + encodeURIComponent(d.email) + '?subject=' + encodeURIComponent(d.assunto) + '&body=' + encodeURIComponent(msg);
-                document.getElementById('pEmailSub').textContent = d.email ? 'Para ' + d.email : 'Mensagem com o link do orçamento';
-                document.getElementById('pSms').href = 'sms:' + (d.telefone || '').replace(/\s/g, '') + (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(msg);
-                var tag = document.querySelector('.partilhar-btn[data-id="' + id + '"]');
-                if (tag && !tag.querySelector('.ptag')) tag.insertAdjacentHTML('beforeend', '<span class="ptag" title="Já tem link">🔗</span>');
-                // Enviar o próprio PDF (telemóvel): prepara já o ficheiro, a partilha tem de sair do toque
-                if (navigator.canShare) {
-                    fetch('/orcamentos/' + id + '/pdf').then(function(r) { return r.blob(); }).then(function(b) {
-                        var f = new File([b], d.ficheiro, {type: 'application/pdf'});
-                        if (_partilha && _partilha.id === id && navigator.canShare({files: [f]})) {
-                            _partilha.ficheiro = f;
-                            document.getElementById('pNativo').style.display = '';
-                        }
-                    }).catch(function() {});
-                }
-            })
-            .catch(function() { showToast('Sem ligação. Tente outra vez.', 'error'); fecharPartilha(); });
-    }
-    function fecharPartilha() { document.getElementById('partilhaModal').classList.remove('open'); _partilha = null; }
-    document.getElementById('partilhaModal').addEventListener('click', function(e) { if (e.target === this) fecharPartilha(); });
-    document.getElementById('pNativo').addEventListener('click', function() {
-        if (!_partilha || !_partilha.ficheiro) return;
-        navigator.share({files: [_partilha.ficheiro], title: _partilha.dados.assunto, text: _partilha.dados.texto})
-            .catch(function(e) { if (e.name !== 'AbortError') showToast('Não foi possível partilhar o PDF.', 'error'); });
-    });
-    document.getElementById('pCopiar').addEventListener('click', function() {
-        if (!_partilha || !_partilha.url) return;
-        var inp = document.getElementById('pLink'), btn = this;
-        var feito = function() { btn.textContent = 'Copiado ✓'; setTimeout(function() { btn.textContent = 'Copiar link'; }, 1800); };
-        if (navigator.clipboard) navigator.clipboard.writeText(_partilha.url).then(feito, function() { inp.select(); document.execCommand('copy'); feito(); });
-        else { inp.select(); document.execCommand('copy'); feito(); }
-    });
-    document.getElementById('pDesativar').addEventListener('click', function() {
-        if (!_partilha || !confirm('Desativar o link? Quem o tiver deixa de conseguir abrir o orçamento.')) return;
-        var id = _partilha.id;
-        fetch('/orcamentos/' + id + '/partilhar/desativar', {method: 'POST', headers: {'Accept': 'application/json'}}).then(function(r) { return r.json(); }).then(function(d) {
-            if (!d.ok) return;
-            var tag = document.querySelector('.partilhar-btn[data-id="' + id + '"] .ptag');
-            if (tag) tag.remove();
-            fecharPartilha();
-            showToast('Link desativado.', 'success');
+    // Telemóvel: o PDF abre na pré-visualização do telemóvel, com o botão de partilhar (como nas plantas)
+    if (window.matchMedia('(pointer: coarse)').matches) {
+        document.addEventListener('click', function(e) {
+            var a = e.target.closest && e.target.closest('a.abrir-pdf');
+            if (!a) return;
+            e.preventDefault();
+            if (a.dataset.aCarregar) return;
+            a.dataset.aCarregar = '1';
+            var rotulo = a.textContent;
+            a.textContent = '…';
+            fetch(a.href)
+                .then(function(r) {
+                    if (!r.ok) throw new Error();
+                    var cd = r.headers.get('Content-Disposition') || '', m = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)/i);
+                    return r.blob().then(function(b) { return [b, m ? decodeURIComponent(m[1]) : 'orcamento.pdf']; });
+                })
+                .then(function(res) {
+                    var l = document.createElement('a');
+                    l.href = URL.createObjectURL(res[0]);
+                    l.download = res[1];
+                    document.body.appendChild(l); l.click(); l.remove();
+                    setTimeout(function() { URL.revokeObjectURL(l.href); }, 4000);
+                })
+                .catch(function() { showToast('Não foi possível abrir o PDF.', 'error'); })
+                .then(function() { a.textContent = rotulo; delete a.dataset.aCarregar; });
         });
-    });
-    {% if partilhar_id %}
-    document.addEventListener('DOMContentLoaded', function() {
-        var b = document.querySelector('.partilhar-btn[data-id="{{ partilhar_id }}"]');
-        if (b) setTimeout(function() { b.click(); }, 400);
-        try { history.replaceState(null, '', location.pathname + '?novo={{ partilhar_id }}'); } catch (e) {}  // ao recarregar não volta a abrir
-    });
-    {% endif %}
+    }
 </script>
 
 <div id="orcConfirmModal" class="confirm-backdrop">
