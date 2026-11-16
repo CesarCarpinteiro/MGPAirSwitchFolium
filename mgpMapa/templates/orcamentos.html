@@ -185,7 +185,8 @@
                 content: attr(data-label); color: #999; font-size: 0.78em;
                 text-transform: uppercase; letter-spacing: 0.4px; text-align: left; flex-shrink: 0;
             }
-            .orcamentos-table td.desc { white-space: normal !important; }
+            .orcamentos-table td.desc { white-space: nowrap !important; overflow: hidden; }
+            .orcamentos-table td.desc .desc-txt { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .orcamentos-table td.acoes { justify-content: flex-end; border-top: 1px solid #f0f0f0; margin-top: 4px; padding-top: 8px; }
             .acao .lbl { display: inline; }
         }
@@ -301,7 +302,7 @@
                     <td data-label="Nº" style="color:#aaa; font-size:0.85em;">#{{ o.id }}</td>
                     <td data-label="Cliente"><strong>{{ o.cliente }}</strong></td>
                     <td data-label="Descrição" class="desc" style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#666;">
-                        {{ o.descricao or '—' }}
+                        <span class="desc-txt" title="{{ o.descricao or '' }}">{{ o.descricao or '—' }}</span>
                     </td>
                     <td data-label="Máquinas">{{ o.num_maquinas or '—' }}</td>
                     <td data-label="Valor" style="white-space:nowrap;"><strong style="color:#2d3a6e;">{{ ('{:,.2f}'.format(o.valor).replace(',', ' ').replace('.', ',') ~ ' €') if o.valor else '—' }}</strong></td>
