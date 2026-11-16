@@ -19,3 +19,19 @@ body { -webkit-font-smoothing: antialiased; }
 }
 /* Já não há rodapé fixo a compensar */
 body:has(> .rodape-app), body:has(> * > .rodape-app) { padding-bottom: 0 !important; }
+
+/* App instalada no iPhone: a barra de estado (horas, bateria) fica por cima da página — o cabeçalho desce o necessário */
+@media (display-mode: standalone) {
+    html body .page-header, html body .topo { padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important; }
+    .mn-topo { padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important; }
+    .mn-btn.mn-flutua { top: calc(env(safe-area-inset-top, 0px) + 10px); }
+}
+
+/* Pesquisa do mapa: lupa e campo na mesma linha */
+.leaflet-control-geocoder { display: flex !important; align-items: center; white-space: nowrap; }
+.leaflet-control-geocoder-icon { flex-shrink: 0; }
+.leaflet-control-geocoder-form { display: inline-block !important; }
+.leaflet-control-geocoder-form input { width: 190px; max-width: 46vw; font-size: 14px; padding: 0 6px; }
+@media (max-width: 600px) {
+    .leaflet-control-geocoder-form input { font-size: 16px; }  /* 16px: o iPhone não faz zoom ao tocar */
+}

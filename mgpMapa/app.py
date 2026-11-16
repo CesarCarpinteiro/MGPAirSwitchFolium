@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import timedelta
 
 from dotenv import load_dotenv
@@ -66,11 +67,13 @@ def create_app():
                     mapa = '0' if org and getattr(org, 'tipo_negocio', '') == 'espaco' else '1'
                     extra += ('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
                               '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">'
-                              '<link rel="stylesheet" href="/static/tema.css?v=2">')
+                              '<link rel="stylesheet" href="/static/tema.css?v=4">')
                     extra += (f'<script src="/static/menu.js?v=9" data-admin="{1 if current_user.is_admin else 0}" '
                               f'data-mapa="{mapa}" data-nome="{escape(current_user.nome or "")}" defer></script>')
                 if 'rel="icon"' not in html:
                     extra += '<link rel="icon" type="image/png" href="/static/icons/icon-64.png?v=2">'
+                # viewport-fit=cover: na app instalada no iPhone sabe-se a altura da barra de estado (env(safe-area-inset-top))
+                html = re.sub(r'(<meta name="viewport" content="(?![^"]*viewport-fit)[^"]*)"', r'\1, viewport-fit=cover"', html, count=1)
                 resposta.set_data(html.replace('</head>', extra + '</head>', 1))
         return resposta
 
