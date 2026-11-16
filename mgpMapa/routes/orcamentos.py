@@ -417,8 +417,10 @@ def orcamento_pdf(id):
     if not o:
         return redirect(url_for('orcamentos.orcamentos'))
     pdf, nome = _pdf(o)
-    return send_file(io.BytesIO(pdf), mimetype='application/pdf', download_name=nome,
-                     as_attachment=request.args.get('download') == '1')
+    resposta = send_file(io.BytesIO(pdf), mimetype='application/pdf', download_name=nome,
+                         as_attachment=request.args.get('download') == '1')
+    resposta.headers['Cache-Control'] = 'no-store'  # gerado na hora: nunca mostrar uma versão antiga guardada
+    return resposta
 
 
 # ── Catálogo de produtos (admin) ──────────────────────────────────────
