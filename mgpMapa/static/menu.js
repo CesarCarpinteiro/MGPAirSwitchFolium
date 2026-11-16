@@ -25,6 +25,12 @@
         ]],
     ];
 
+    var LARG = 236;
+    function lerFixo() { try { return localStorage.getItem('menuFixo') !== '0'; } catch (e) { return true; } }
+    function guardarFixo(v) { try { localStorage.setItem('menuFixo', v ? '1' : '0'); } catch (e) {} }
+    var computador = window.matchMedia('(min-width:1100px)');
+    if (lerFixo()) document.documentElement.classList.add('mn-fixo');  // já, para a página não saltar
+
     var css = '' +
         '.mn-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;min-width:42px;padding:0 12px;border-radius:7px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);color:#fff;font:600 14px "DM Sans",sans-serif;cursor:pointer;flex-shrink:0}' +
         '.mn-btn:hover{background:rgba(255,255,255,.25)}' +
@@ -51,7 +57,19 @@
         '@media(max-width:600px){.mn-btn .mn-txt{display:none}.mn-btn{padding:0 10px}' +
         // no telemóvel o cabeçalho fica só com o essencial: o resto está no menu
         '.mn-casa>a[href="/"],.mn-casa>a[href="/registos"],.mn-casa>a[href="/perfil"],.mn-casa>a.user-pill{display:none!important}}' +
-        '@media print{.mn-btn,.mn-painel,.mn-fundo{display:none!important}}';
+        '.mn-fixar{display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;font-size:13px;padding:5px 8px;cursor:pointer;margin-right:4px}' +
+        // Computador: menu sempre aberto à direita (pode-se esconder e voltar a fixar)
+        '@media(min-width:1100px){' +
+            '.mn-fixar{display:inline-block}' +
+            'html.mn-fixo body{padding-right:' + LARG + 'px!important}' +
+            'html.mn-fixo .mn-painel{transform:none;width:' + LARG + 'px;box-shadow:-1px 0 0 #e1e4ef;transition:none}' +
+            'html.mn-fixo .mn-fundo{display:none}' +
+            'html.mn-fixo .mn-btn{display:none!important}' +
+            'html.mn-fixo .mn-casa>a[href="/"],html.mn-fixo .mn-casa>a[href="/registos"],html.mn-fixo .mn-casa>a[href="/perfil"],html.mn-fixo .mn-casa>a.user-pill{display:none!important}' +
+            'html.mn-fixo .mn-item{padding-top:9px;padding-bottom:9px;font-size:14px}' +
+            'html.mn-fixo .mn-item.mn-sub{padding-top:6px;padding-bottom:6px;font-size:13px}' +
+        '}' +
+        '@media print{.mn-btn,.mn-painel,.mn-fundo{display:none!important}html.mn-fixo body{padding-right:0!important}}';
     var st = document.createElement('style');
     st.textContent = css;
     document.head.appendChild(st);
@@ -68,7 +86,8 @@
         if (document.querySelector('.mn-painel')) return;
         var aqui = location.pathname;
         var html = '<div class="mn-topo"><a href="/perfil">' + esc(NOME || 'Perfil') + '<small>Ver perfil</small></a>' +
-            '<button type="button" class="mn-fechar" aria-label="Fechar menu">×</button></div><nav class="mn-lista">';
+            '<span><button type="button" class="mn-fixar" title="Manter o menu sempre aberto">📌 Fixar</button>' +
+            '<button type="button" class="mn-fechar" aria-label="Fechar menu">×</button></span></div><nav class="mn-lista">';
         grupos.forEach(function(g) {
             var itens = g[1].filter(Boolean);
             if (!itens.length) return;
@@ -99,12 +118,34 @@
         if (sitio) { sitio.appendChild(btn); sitio.classList.add('mn-casa'); }
         else { btn.classList.add('mn-flutua', 'mn-claro'); document.body.appendChild(btn); }
 
+        var raiz = document.documentElement, bFechar = painel.querySelector('.mn-fechar'), bFixar = painel.querySelector('.mn-fixar');
+        function estado() {
+            var fixo = raiz.classList.contains('mn-fixo') && computador.matches;
+            bFechar.textContent = fixo ? '»' : '×';
+            bFechar.title = fixo ? 'Esconder o menu' : 'Fechar';
+            bFixar.style.visibility = fixo ? 'hidden' : '';
+        }
         function abrir() { document.body.classList.add('mn-aberto'); }
-        function fechar() { document.body.classList.remove('mn-aberto'); }
+        function fechar() {
+            if (raiz.classList.contains('mn-fixo') && computador.matches) {  // esconder o menu fixo
+                raiz.classList.remove('mn-fixo'); guardarFixo(false);
+                window.dispatchEvent(new Event('resize'));  // mapas e desenhos reajustam-se ao novo espaço
+            }
+            document.body.classList.remove('mn-aberto');
+            estado();
+        }
+        bFixar.addEventListener('click', function() {
+            raiz.classList.add('mn-fixo'); guardarFixo(true);
+            document.body.classList.remove('mn-aberto');
+            window.dispatchEvent(new Event('resize'));
+            estado();
+        });
+        if (computador.addEventListener) computador.addEventListener('change', estado);
+        estado();
         btn.addEventListener('click', abrir);
         fundo.addEventListener('click', fechar);
-        painel.querySelector('.mn-fechar').addEventListener('click', fechar);
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') fechar(); });
+        bFechar.addEventListener('click', fechar);
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('mn-aberto')) document.body.classList.remove('mn-aberto'); });
         // Deslizar para a direita fecha (telemóvel)
         var x0 = null;
         painel.addEventListener('touchstart', function(e) { x0 = e.touches[0].clientX; }, {passive: true});

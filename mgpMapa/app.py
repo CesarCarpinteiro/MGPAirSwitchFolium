@@ -64,7 +64,7 @@ def create_app():
                     from models import Organizacao
                     org = db.session.get(Organizacao, current_user.org_id)
                     mapa = '0' if org and getattr(org, 'tipo_negocio', '') == 'espaco' else '1'
-                    extra += (f'<script src="/static/menu.js?v=3" data-admin="{1 if current_user.is_admin else 0}" '
+                    extra += (f'<script src="/static/menu.js?v=4" data-admin="{1 if current_user.is_admin else 0}" '
                               f'data-mapa="{mapa}" data-nome="{escape(current_user.nome or "")}" defer></script>')
                 if 'rel="icon"' not in html:
                     extra += '<link rel="icon" type="image/png" href="/static/icons/icon-64.png?v=2">'
